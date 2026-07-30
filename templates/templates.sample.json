@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "scannedAt": "2026-06-17T00:00:00Z",
+  "sourceFile": "templates.sample (dummy)",
+  "templates": [
+    {
+      "name": "_entry_fade_in",
+      "slot": "entry",
+      "displayName": "フェードイン",
+      "duration": 0.4,
+      "tags": ["soft"]
+    },
+    {
+      "name": "_entry_slide_up",
+      "slot": "entry",
+      "displayName": "スライドアップ",
+      "duration": 0.4,
+      "tags": ["soft"]
+    },
+    {
+      "name": "_entry_pop",
+      "slot": "entry",
+      "displayName": "ポップ",
+      "duration": 0.3,
+      "tags": ["bouncy"]
+    },
+    {
+      "name": "_hold_static",
+      "slot": "hold",
+      "displayName": "静止",
+      "duration": 1.0,
+      "tags": []
+    },
+    {
+      "name": "_hold_wave",
+      "slot": "hold",
+      "displayName": "上下ゆらぎ",
+      "duration": 2.0,
+      "tags": ["live"]
+    },
+    {
+      "name": "_exit_fade_out",
+      "slot": "exit",
+      "displayName": "フェードアウト",
+      "duration": 0.4,
+      "tags": ["soft"]
+    },
+    {
+      "name": "_exit_slide_down",
+      "slot": "exit",
+      "displayName": "スライドダウン",
+      "duration": 0.4,
+      "tags": ["soft"]
+    },
+    {
+      "name": "_design_white_mincho",
+      "slot": "design",
+      "displayName": "白明朝",
+      "duration": 1.0,
+      "tags": ["clean"],
+      "emphasisLayers": ["lv0", "lv1", "lv2", "lv3"]
+    },
+    {
+      "name": "_design_pop_color",
+      "slot": "design",
+      "displayName": "ポップカラー",
+      "duration": 1.0,
+      "tags": ["pop"],
+      "emphasisLayers": ["lv0", "lv1", "lv2", "lv3"]
+    }
+  ]
+}

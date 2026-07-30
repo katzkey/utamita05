@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>うたみた05</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="logo">うたみた<span class="logo-version">05</span></span>
+    <span class="project-name" id="projectName">新規プロジェクト</span>
+  </div>
+  <nav class="topbar-menu">
+    <button class="menu-btn" id="btnNew">新規</button>
+    <button class="menu-btn" id="btnOpen">開く</button>
+    <button class="menu-btn" id="btnSave">保存</button>
+    <button class="menu-btn" id="btnImportLyrics">歌詞読込</button>
+    <button class="menu-btn" id="btnLoadAudio">楽曲読込</button>
+    <button class="menu-btn" id="btnUndo" title="Ctrl+Z">↶ Undo</button>
+    <button class="menu-btn" id="btnRedo" title="Ctrl+Y">↷ Redo</button>
+  </nav>
+  <div class="topbar-right">
+    <span class="status" id="dirtyStatus">— </span>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab tab-active" data-tab="lyrics">歌詞</button>
+  <button class="tab" data-tab="backgrounds">背景</button>
+  <button class="tab" data-tab="titles">タイトル</button>
+  <button class="tab" data-tab="templates">テンプレ</button>
+  <button class="tab" data-tab="settings">全体設定</button>
+</div>
+
+<main class="main">
+
+  <section class="tab-panel" data-panel="lyrics">
+    <div class="lyric-list-pane">
+      <div class="list-toolbar">
+        <span class="count" id="lineCount">0 行</span>
+        <div class="toolbar-right">
+          <button class="tool-btn" id="btnAddLine" title="Ctrl+N">+ 行追加</button>
+          <button class="tool-btn" id="btnSplitLine" title="Ctrl+/">分割</button>
+          <button class="tool-btn" id="btnMergeNext" title="Ctrl+J">↓と結合</button>
+          <button class="tool-btn tool-btn-danger" id="btnRemoveLine" title="Delete">削除</button>
+        </div>
+      </div>
+      <div class="lyric-table">
+        <div class="lyric-table-head">
+          <div>#</div>
+          <div>TC IN</div>
+          <div>TC OUT</div>
+          <div>歌詞</div>
+        </div>
+        <div class="lyric-table-body" id="lyricRows"></div>
+      </div>
+    </div>
+
+    <aside class="detail-pane" id="detailPane">
+      <div class="empty-state">行を選択してください</div>
+    </aside>
+  </section>
+
+  <section class="tab-panel hidden" data-panel="backgrounds">
+    <div class="bg-pane">
+      <div class="list-toolbar">
+        <span class="count" id="bgCount">0 件</span>
+        <button class="tool-btn" id="btnAddBg">+ 画像背景</button>
+        <button class="tool-btn" id="btnAddBgSolid">+ 単色背景</button>
+      </div>
+      <div class="bg-table">
+        <div class="bg-table-head">
+          <div>#</div>
+          <div>TC IN</div>
+          <div>TC OUT</div>
+          <div>ファイル</div>
+          <div>フェードIN</div>
+          <div>フェードOUT</div>
+          <div>fit</div>
+          <div>blend</div>
+          <div>opacity</div>
+          <div></div>
+        </div>
+        <div class="bg-table-body" id="bgRows"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab-panel hidden" data-panel="titles">
+    <div class="bg-pane">
+      <div class="list-toolbar">
+        <span class="count" id="titleCount">0 件</span>
+        <button class="tool-btn" id="btnAddTitle">+ タイトル追加</button>
+      </div>
+      <div class="bg-table">
+        <div class="title-table-head">
+          <div>#</div>
+          <div>TC IN</div>
+          <div>TC OUT</div>
+          <div>テキスト</div>
+          <div>サブ</div>
+          <div>素材</div>
+          <div>テンプレ</div>
+          <div>fit</div>
+          <div>fadeIN</div>
+          <div>fadeOUT</div>
+          <div>layout</div>
+          <div>色</div>
+          <div>opa</div>
+          <div></div>
+        </div>
+        <div class="bg-table-body" id="titleRows"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab-panel hidden" data-panel="templates">
+    <div class="tmpl-pane" id="tmplPane"></div>
+  </section>
+
+  <section class="tab-panel hidden" data-panel="settings">
+    <div class="settings-pane" id="settingsPane"></div>
+  </section>
+
+</main>
+
+<footer class="playbar">
+  <button class="play-btn" id="playBtn">▶</button>
+  <button class="loop-toggle" id="loopBtn" title="行のIN/OUTでループ">↻ ループ</button>
+  <button class="loop-toggle marking-toggle" id="markingBtn" title="ON: 行クリックでループせず通し再生">🎯 マーキング</button>
+  <button class="mark-action-btn" id="markInBtn" title="現時刻を選択行のINに (I)">I</button>
+  <button class="mark-action-btn" id="markOutBtn" title="現時刻を選択行のOUTに (O)">O</button>
+  <span class="time-display">
+    <span id="currentTC">00:00:00:00</span> / <span id="totalTC">00:00:00:00</span>
+  </span>
+  <div class="playbar-progress" id="playbarProgress">
+    <div class="progress-fill" id="progressFill"></div>
+    <div class="progress-marker" id="progressMarker"></div>
+  </div>
+  <span class="status-pill" id="aeStatus"><span class="dot"></span> AE: 未接続</span>
+</footer>
+
+<audio id="player" preload="auto"></audio>
+
+<!-- 隠しファイル選択 -->
+<input type="file" id="filePickerOpen"   accept=".json"   style="display:none">
+<input type="file" id="filePickerLyrics" accept=".txt"    style="display:none">
+<input type="file" id="filePickerAudio"  accept="audio/*,video/*" style="display:none">
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

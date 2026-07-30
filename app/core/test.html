@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>うたみた05 Core テスト</title>
+<style>
+  body {
+    margin: 0; padding: 24px;
+    font-family: "Inter", "Hiragino Sans", "Meiryo", system-ui, sans-serif;
+    background: #0F142A; color: #CADCFC;
+  }
+  h1 { color: #F9E795; font-family: Georgia, serif; margin: 0 0 16px; }
+  #log {
+    font-family: "Consolas", monospace;
+    font-size: 13px;
+    background: #1E2761;
+    padding: 16px;
+    border-radius: 8px;
+    max-width: 1000px;
+  }
+  .log { padding: 3px 0; }
+  .log-ok { color: #4ADE80; }
+  .log-ng { color: #F96167; font-weight: 700; }
+  .log-info { color: #F9E795; font-weight: 600; }
+  .summary {
+    margin-top: 24px;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .summary.pass { color: #4ADE80; }
+  .summary.fail { color: #F96167; }
+</style>
+</head>
+<body>
+<h1>うたみた05 — Phase 0 Core テスト</h1>
+<div id="log"></div>
+<div id="summary" class="summary"></div>
+
+<script type="module">
+import { runAllTests } from "./test.js";
+const logEl = document.getElementById("log");
+const result = runAllTests(logEl);
+const summary = document.getElementById("summary");
+summary.textContent = `${result.passed}/${result.total} PASS`;
+summary.classList.add(result.failed === 0 ? "pass" : "fail");
+</script>
+</body>
+</html>

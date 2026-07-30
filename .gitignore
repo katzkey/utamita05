@@ -1,0 +1,85 @@
+# =========================================
+# うたみた05 web版 .gitignore
+# 楽曲・素材・個人ドラフトを完全除外
+# =========================================
+
+# ---- 素材フォルダ（ユーザーの楽曲・画像・動画） ----
+input/
+output/
+to/
+
+# ---- メディアファイル ----
+*.mp3
+*.wav
+*.m4a
+*.aac
+*.flac
+*.ogg
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+
+# ---- ルートの画像は素材扱いで除外（ドキュメント用は docs/ に置く運用） ----
+/*.jpg
+/*.jpeg
+/*.png
+/*.gif
+
+# ---- AE テンプレ本体（ローカル参照、Git 管理外） ----
+templates/*.aep
+templates/Adobe After Effects 自動保存/
+
+# ---- ドキュメント（社内資料・個人メモ） ----
+docs/
+
+# ---- AE 実行時生成物 ----
+# ae/ae_fonts.json は web アプリのフォント一覧に使うのでコミットする
+ae/ae_fonts_dump.log
+ae/build_debug.txt
+ae/build_layers.txt
+ae/build_project.settings.txt
+ae/font_inspector_result.txt
+ae/font_probe_result.txt
+
+# ---- ユーザードラフト・サンプルプロジェクト ----
+ae/sample*.json
+ae/short_*.json
+ae/test*.json
+ae/*.utamita*.json
+ae/新規プロジェクト*.json
+
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# ---- 配布 zip ----
+dist/
+build/
+*.zip
+*.tar.gz
+
+# ---- Node.js ----
+node_modules/
+
+# ---- エディタ・OS ----
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- ログ ----
+*.log
+
+# ---- Claude Code 設定 ----
+.claude/
