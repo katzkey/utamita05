@@ -1,6 +1,6 @@
 // プロジェクト保存・読込、歌詞ファイル取込、楽曲読込
 
-import { getProject, getUi, replaceProject, setUi, markSaved, setProject, registerFileBlob } from "./state.js";
+import { getProject, getUi, replaceProject, setUi, markSaved, setProject, registerFileBlob, restoreProjectFiles, getFileBlobUrl } from "./state.js";
 import { fromJSON, toJSON } from "../core/project.js";
 import { getTemplatesRegistry } from "../core/templates_loader.js";
 import * as ops from "../core/operations.js";
@@ -80,6 +80,23 @@ async function onOpenFile(e) {
     const text = await file.text();
     const project = fromJSON(text);
     replaceProject(withRegistryTemplates(project));
+    // 参照ファイル（音源・背景・タイトル素材）を IndexedDB から復元
+    const { restored, missing } = await restoreProjectFiles(project);
+    // 音源が復元されたら audio 要素にセット
+    if (project.music && project.music.file) {
+      const url = getFileBlobUrl(project.music.file);
+      if (url && audioEl) {
+        audioEl.src = url;
+        audioEl.load();
+        setUi({ audioUrl: url });
+      }
+    }
+    if (missing.length > 0) {
+      console.warn("[open] 未登録のファイル:", missing);
+    }
+    if (restored.length > 0) {
+      console.log("[open] 復元したファイル:", restored);
+    }
   } catch (err) {
     alert("プロジェクト読込失敗: " + err.message);
   }

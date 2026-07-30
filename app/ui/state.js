@@ -1,6 +1,7 @@
 // 状態管理 + History (Undo/Redo)
 
 import { createEmptyProject } from "../core/project.js";
+import { saveFileToStore, loadFileFromStore } from "../core/file_store.js";
 
 const state = {
   project: createEmptyProject({ name: "新規プロジェクト" }),
@@ -96,6 +97,7 @@ export function markSaved() {
 // ---- 素材ファイルの Blob URL レジストリ ----
 
 // File を登録し、Blob URL を返す（プレビュー用）。
+// 同時に IndexedDB にも保存して次回セッションで復元可能にする。
 // 同名で再登録した場合は古い URL を revoke してから差し替え。
 export function registerFileBlob(file) {
   if (!file || !file.name) return null;
@@ -105,8 +107,45 @@ export function registerFileBlob(file) {
   }
   const url = URL.createObjectURL(file);
   state.fileBlobs.set(file.name, { file, url });
+  // 非同期で IndexedDB に保存（プレビューはブロックしない）
+  saveFileToStore(file.name, file);
   emit("fileBlobs");
   return url;
+}
+
+// IndexedDB からファイルを復元して Blob URL を発行。
+// メモリに既にあればそれを返す。無ければ null。
+export async function restoreFileBlob(name) {
+  if (!name) return null;
+  if (state.fileBlobs.has(name)) return state.fileBlobs.get(name).url;
+  const file = await loadFileFromStore(name);
+  if (!file) return null;
+  const url = URL.createObjectURL(file);
+  state.fileBlobs.set(name, { file, url });
+  emit("fileBlobs");
+  return url;
+}
+
+// project 内で参照される全ファイルを IndexedDB から復元する。
+// music.file, backgrounds[].file, titles[].file を対象。
+// 戻り値：{ restored: [names], missing: [names] }
+export async function restoreProjectFiles(project) {
+  const names = new Set();
+  if (project.music && project.music.file) names.add(project.music.file);
+  for (const bg of project.backgrounds || []) {
+    if (bg.file && !bg.solidColor) names.add(bg.file);
+  }
+  for (const t of project.titles || []) {
+    if (t.file) names.add(t.file);
+  }
+  const restored = [];
+  const missing = [];
+  for (const name of names) {
+    const url = await restoreFileBlob(name);
+    if (url) restored.push(name);
+    else missing.push(name);
+  }
+  return { restored, missing };
 }
 
 export function getFileBlobUrl(name) {
