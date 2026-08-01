@@ -7,6 +7,7 @@ import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "
 import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js";
 import { parseJitterBlocks, jitterOffsetFor } from "../core/utils.js";
 import { getPresetsByCategory } from "../core/presets.js";
+import { SMALL_KANA } from "../core/char_type.js";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -768,6 +769,9 @@ function buildLineInnerHtml(line, opts) {
     }
   }
 
+  // 縦組みフラグ（小書きかな位置補正で使用）
+  const isVerticalLayout = /^v[lrc]_/.test(String(line.layout || "h_bottom"));
+
   // ジッター
   const jit = line.jitter;
   const jitterOn = !!(jit && jit.enabled && totalChars > 0);
@@ -878,7 +882,13 @@ function buildLineInnerHtml(line, opts) {
     }
     const ch = escapeHtml(t.ch);
     const lv = levels[t.charIdx];
-    html += lv > 0 ? `<span style="color:${EMPHASIS_COLORS[lv] || "#ff5252"}">${ch}</span>` : ch;
+    let chHtml = lv > 0 ? `<span style="color:${EMPHASIS_COLORS[lv] || "#ff5252"}">${ch}</span>` : ch;
+    // 縦組みで小書きかなは、字送り box 中央だと視覚的に左下寄りに見える。
+    // 右上に少しシフトして伝統的な位置感を再現。
+    if (isVerticalLayout && SMALL_KANA.has(t.ch)) {
+      chHtml = `<span style="display:inline-block;transform:translate(0.15em, -0.10em)">${chHtml}</span>`;
+    }
+    html += chHtml;
   }
   closeSpan();
   return html;
