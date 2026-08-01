@@ -17,6 +17,7 @@ export const PRESETS = [
     label: "いろはマル × カラー座布団",
     apply: {
       fontOverride: { family: "irohamaru-Regular", size: 60 },
+      layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "round", mode: "fill",
         color: "#FF69B4", opacity: 0.85,
@@ -32,6 +33,7 @@ export const PRESETS = [
     label: "M+ Rounded × カラー座布団",
     apply: {
       fontOverride: { family: "rounded-mplus-1p-medium", size: 60 },
+      layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "round", mode: "fill",
         color: "#FFB6C1", opacity: 0.85,
@@ -47,6 +49,7 @@ export const PRESETS = [
     label: "Sic オリーブ Dance（座布団なし）",
     apply: {
       fontOverride: { family: "SicOliveDanceR", size: 64 },
+      layout: "h_bottom",
       zabuton: null,
     },
   },
@@ -58,6 +61,7 @@ export const PRESETS = [
     label: "源ノ角ゴ M × アウトライン",
     apply: {
       fontOverride: { family: "SourceHanSansJP-Medium", size: 60 },
+      layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "round", mode: "stroke",
         color: "#FFFFFF", opacity: 1.0,
@@ -73,6 +77,7 @@ export const PRESETS = [
     label: "源ノ明朝 M × アウトライン",
     apply: {
       fontOverride: { family: "SourceHanSerifJP-Medium", size: 60 },
+      layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "round", mode: "stroke",
         color: "#FFFFFF", opacity: 1.0,
@@ -88,6 +93,7 @@ export const PRESETS = [
     label: "せのびゴ × アウトライン",
     apply: {
       fontOverride: { family: "Senobi-Gothic-Regular", size: 60 },
+      layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "round", mode: "stroke",
         color: "#FFFFFF", opacity: 1.0,
@@ -106,6 +112,7 @@ export const PRESETS = [
     label: "源ノ角ゴ Heavy × 黒座布団",
     apply: {
       fontOverride: { family: "SourceHanSansJP-Heavy", size: 64 },
+      layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#000000", opacity: 0.7,
@@ -121,6 +128,7 @@ export const PRESETS = [
     label: "源ノ明朝 Heavy × 黒座布団",
     apply: {
       fontOverride: { family: "SourceHanSerifJP-Heavy", size: 64 },
+      layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#000000", opacity: 0.7,
@@ -136,6 +144,7 @@ export const PRESETS = [
     label: "FOT-キアロ × 黒座布団",
     apply: {
       fontOverride: { family: "ChiaroStd-B", size: 64 },
+      layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#000000", opacity: 0.7,
@@ -199,6 +208,7 @@ export const PRESETS = [
     label: "筑紫オールド（代替: 源ノ明朝 ExtraLight） × 色ボックス",
     apply: {
       fontOverride: { family: "SourceHanSerifJP-ExtraLight", size: 60 },
+      layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#4B0000", opacity: 0.85,
@@ -214,6 +224,7 @@ export const PRESETS = [
     label: "DNP 秀英にじみ（代替: 源ノ明朝 Light） × 色ボックス",
     apply: {
       fontOverride: { family: "SourceHanSerifJP-Light", size: 60 },
+      layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#3D0A0A", opacity: 0.85,
@@ -229,6 +240,7 @@ export const PRESETS = [
     label: "VDL G 明朝 × 色ボックス",
     apply: {
       fontOverride: { family: "VDL-GothicMincho-Regular", size: 60 },
+      layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#2B0F1A", opacity: 0.85,
