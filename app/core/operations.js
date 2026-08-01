@@ -12,6 +12,7 @@ import {
   defaultZabuton, defaultJitter,
   PROJECT_VERSION,
 } from "./project.js";
+import { getPresetById } from "./presets.js";
 
 // ──────────────────────────────────────────────────
 // 内部ヘルパー
@@ -224,6 +225,29 @@ export function setLineZabuton(project, id, partial) {
     }
     const base = line.zabuton || defaultZabuton();
     return { ...line, zabuton: { ...base, ...partial } };
+  });
+}
+
+// プリセット適用：presets.js の定義に従って fontOverride / zabuton / layout を上書き。
+// 適用後も個別プロパティは手で編集できる（プリセット未使用相当）。
+// presetId=null / 空 = 何もしない（未適用の状態に戻すには手で各プロパティを直す）。
+export function applyPresetToLine(project, id, presetId) {
+  const preset = getPresetById(presetId);
+  if (!preset) return project;
+  return updateLine(project, id, (line) => {
+    const next = { ...line, presetId };
+    if (preset.apply.fontOverride != null) {
+      next.fontOverride = { ...preset.apply.fontOverride };
+    }
+    if (Object.prototype.hasOwnProperty.call(preset.apply, "zabuton")) {
+      next.zabuton = preset.apply.zabuton
+        ? JSON.parse(JSON.stringify(preset.apply.zabuton))
+        : null;
+    }
+    if (preset.apply.layout) {
+      next.layout = preset.apply.layout;
+    }
+    return next;
   });
 }
 

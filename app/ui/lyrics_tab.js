@@ -6,6 +6,7 @@ import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js";
 import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js";
 import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js";
 import { parseJitterBlocks, jitterOffsetFor } from "../core/utils.js";
+import { getPresetsByCategory } from "../core/presets.js";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -157,6 +158,28 @@ function renderDetail(project, ui) {
     <div class="preview-box ${ui.previewLarge ? "preview-large" : ""}" id="linePreview" style="margin:8px 0 4px">
       <button class="preview-toggle" id="btnPreviewSize" title="プレビューを${ui.previewLarge ? "縮小" : "拡大"}">${ui.previewLarge ? "🗕" : "⤢"}</button>
       ${renderLinePreviewHtml(line, project)}
+    </div>
+
+    <div class="section">
+      <div class="section-title">プリセット</div>
+      <select class="field-select" id="fldPreset" style="width:100%">
+        <option value="">— 未適用 / 手動 —</option>
+        ${(() => {
+          let html = "";
+          for (const [cat, list] of getPresetsByCategory()) {
+            html += `<optgroup label="${escapeHtml(cat)}">`;
+            for (const p of list) {
+              const sel = line.presetId === p.id ? "selected" : "";
+              html += `<option value="${p.id}" ${sel}>${escapeHtml(p.label)}</option>`;
+            }
+            html += "</optgroup>";
+          }
+          return html;
+        })()}
+      </select>
+      <div style="font-size:10px;color:var(--gray-3);margin-top:4px">
+        選ぶとフォント・座布団・レイアウトが上書きされます（適用後も個別編集可）
+      </div>
     </div>
 
     <div class="section">
@@ -343,6 +366,12 @@ function renderDetail(project, ui) {
   `;
 
   // ハンドラ
+  document.getElementById("fldPreset").addEventListener("change", (e) => {
+    const v = e.target.value;
+    if (!v) return; // 「未適用」を選んだ場合は何もしない（手動編集を尊重）
+    setProject(ops.applyPresetToLine(getProject(), id, v));
+  });
+
   const onTextChange = () => {
     const text = document.getElementById("fldText").value.replace(/\n/g, "\\n");
     setProject(ops.setLineText(getProject(), id, text));
