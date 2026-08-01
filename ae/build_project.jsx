@@ -431,6 +431,13 @@
         return "ー〜～－‐―…‥＝=（）()「」『』【】［］[]｛｝{}〈〉《》＜＞<>".indexOf(c) >= 0;
     }
 
+    // 縦組みで右上寄りに配置する小書きかな
+    // 通常は em ボックスの中央に描画されるが、視覚的には左下に寄って見える。
+    // 右にシフトしてバランスを取る。
+    function isSmallKanaChar(c) {
+        return "ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶ".indexOf(c) >= 0;
+    }
+
     // line モード：1行=1テキストレイヤ（+ 装飾あれば一緒に）
     function placeLineAsSingleLayer(line, stats) {
         if (!line.text) return;
@@ -813,7 +820,14 @@
                 if (vertical) {
                     var vy = cursorY + thisW / 2 + posDy;
                     cursorY += thisW;
-                    basePos = [colX + posDx, vy];
+                    // 縦組み小書きかな：右にシフトして視覚バランス調整
+                    var xShift = 0;
+                    if (isSmallKanaChar(ch.ch || "")) {
+                        var refSize = lineSizeExplicit || 48;
+                        xShift = refSize * 0.15;
+                        vy -= refSize * 0.10;
+                    }
+                    basePos = [colX + posDx + xShift, vy];
                 } else {
                     var x = cursorX + thisW / 2 + posDx;
                     cursorX += thisW;
