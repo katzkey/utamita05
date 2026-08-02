@@ -291,8 +291,8 @@ function renderDetail(project, ui) {
         </div>
         <div class="field">
           <span class="field-label">余白 X / Y</span>
-          <input class="field-input" id="fldZabPadX" value="${line.zabuton?.paddingX ?? 40}" style="width:50px">
-          <input class="field-input" id="fldZabPadY" value="${line.zabuton?.paddingY ?? 20}" style="width:50px">
+          <input class="field-input" id="fldZabPadX" value="${line.zabuton?.paddingX ?? 0}" style="width:50px">
+          <input class="field-input" id="fldZabPadY" value="${line.zabuton?.paddingY ?? 0}" style="width:50px">
         </div>
         <div class="field">
           <span class="field-label">角丸半径</span>
@@ -704,8 +704,8 @@ const EMPHASIS_COLORS = { 1: "#ffd54a", 2: "#ff8a65", 3: "#ff5252" };
 // 座布団の CSS スタイル配列を返す（外側でも per-block span でも共用）
 function buildZabCss(zab, toCqw) {
   if (!zab || !zab.enabled) return [];
-  const px = toCqw(zab.paddingX ?? 40);
-  const py = toCqw(zab.paddingY ?? 20);
+  const px = toCqw(zab.paddingX ?? 0);
+  const py = toCqw(zab.paddingY ?? 0);
   let radius = "0";
   if (zab.shape === "round") radius = `${toCqw(zab.cornerRadius ?? 16).toFixed(3)}cqw`;
   else if (zab.shape === "pill") radius = "999em";

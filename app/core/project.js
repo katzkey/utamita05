@@ -42,8 +42,8 @@ export function defaultZabuton() {
     shape: "round",       // "rect" | "round" | "pill" | "circle"
     color: "#000000",
     opacity: 0.5,
-    paddingX: 40,         // 文字ボックスからの余白（AE px）
-    paddingY: 20,
+    paddingX: 0,          // 文字ボックスからの余白（AE px）デフォルトは文字ぴったり
+    paddingY: 0,
     cornerRadius: 16,     // round のとき
     timingMode: "follow", // "follow": 文字に親付け / "static": 独立フェード
     fade: 0.3,            // static のフェード秒（in/out 共通）

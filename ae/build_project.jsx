@@ -1004,8 +1004,8 @@
         if (!stats.zabInfo) stats.zabInfo = [];
         stats.zabInfo.push("行" + line.id + ": abs=(" + Math.round(bounds.cx) + "," + Math.round(bounds.cy) + ") wh=(" + Math.round(bounds.w) + "," + Math.round(bounds.h) + ") parentBase=(" + Math.round(parentBasePos[0]) + "," + Math.round(parentBasePos[1]) + ")");
         try {
-            var padX = (typeof zab.paddingX === "number") ? zab.paddingX : 40;
-            var padY = (typeof zab.paddingY === "number") ? zab.paddingY : 20;
+            var padX = (typeof zab.paddingX === "number") ? zab.paddingX : 0;
+            var padY = (typeof zab.paddingY === "number") ? zab.paddingY : 0;
             var w = bounds.w + padX * 2;
             var h = bounds.h + padY * 2;
             var shape = String(zab.shape || "round");
