@@ -886,7 +886,7 @@ function buildLineInnerHtml(line, opts) {
     // 縦組みで小書きかなは、字送り box 中央だと視覚的に左下寄りに見える。
     // 右上に少しシフトして伝統的な位置感を再現。
     if (isVerticalLayout && SMALL_KANA.has(t.ch)) {
-      chHtml = `<span style="display:inline-block;transform:translate(0.15em, -0.10em)">${chHtml}</span>`;
+      chHtml = `<span style="display:inline-block;transform:translate(0.08em, -0.05em)">${chHtml}</span>`;
     }
     html += chHtml;
   }
