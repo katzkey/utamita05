@@ -638,14 +638,16 @@ function renderLinePreviewHtml(line, project) {
   ].filter(Boolean).join(";");
 
   // 配置ガイド（15/50/85% の水平線 + 中央縦線）
+  // 中央縦線は目視で分かりやすく赤系＋ opacity 高めに
   const guide = (pct) => `<div style="position:absolute;left:0;right:0;top:${pct}%;border-top:1px dashed rgba(255,255,255,.12)"></div>`;
+  const vGuide = `<div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(255,80,80,.55)"></div>`;
 
   const meta = `${escapeHtml(labelFor(familyValue) || "(継承)")} / size ${rawSize} / tracking ${tracking} / ${escapeHtml(layout)}${dx || dy ? ` / dx:${dx} dy:${dy}` : ""}`;
   return `
     <div style="container-type:inline-size;width:100%;aspect-ratio:${resW}/${resH};background:#101014;border:1px solid var(--gray-5,#333);border-radius:4px;position:relative;overflow:hidden">
       ${renderPreviewBackgrounds(line, project)}
       ${guide(15)}${guide(50)}${guide(85)}
-      <div style="position:absolute;top:0;bottom:0;left:50%;border-left:1px dashed rgba(255,255,255,.08)"></div>
+      ${vGuide}
       <div style="${textStyle}">${htmlText}</div>
     </div>
     <div style="margin-top:6px;font-size:10px;color:var(--gray-3, #999)">${escapeHtml(meta)}</div>
