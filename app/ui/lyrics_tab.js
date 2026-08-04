@@ -884,8 +884,12 @@ function buildLineInnerHtml(line, opts) {
     }
     const ch = escapeHtml(t.ch);
     const lv = levels[t.charIdx];
-    const chHtml = lv > 0 ? `<span style="color:${EMPHASIS_COLORS[lv] || "#ff5252"}">${ch}</span>` : ch;
-    // （縦組み小書きかな補正は無し。字送り box 中央のまま = ブラウザ既定）
+    let chHtml = lv > 0 ? `<span style="color:${EMPHASIS_COLORS[lv] || "#ff5252"}">${ch}</span>` : ch;
+    // 縦組みで小書きかなはフォントによっては右寄りに描画される（源ノ明朝など）。
+    // 左に少しシフトして視覚バランスを取る。
+    if (isVerticalLayout && SMALL_KANA.has(t.ch)) {
+      chHtml = `<span style="display:inline-block;transform:translate(-0.08em, 0)">${chHtml}</span>`;
+    }
     html += chHtml;
   }
   closeSpan();
