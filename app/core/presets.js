@@ -21,7 +21,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "round", mode: "fill",
         color: "#FF69B4", opacity: 0.85,
-        paddingX: 30, paddingY: 15, cornerRadius: 20,
+        paddingX: 0, paddingY: 0, cornerRadius: 20,
         timingMode: "follow", fade: 0.3,
         strokeWidth: 2, perBlock: false,
       },
@@ -37,7 +37,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "round", mode: "fill",
         color: "#FFB6C1", opacity: 0.85,
-        paddingX: 30, paddingY: 15, cornerRadius: 20,
+        paddingX: 0, paddingY: 0, cornerRadius: 20,
         timingMode: "follow", fade: 0.3,
         strokeWidth: 2, perBlock: false,
       },
@@ -65,7 +65,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "round", mode: "stroke",
         color: "#FFFFFF", opacity: 1.0,
-        paddingX: 30, paddingY: 15, cornerRadius: 12,
+        paddingX: 0, paddingY: 0, cornerRadius: 12,
         strokeWidth: 3,
         timingMode: "follow", fade: 0.3, perBlock: false,
       },
@@ -81,7 +81,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "round", mode: "stroke",
         color: "#FFFFFF", opacity: 1.0,
-        paddingX: 30, paddingY: 15, cornerRadius: 12,
+        paddingX: 0, paddingY: 0, cornerRadius: 12,
         strokeWidth: 3,
         timingMode: "follow", fade: 0.3, perBlock: false,
       },
@@ -97,7 +97,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "round", mode: "stroke",
         color: "#FFFFFF", opacity: 1.0,
-        paddingX: 30, paddingY: 15, cornerRadius: 12,
+        paddingX: 0, paddingY: 0, cornerRadius: 12,
         strokeWidth: 3,
         timingMode: "follow", fade: 0.3, perBlock: false,
       },
@@ -116,7 +116,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#000000", opacity: 0.7,
-        paddingX: 40, paddingY: 20, cornerRadius: 0,
+        paddingX: 0, paddingY: 0, cornerRadius: 0,
         timingMode: "follow", fade: 0.3,
         strokeWidth: 2, perBlock: false,
       },
@@ -132,7 +132,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#000000", opacity: 0.7,
-        paddingX: 40, paddingY: 20, cornerRadius: 0,
+        paddingX: 0, paddingY: 0, cornerRadius: 0,
         timingMode: "follow", fade: 0.3,
         strokeWidth: 2, perBlock: false,
       },
@@ -148,7 +148,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#000000", opacity: 0.7,
-        paddingX: 40, paddingY: 20, cornerRadius: 0,
+        paddingX: 0, paddingY: 0, cornerRadius: 0,
         timingMode: "follow", fade: 0.3,
         strokeWidth: 2, perBlock: false,
       },
@@ -167,7 +167,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#111111", opacity: 0.6,
-        paddingX: 24, paddingY: 24, cornerRadius: 0,
+        paddingX: 0, paddingY: 0, cornerRadius: 0,
         timingMode: "follow", fade: 0.5,
         strokeWidth: 2, perBlock: false,
       },
@@ -183,7 +183,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "rect", mode: "stroke",
         color: "#FFFFFF", opacity: 0.9,
-        paddingX: 30, paddingY: 30, cornerRadius: 0,
+        paddingX: 0, paddingY: 0, cornerRadius: 0,
         strokeWidth: 2,
         timingMode: "follow", fade: 0.5, perBlock: false,
       },
@@ -212,7 +212,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#4B0000", opacity: 0.85,
-        paddingX: 30, paddingY: 18, cornerRadius: 0,
+        paddingX: 0, paddingY: 0, cornerRadius: 0,
         timingMode: "follow", fade: 0.5,
         strokeWidth: 2, perBlock: false,
       },
@@ -228,7 +228,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#3D0A0A", opacity: 0.85,
-        paddingX: 30, paddingY: 18, cornerRadius: 0,
+        paddingX: 0, paddingY: 0, cornerRadius: 0,
         timingMode: "follow", fade: 0.5,
         strokeWidth: 2, perBlock: false,
       },
@@ -244,7 +244,7 @@ export const PRESETS = [
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
         color: "#2B0F1A", opacity: 0.85,
-        paddingX: 30, paddingY: 18, cornerRadius: 0,
+        paddingX: 0, paddingY: 0, cornerRadius: 0,
         timingMode: "follow", fade: 0.5,
         strokeWidth: 2, perBlock: false,
       },
