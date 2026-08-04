@@ -888,7 +888,7 @@ function buildLineInnerHtml(line, opts) {
     // 縦組みで小書きかなはフォントによっては右寄りに描画される（源ノ明朝など）。
     // 左に少しシフトして視覚バランスを取る。
     if (isVerticalLayout && SMALL_KANA.has(t.ch)) {
-      chHtml = `<span style="display:inline-block;transform:translate(-0.08em, 0)">${chHtml}</span>`;
+      chHtml = `<span style="display:inline-block;transform:translate(-0.04em, 0)">${chHtml}</span>`;
     }
     html += chHtml;
   }
