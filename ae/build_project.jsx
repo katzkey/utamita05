@@ -820,14 +820,8 @@
                 if (vertical) {
                     var vy = cursorY + thisW / 2 + posDy;
                     cursorY += thisW;
-                    // 縦組み小書きかな：右にシフトして視覚バランス調整
-                    var xShift = 0;
-                    if (isSmallKanaChar(ch.ch || "")) {
-                        var refSize = lineSizeExplicit || 48;
-                        xShift = refSize * 0.04;
-                        vy -= refSize * 0.03;
-                    }
-                    basePos = [colX + posDx + xShift, vy];
+                    // （縦組み小書きかな補正は無し。中央配置のまま）
+                    basePos = [colX + posDx, vy];
                 } else {
                     var x = cursorX + thisW / 2 + posDx;
                     cursorX += thisW;
