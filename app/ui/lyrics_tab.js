@@ -625,7 +625,7 @@ function renderLinePreviewHtml(line, project) {
     `position:absolute`,
     `left: ${leftPct.toFixed(3)}%`,
     `top: ${topPct.toFixed(3)}%`,
-    `transform: ${translate} rotate(${rot}deg) scale(${scale})`,
+    `transform: ${translate}${vertical ? " translate(-0.1em, 0)" : ""} rotate(${rot}deg) scale(${scale})`,
     `font-family: '${(cssFam || "").replace(/'/g, "\\'")}', system-ui, sans-serif`,
     `font-size: ${fontCqw.toFixed(3)}cqw`,
     `letter-spacing: ${letterCqw.toFixed(3)}cqw`,
