@@ -629,7 +629,7 @@ function renderLinePreviewHtml(line, project) {
     `font-family: '${(cssFam || "").replace(/'/g, "\\'")}', system-ui, sans-serif`,
     `font-size: ${fontCqw.toFixed(3)}cqw`,
     `letter-spacing: ${letterCqw.toFixed(3)}cqw`,
-    `line-height: 1.3`,
+    `line-height: ${vertical ? 1 : 1.3}`,
     `color: #fff`,
     `white-space: nowrap`,
     `text-align: center`,
