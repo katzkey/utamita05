@@ -16,7 +16,7 @@ export const PRESETS = [
     category: "可愛い・ポップ",
     label: "いろはマル × カラー座布団",
     apply: {
-      fontOverride: { family: "irohamaru-Regular", size: 60 },
+      fontOverride: { family: "irohamaru-Regular", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "round", mode: "fill",
@@ -32,7 +32,7 @@ export const PRESETS = [
     category: "可愛い・ポップ",
     label: "M+ Rounded × カラー座布団",
     apply: {
-      fontOverride: { family: "rounded-mplus-1p-medium", size: 60 },
+      fontOverride: { family: "rounded-mplus-1p-medium", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "round", mode: "fill",
@@ -48,7 +48,7 @@ export const PRESETS = [
     category: "可愛い・ポップ",
     label: "Sic オリーブ Dance（座布団なし）",
     apply: {
-      fontOverride: { family: "SicOliveDanceR", size: 64 },
+      fontOverride: { family: "SicOliveDanceR", size: 36 },
       layout: "h_bottom",
       zabuton: null,
     },
@@ -60,7 +60,7 @@ export const PRESETS = [
     category: "かっこいい・クール",
     label: "源ノ角ゴ M × アウトライン",
     apply: {
-      fontOverride: { family: "SourceHanSansJP-Medium", size: 60 },
+      fontOverride: { family: "SourceHanSansJP-Medium", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "round", mode: "stroke",
@@ -76,7 +76,7 @@ export const PRESETS = [
     category: "かっこいい・クール",
     label: "源ノ明朝 M × アウトライン",
     apply: {
-      fontOverride: { family: "SourceHanSerifJP-Medium", size: 60 },
+      fontOverride: { family: "SourceHanSerifJP-Medium", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "round", mode: "stroke",
@@ -92,7 +92,7 @@ export const PRESETS = [
     category: "かっこいい・クール",
     label: "せのびゴ × アウトライン",
     apply: {
-      fontOverride: { family: "Senobi-Gothic-Regular", size: 60 },
+      fontOverride: { family: "Senobi-Gothic-Regular", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "round", mode: "stroke",
@@ -111,7 +111,7 @@ export const PRESETS = [
     category: "激しい・情熱的",
     label: "源ノ角ゴ Heavy × 黒座布団",
     apply: {
-      fontOverride: { family: "SourceHanSansJP-Heavy", size: 64 },
+      fontOverride: { family: "SourceHanSansJP-Heavy", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
@@ -127,7 +127,7 @@ export const PRESETS = [
     category: "激しい・情熱的",
     label: "源ノ明朝 Heavy × 黒座布団",
     apply: {
-      fontOverride: { family: "SourceHanSerifJP-Heavy", size: 64 },
+      fontOverride: { family: "SourceHanSerifJP-Heavy", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
@@ -143,7 +143,7 @@ export const PRESETS = [
     category: "激しい・情熱的",
     label: "FOT-キアロ × 黒座布団",
     apply: {
-      fontOverride: { family: "ChiaroStd-B", size: 64 },
+      fontOverride: { family: "ChiaroStd-B", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
@@ -162,7 +162,7 @@ export const PRESETS = [
     category: "切ない・エモい",
     label: "しっぽり明朝（代替: 源ノ明朝 SemiBold） × ボックス",
     apply: {
-      fontOverride: { family: "SourceHanSerifJP-SemiBold", size: 56 },
+      fontOverride: { family: "SourceHanSerifJP-SemiBold", size: 36 },
       layout: "vc_center",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
@@ -178,7 +178,7 @@ export const PRESETS = [
     category: "切ない・エモい",
     label: "源ノ明朝 Light × アウトラインボックス",
     apply: {
-      fontOverride: { family: "SourceHanSerifJP-Light", size: 56 },
+      fontOverride: { family: "SourceHanSerifJP-Light", size: 36 },
       layout: "vc_center",
       zabuton: {
         enabled: true, shape: "rect", mode: "stroke",
@@ -194,7 +194,7 @@ export const PRESETS = [
     category: "切ない・エモい",
     label: "TA-礼筆 M（座布団なし）",
     apply: {
-      fontOverride: { family: "TA_rehitsu_m", size: 58 },
+      fontOverride: { family: "TA_rehitsu_m", size: 36 },
       layout: "vc_center",
       zabuton: null,
     },
@@ -207,7 +207,7 @@ export const PRESETS = [
     category: "ダーク・妖艶",
     label: "筑紫オールド（代替: 源ノ明朝 ExtraLight） × 色ボックス",
     apply: {
-      fontOverride: { family: "SourceHanSerifJP-ExtraLight", size: 60 },
+      fontOverride: { family: "SourceHanSerifJP-ExtraLight", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
@@ -223,7 +223,7 @@ export const PRESETS = [
     category: "ダーク・妖艶",
     label: "DNP 秀英にじみ（代替: 源ノ明朝 Light） × 色ボックス",
     apply: {
-      fontOverride: { family: "SourceHanSerifJP-Light", size: 60 },
+      fontOverride: { family: "SourceHanSerifJP-Light", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
@@ -239,7 +239,7 @@ export const PRESETS = [
     category: "ダーク・妖艶",
     label: "VDL G 明朝 × 色ボックス",
     apply: {
-      fontOverride: { family: "VDL-GothicMincho-Regular", size: 60 },
+      fontOverride: { family: "VDL-GothicMincho-Regular", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",

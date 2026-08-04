@@ -824,8 +824,8 @@
                     var xShift = 0;
                     if (isSmallKanaChar(ch.ch || "")) {
                         var refSize = lineSizeExplicit || 48;
-                        xShift = refSize * 0.08;
-                        vy -= refSize * 0.05;
+                        xShift = refSize * 0.04;
+                        vy -= refSize * 0.03;
                     }
                     basePos = [colX + posDx + xShift, vy];
                 } else {
