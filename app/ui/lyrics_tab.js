@@ -1118,19 +1118,23 @@ function buildLineInnerHtml(line, opts) {
       const bi = blockOf[t.charIdx];
       if (bi !== curBlock) { closeSpan(); openBlockSpan(bi); prevType = null; }
     }
-    const ch = escapeHtml(t.ch);
+    // スペース (半角/全角) の可視化：nbsp / ideographic-space を使って span 化しても崩れない
+    const isSpace = (t.ch === " " || t.ch === "　");
+    const rawCh = isSpace ? (t.ch === "　" ? "　" : " ") : escapeHtml(t.ch);
     const lv = levels[t.charIdx];
-    let chHtml = lv > 0 ? `<span style="color:${EMPHASIS_COLORS[lv] || "#ff5252"}">${ch}</span>` : ch;
+    let chHtml = lv > 0 ? `<span style="color:${EMPHASIS_COLORS[lv] || "#ff5252"}">${rawCh}</span>` : rawCh;
     // 縦組み小書きかな左シフト補正
     if (isVerticalLayout && SMALL_KANA.has(t.ch)) {
       chHtml = `<span style="display:inline-block;transform:translate(-0.04em, 0)">${chHtml}</span>`;
     }
-    // 文字種別ギャップ：前の文字種と異なる場合、この文字の inline-start に空き
-    const curType = classifyChar(t.ch);
-    if (interTypeGap > 0 && prevType && curType && prevType !== curType) {
-      chHtml = `<span style="padding-inline-start:${interTypeGap}em">${chHtml}</span>`;
+    // 文字種別ギャップ：スペースは判定・prev 更新に含めない（隣接種別の判定を跨がせる）
+    if (!isSpace) {
+      const curType = classifyChar(t.ch);
+      if (interTypeGap > 0 && prevType && curType && prevType !== curType) {
+        chHtml = `<span style="padding-inline-start:${interTypeGap}em">${chHtml}</span>`;
+      }
+      prevType = curType;
     }
-    prevType = curType;
     html += chHtml;
   }
   closeSpan();
