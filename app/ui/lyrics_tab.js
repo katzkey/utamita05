@@ -325,7 +325,7 @@ function renderDetail(project, ui) {
           <div class="field">
             <span class="field-label">角度</span>
             <input class="field-input" id="fldZabGradAngle" type="number" step="15" value="${line.zabuton?.gradient?.angle ?? 90}" style="width:60px">
-            <span style="font-size:10px;color:var(--gray-3);margin-left:8px">0=右, 90=下, 180=左, 270=上</span>
+            <span style="font-size:10px;color:var(--gray-3);margin-left:8px">0=上, 90=右, 180=下, 270=左（縦組みは +90° 自動回転）</span>
           </div>
           <div class="field">
             <span class="field-label">色 A / B</span>
@@ -668,7 +668,7 @@ function renderLinePreviewHtml(line, project) {
   const zab = line.zabuton;
   const perBlockZab = !!(zab && zab.enabled && zab.perBlock);
   const zabLayerHtml = (zab && zab.enabled && !perBlockZab)
-    ? `<div style="${buildZabLayerCss(zab, toCqw)}"></div>`
+    ? `<div style="${buildZabLayerCss(zab, toCqw, vertical)}"></div>`
     : '';
 
   // 外枠 wrapper: 位置・変形はここに（子は shrink-to-fit で text natural size）
@@ -764,7 +764,7 @@ const EMPHASIS_COLORS = { 1: "#ffd54a", 2: "#ff8a65", 3: "#ff5252" };
 // 座布団の CSS スタイル配列を返す（外側でも per-block span でも共用）
 // 座布団を absolute layer として描画する用の CSS（text と分離、blur は text に影響しない）。
 // inset で padding 分外側に広げる。
-function buildZabLayerCss(zab, toCqw) {
+function buildZabLayerCss(zab, toCqw, isVertical) {
   if (!zab || !zab.enabled) return "";
   const px = toCqw(zab.paddingX ?? 0);
   const py = toCqw(zab.paddingY ?? 0);
@@ -779,7 +779,9 @@ function buildZabLayerCss(zab, toCqw) {
   if (grad && grad.enabled) {
     const cA = hexToRgba(grad.colorA || "#FF69B4", opacity);
     const cB = hexToRgba(grad.colorB || "#FFD54A", opacity);
-    const angle = Number(grad.angle) || 90;
+    // 縦組みではグラデも「テキスト方向」に沿うよう +90 度回転
+    const rawAngle = Number(grad.angle) || 90;
+    const angle = ((rawAngle + (isVertical ? 90 : 0)) % 360 + 360) % 360;
     bgCss = grad.colorC
       ? `linear-gradient(${angle}deg, ${cA}, ${cB}, ${hexToRgba(grad.colorC, opacity)})`
       : `linear-gradient(${angle}deg, ${cA}, ${cB})`;
@@ -802,8 +804,14 @@ function buildZabLayerCss(zab, toCqw) {
   const bx = Number(zab.blurX) || 0;
   const by = Number(zab.blurY) || 0;
   if (bx > 0 || by > 0) {
-    const svg = `<svg xmlns='http://www.w3.org/2000/svg'><filter id='b'><feGaussianBlur stdDeviation='${bx} ${by}'/></filter></svg>`;
-    styles.push(`filter: url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}#b")`);
+    if (bx === by) {
+      // X=Y のときは素直に CSS blur（一番確実）
+      styles.push(`filter: blur(${bx}px)`);
+    } else {
+      // X!=Y は SVG feGaussianBlur（フィルタ領域を明示して blur が clip されないように）
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg'><filter id='b' x='-50%' y='-50%' width='200%' height='200%'><feGaussianBlur stdDeviation='${bx} ${by}'/></filter></svg>`;
+      styles.push(`filter: url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}#b")`);
+    }
   }
   return styles.join(';');
 }
