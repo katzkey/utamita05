@@ -12,7 +12,7 @@ import {
   defaultZabuton, defaultJitter,
   PROJECT_VERSION,
 } from "./project.js";
-import { getPresetById } from "./presets.js";
+import { getPresetById, getFontPresetById, getZabutonPresetById } from "./presets.js";
 
 // ──────────────────────────────────────────────────
 // 内部ヘルパー
@@ -228,27 +228,36 @@ export function setLineZabuton(project, id, partial) {
   });
 }
 
-// プリセット適用：presets.js の定義に従って fontOverride / zabuton / layout を上書き。
-// 適用後も個別プロパティは手で編集できる（プリセット未使用相当）。
-// presetId=null / 空 = 何もしない（未適用の状態に戻すには手で各プロパティを直す）。
-export function applyPresetToLine(project, id, presetId) {
-  const preset = getPresetById(presetId);
+// フォントプリセット適用：font / size / layout を上書き。zabuton は触らない。
+export function applyFontPresetToLine(project, id, presetId) {
+  const preset = getFontPresetById(presetId);
   if (!preset) return project;
   return updateLine(project, id, (line) => {
-    const next = { ...line, presetId };
-    if (preset.apply.fontOverride != null) {
-      next.fontOverride = { ...preset.apply.fontOverride };
-    }
+    const next = { ...line, fontPresetId: presetId };
+    if (preset.apply.fontOverride) next.fontOverride = { ...preset.apply.fontOverride };
+    if (preset.apply.layout) next.layout = preset.apply.layout;
+    return next;
+  });
+}
+
+// 座布団プリセット適用：zabuton だけ上書き（null で座布団オフ）
+export function applyZabutonPresetToLine(project, id, presetId) {
+  const preset = getZabutonPresetById(presetId);
+  if (!preset) return project;
+  return updateLine(project, id, (line) => {
+    const next = { ...line, zabutonPresetId: presetId };
     if (Object.prototype.hasOwnProperty.call(preset.apply, "zabuton")) {
       next.zabuton = preset.apply.zabuton
         ? JSON.parse(JSON.stringify(preset.apply.zabuton))
         : null;
     }
-    if (preset.apply.layout) {
-      next.layout = preset.apply.layout;
-    }
     return next;
   });
+}
+
+// 旧 API 互換
+export function applyPresetToLine(project, id, presetId) {
+  return applyFontPresetToLine(project, id, presetId);
 }
 
 // ジッター：partial をマージ。null を渡すと削除

@@ -143,7 +143,9 @@ export function createLine(id, opts = {}) {
     layout: opts.layout || "h_bottom",
     layerMode: opts.layerMode ?? null,  // null = プロジェクトデフォルト継承
     pos: opts.pos || defaultPos(),
-    presetId: opts.presetId ?? null, // 適用中のプリセット ID（null = 未適用 or 手動編集）
+    presetId: opts.presetId ?? null,             // 旧 API 互換
+    fontPresetId: opts.fontPresetId ?? null,     // フォントプリセット ID
+    zabutonPresetId: opts.zabutonPresetId ?? null, // 座布団プリセット ID
     emphasis: opts.emphasis || [],
     groups: opts.groups || [],
     stagger: opts.stagger ?? 0,  // 文字ごとの開始ずらし秒数（0 = 同時）
