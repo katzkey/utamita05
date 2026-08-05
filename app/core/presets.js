@@ -8,9 +8,9 @@
 // フォントプリセット：font family / size / layout を上書き
 export const FONT_PRESETS = [
   // ========== 可愛い・ポップ ==========
-  { id: "font_pop_iroha",  category: "可愛い・ポップ", label: "いろはマル",           apply: { fontOverride: { family: "irohamaru-Regular",           size: 36 }, layout: "h_bottom" } },
-  { id: "font_pop_mplus",  category: "可愛い・ポップ", label: "M+ Rounded 1p",         apply: { fontOverride: { family: "rounded-mplus-1p-medium",     size: 36 }, layout: "h_bottom" } },
-  { id: "font_pop_olive",  category: "可愛い・ポップ", label: "Sic オリーブ Dance",    apply: { fontOverride: { family: "SicOliveDanceR",              size: 36 }, layout: "h_bottom" } },
+  { id: "font_pop_iroha",  category: "可愛い・ポップ", label: "いろはマル",           apply: { fontOverride: { family: "irohamaru-Regular",           size: 36 }, layout: "h_bottom", tracking: 0.05 } },
+  { id: "font_pop_mplus",  category: "可愛い・ポップ", label: "M+ Rounded 1p",         apply: { fontOverride: { family: "rounded-mplus-1p-medium",     size: 36 }, layout: "h_bottom", tracking: 0.05 } },
+  { id: "font_pop_olive",  category: "可愛い・ポップ", label: "Sic オリーブ Dance",    apply: { fontOverride: { family: "SicOliveDanceR",              size: 36 }, layout: "h_bottom", tracking: 0.05 } },
   // ========== かっこいい・クール ==========
   { id: "font_cool_sanp",  category: "かっこいい・クール", label: "源ノ角ゴ Medium", apply: { fontOverride: { family: "SourceHanSansJP-Medium",  size: 36 }, layout: "h_bottom" } },
   { id: "font_cool_mincho", category: "かっこいい・クール", label: "源ノ明朝 Medium", apply: { fontOverride: { family: "SourceHanSerifJP-Medium", size: 36 }, layout: "h_bottom" } },
@@ -41,33 +41,33 @@ const ZABUTON_BASE = {
 
 export const ZABUTON_PRESETS = [
   // ========== 可愛い・ポップ ==========
-  // PDF: 光彩 / カラー座布団 / カラフルグラデーション座布団
+  // PDF: 光彩 / カラー座布団 / カラフルグラデーション座布団（色は PDF ピクセル実測）
   {
-    id: "zab_pop_glow", category: "可愛い・ポップ", label: "光彩（テキストグロー・ピンク）",
+    id: "zab_pop_glow", category: "可愛い・ポップ", label: "光彩（マゼンタ）",
     apply: {
       zabuton: null,
-      glow: { enabled: true, color: "#FF69B4", opacity: 0.95, blur: 24 },
+      glow: { enabled: true, color: "#B620AD", opacity: 0.85, blur: 14 },
     },
   },
   {
-    id: "zab_pop_color", category: "可愛い・ポップ", label: "カラー座布団（ピンク）",
+    id: "zab_pop_color", category: "可愛い・ポップ", label: "カラー座布団（マゼンタ）",
     apply: {
       zabuton: {
         ...ZABUTON_BASE, shape: "round", cornerRadius: 24,
-        color: "#E91E63", opacity: 0.85,
+        color: "#A448AB", opacity: 0.85,
         paddingX: 30, paddingY: 10,
       },
       glow: null,
     },
   },
   {
-    id: "zab_pop_gradient", category: "可愛い・ポップ", label: "カラフルグラデ座布団",
+    id: "zab_pop_gradient", category: "可愛い・ポップ", label: "カラフルグラデ座布団（アクア→ピンク）",
     apply: {
       zabuton: {
         ...ZABUTON_BASE, shape: "round", cornerRadius: 24,
-        color: "#FFB6C1", opacity: 0.85,
+        color: "#A0E3DF", opacity: 0.85,
         paddingX: 30, paddingY: 10,
-        gradient: { enabled: true, angle: 90, colorA: "#FF69B4", colorB: "#FFD54A", colorC: "#4FC3F7" },
+        gradient: { enabled: true, angle: 90, colorA: "#A0E3DF", colorB: "#B0D8E4", colorC: "#E5B5D5" },
       },
       glow: null,
     },
