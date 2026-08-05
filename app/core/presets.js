@@ -8,9 +8,9 @@
 // フォントプリセット：font family / size / layout を上書き
 export const FONT_PRESETS = [
   // ========== 可愛い・ポップ ==========
-  { id: "font_pop_iroha",  category: "可愛い・ポップ", label: "いろはマル",           apply: { fontOverride: { family: "irohamaru-Regular",           size: 36 }, layout: "h_bottom", tracking: 0.05 } },
-  { id: "font_pop_mplus",  category: "可愛い・ポップ", label: "M+ Rounded 1p",         apply: { fontOverride: { family: "rounded-mplus-1p-medium",     size: 36 }, layout: "h_bottom", tracking: 0.05 } },
-  { id: "font_pop_olive",  category: "可愛い・ポップ", label: "Sic オリーブ Dance",    apply: { fontOverride: { family: "SicOliveDanceR",              size: 36 }, layout: "h_bottom", tracking: 0.05 } },
+  { id: "font_pop_iroha",  category: "可愛い・ポップ", label: "いろはマル",           apply: { fontOverride: { family: "irohamaru-Regular",           size: 36 }, layout: "h_bottom", tracking: 0.05, interTypeGap: 0.12 } },
+  { id: "font_pop_mplus",  category: "可愛い・ポップ", label: "M+ Rounded 1p",         apply: { fontOverride: { family: "rounded-mplus-1p-medium",     size: 36 }, layout: "h_bottom", tracking: 0.05, interTypeGap: 0.12 } },
+  { id: "font_pop_olive",  category: "可愛い・ポップ", label: "Sic オリーブ Dance",    apply: { fontOverride: { family: "SicOliveDanceR",              size: 36 }, layout: "h_bottom", tracking: 0.05, interTypeGap: 0.12 } },
   // ========== かっこいい・クール ==========
   { id: "font_cool_sanp",  category: "かっこいい・クール", label: "源ノ角ゴ Medium", apply: { fontOverride: { family: "SourceHanSansJP-Medium",  size: 36 }, layout: "h_bottom" } },
   { id: "font_cool_mincho", category: "かっこいい・クール", label: "源ノ明朝 Medium", apply: { fontOverride: { family: "SourceHanSerifJP-Medium", size: 36 }, layout: "h_bottom" } },

@@ -237,6 +237,7 @@ export function applyFontPresetToLine(project, id, presetId) {
     if (preset.apply.fontOverride) next.fontOverride = { ...preset.apply.fontOverride };
     if (preset.apply.layout) next.layout = preset.apply.layout;
     if (preset.apply.tracking != null) next.tracking = preset.apply.tracking;
+    if (preset.apply.interTypeGap != null) next.interTypeGap = preset.apply.interTypeGap;
     return next;
   });
 }

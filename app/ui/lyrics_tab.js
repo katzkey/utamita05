@@ -7,7 +7,7 @@ import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "
 import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js";
 import { parseJitterBlocks, jitterOffsetFor } from "../core/utils.js";
 import { getFontPresetsByCategory, getZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js";
-import { SMALL_KANA } from "../core/char_type.js";
+import { SMALL_KANA, classifyChar } from "../core/char_type.js";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -253,6 +253,11 @@ function renderDetail(project, ui) {
         <span class="field-label">tracking</span>
         <input class="field-input" id="fldTracking" type="number" step="0.01" value="${line.tracking ?? 0}" style="width:80px">
         <span style="font-size:10px;color:var(--gray-3);margin-left:8px">負で詰め、正で開く</span>
+      </div>
+      <div class="field">
+        <span class="field-label">文字種ギャップ</span>
+        <input class="field-input" id="fldInterTypeGap" type="number" step="0.02" min="0" value="${line.interTypeGap ?? 0}" style="width:80px">
+        <span style="font-size:10px;color:var(--gray-3);margin-left:8px">em（英/カナ/漢字境界に空き）</span>
       </div>
       <div class="field">
         <span class="field-label">italic</span>
@@ -519,6 +524,12 @@ function renderDetail(project, ui) {
   });
   document.getElementById("fldFontItalic").addEventListener("change", (e) => {
     setProject(ops.setLineFont(getProject(), id, { italic: e.target.checked ? true : null }));
+  });
+  document.getElementById("fldInterTypeGap").addEventListener("change", (e) => {
+    const v = Math.max(0, Number(e.target.value) || 0);
+    const p = getProject();
+    const line2 = p.lines.find(l => l.id === id);
+    if (line2) setProject({ ...p, lines: p.lines.map(l => l.id === id ? { ...l, interTypeGap: v } : l) });
   });
   document.getElementById("fldTracking").addEventListener("change", (e) => {
     setProject(ops.setLineTracking(getProject(), id, e.target.value));
@@ -1082,10 +1093,14 @@ function buildLineInnerHtml(line, opts) {
   }
   const zabInnerStyles = perBlockZab ? buildZabCss(zab, toCqw) : [];
 
+  // 文字種別ギャップ（アキ設定）：異なる種別の文字間に padding-inline-start で空きを追加
+  const interTypeGap = Number(line.interTypeGap) || 0;
+
   // HTML 組み立て
   let html = "";
   let curBlock = -1;
   let openSpan = false;
+  let prevType = null;
   const closeSpan = () => { if (openSpan) { html += "</span>"; openSpan = false; } curBlock = -1; };
   const openBlockSpan = (bi) => {
     const o = blockOffsets[bi];
@@ -1097,20 +1112,25 @@ function buildLineInnerHtml(line, opts) {
     curBlock = bi;
   };
   for (const t of tokens) {
-    if (t.type === "br") { closeSpan(); html += "<br>"; continue; }
-    if (t.type === "sep") { closeSpan(); continue; }
+    if (t.type === "br") { closeSpan(); html += "<br>"; prevType = null; continue; }
+    if (t.type === "sep") { closeSpan(); prevType = null; continue; }
     if (blockMode) {
       const bi = blockOf[t.charIdx];
-      if (bi !== curBlock) { closeSpan(); openBlockSpan(bi); }
+      if (bi !== curBlock) { closeSpan(); openBlockSpan(bi); prevType = null; }
     }
     const ch = escapeHtml(t.ch);
     const lv = levels[t.charIdx];
     let chHtml = lv > 0 ? `<span style="color:${EMPHASIS_COLORS[lv] || "#ff5252"}">${ch}</span>` : ch;
-    // 縦組みで小書きかなはフォントによっては右寄りに描画される（源ノ明朝など）。
-    // 左に少しシフトして視覚バランスを取る。
+    // 縦組み小書きかな左シフト補正
     if (isVerticalLayout && SMALL_KANA.has(t.ch)) {
       chHtml = `<span style="display:inline-block;transform:translate(-0.04em, 0)">${chHtml}</span>`;
     }
+    // 文字種別ギャップ：前の文字種と異なる場合、この文字の inline-start に空き
+    const curType = classifyChar(t.ch);
+    if (interTypeGap > 0 && prevType && curType && prevType !== curType) {
+      chHtml = `<span style="padding-inline-start:${interTypeGap}em">${chHtml}</span>`;
+    }
+    prevType = curType;
     html += chHtml;
   }
   closeSpan();
