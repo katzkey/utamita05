@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-23T00:50:12",
+  "generatedAt": "2026-08-06T01:06:03",
   "aeVersion": "26.3x87",
-  "count": 592,
+  "count": 599,
   "fonts": [
     {
       "postScriptName": "AH-Hakushu-School-PRSW1",
@@ -180,6 +180,17 @@
       "technology": "12413"
     },
     {
+      "postScriptName": "DNPShueiNMinStd-L",
+      "familyName": "DNP ShueiNMinStd",
+      "styleName": "L",
+      "nativeFamilyName": "DNP 秀英にじみ明朝 Std",
+      "nativeStyleName": "L",
+      "nativeFullName": "DNP 秀英にじみ明朝 Std L",
+      "fullName": "DNPShueiNMinStd-L",
+      "location": "C:\\Users\\surface\\AppData\\Roaming\\Adobe\\CoreSync\\plugins\\livetype\\r\\47530",
+      "technology": "12414"
+    },
+    {
       "postScriptName": "FixedSys",
       "familyName": "FixedSys",
       "styleName": "Regular",
@@ -199,6 +210,17 @@
       "nativeFullName": "FOT-キアロ Std B",
       "fullName": "FOT-Chiaro Std B",
       "location": "C:\\Users\\surface\\AppData\\Roaming\\Adobe\\CoreSync\\plugins\\livetype\\r\\47214",
+      "technology": "12414"
+    },
+    {
+      "postScriptName": "TsukuAOldMinPr6N-L",
+      "familyName": "FOT-TsukuAOldMin Pr6N",
+      "styleName": "L",
+      "nativeFamilyName": "FOT-筑紫Aオールド明朝 Pr6N",
+      "nativeStyleName": "L",
+      "nativeFullName": "FOT-筑紫Aオールド明朝 Pr6N L",
+      "fullName": "FOT-TsukuAOldMin Pr6N L",
+      "location": "C:\\Users\\surface\\AppData\\Roaming\\Adobe\\CoreSync\\plugins\\livetype\\r\\47213",
       "technology": "12414"
     },
     {
@@ -1178,6 +1200,61 @@
       "nativeFullName": "いろはマル Medium",
       "fullName": "irohamaru Medium",
       "location": "C:\\Users\\surface\\AppData\\Roaming\\Adobe\\CoreSync\\plugins\\livetype\\r\\47297",
+      "technology": "12413"
+    },
+    {
+      "postScriptName": "ShipporiMincho-Regular",
+      "familyName": "Shippori Mincho",
+      "styleName": "Regular",
+      "nativeFamilyName": "しっぽり明朝",
+      "nativeStyleName": "Regular",
+      "nativeFullName": "しっぽり明朝 Regular",
+      "fullName": "Shippori Mincho Regular",
+      "location": "C:\\Users\\surface\\AppData\\Roaming\\Adobe\\CoreSync\\plugins\\livetype\\r\\46458",
+      "technology": "12413"
+    },
+    {
+      "postScriptName": "ShipporiMincho-Medium",
+      "familyName": "Shippori Mincho",
+      "styleName": "Medium",
+      "nativeFamilyName": "しっぽり明朝",
+      "nativeStyleName": "Medium",
+      "nativeFullName": "しっぽり明朝 Medium",
+      "fullName": "Shippori Mincho Medium",
+      "location": "C:\\Users\\surface\\AppData\\Roaming\\Adobe\\CoreSync\\plugins\\livetype\\r\\46460",
+      "technology": "12413"
+    },
+    {
+      "postScriptName": "ShipporiMincho-SemiBold",
+      "familyName": "Shippori Mincho",
+      "styleName": "SemiBold",
+      "nativeFamilyName": "しっぽり明朝",
+      "nativeStyleName": "SemiBold",
+      "nativeFullName": "しっぽり明朝 SemiBold",
+      "fullName": "Shippori Mincho SemiBold",
+      "location": "C:\\Users\\surface\\AppData\\Roaming\\Adobe\\CoreSync\\plugins\\livetype\\r\\46457",
+      "technology": "12413"
+    },
+    {
+      "postScriptName": "ShipporiMincho-Bold",
+      "familyName": "Shippori Mincho",
+      "styleName": "Bold",
+      "nativeFamilyName": "しっぽり明朝",
+      "nativeStyleName": "Bold",
+      "nativeFullName": "しっぽり明朝 Bold",
+      "fullName": "Shippori Mincho Bold",
+      "location": "C:\\Users\\surface\\AppData\\Roaming\\Adobe\\CoreSync\\plugins\\livetype\\r\\46456",
+      "technology": "12413"
+    },
+    {
+      "postScriptName": "ShipporiMincho-ExtraBold",
+      "familyName": "Shippori Mincho",
+      "styleName": "ExtraBold",
+      "nativeFamilyName": "しっぽり明朝",
+      "nativeStyleName": "ExtraBold",
+      "nativeFullName": "しっぽり明朝 ExtraBold",
+      "fullName": "Shippori Mincho  ExtraBold",
+      "location": "C:\\Users\\surface\\AppData\\Roaming\\Adobe\\CoreSync\\plugins\\livetype\\r\\46459",
       "technology": "12413"
     },
     {

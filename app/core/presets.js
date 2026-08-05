@@ -160,9 +160,9 @@ export const PRESETS = [
   {
     id: "emo_shippori_box",
     category: "切ない・エモい",
-    label: "しっぽり明朝（代替: 源ノ明朝 SemiBold） × ボックス",
+    label: "しっぽり明朝 SemiBold × ボックス",
     apply: {
-      fontOverride: { family: "SourceHanSerifJP-SemiBold", size: 36 },
+      fontOverride: { family: "ShipporiMincho-SemiBold", size: 36 },
       layout: "vc_center",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
@@ -205,9 +205,9 @@ export const PRESETS = [
   {
     id: "dark_tsukushi_box",
     category: "ダーク・妖艶",
-    label: "筑紫オールド（代替: 源ノ明朝 ExtraLight） × 色ボックス",
+    label: "FOT-筑紫Aオールド明朝 Pr6N L × 色ボックス",
     apply: {
-      fontOverride: { family: "SourceHanSerifJP-ExtraLight", size: 36 },
+      fontOverride: { family: "TsukuAOldMinPr6N-L", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
@@ -221,9 +221,9 @@ export const PRESETS = [
   {
     id: "dark_shuei_box",
     category: "ダーク・妖艶",
-    label: "DNP 秀英にじみ（代替: 源ノ明朝 Light） × 色ボックス",
+    label: "DNP 秀英にじみ明朝 Std L × 色ボックス",
     apply: {
-      fontOverride: { family: "SourceHanSerifJP-Light", size: 36 },
+      fontOverride: { family: "DNPShueiNMinStd-L", size: 36 },
       layout: "h_bottom",
       zabuton: {
         enabled: true, shape: "rect", mode: "fill",
