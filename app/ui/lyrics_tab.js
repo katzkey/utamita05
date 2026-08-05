@@ -667,8 +667,12 @@ function renderLinePreviewHtml(line, project) {
   // （blur 等が text に影響しないよう別 div にする）
   const zab = line.zabuton;
   const perBlockZab = !!(zab && zab.enabled && zab.perBlock);
-  const zabLayerHtml = (zab && zab.enabled && !perBlockZab)
-    ? `<div style="${buildZabLayerCss(zab, toCqw, vertical)}"></div>`
+  const filterId = `zab-blur-${line.id}`;
+  const zabResult = (zab && zab.enabled && !perBlockZab)
+    ? buildZabLayerCss(zab, toCqw, vertical, filterId)
+    : { css: "", svgDef: "" };
+  const zabLayerHtml = zabResult.css
+    ? `${zabResult.svgDef}<div style="${zabResult.css}"></div>`
     : '';
 
   // 外枠 wrapper: 位置・変形はここに（子は shrink-to-fit で text natural size）
@@ -764,8 +768,8 @@ const EMPHASIS_COLORS = { 1: "#ffd54a", 2: "#ff8a65", 3: "#ff5252" };
 // 座布団の CSS スタイル配列を返す（外側でも per-block span でも共用）
 // 座布団を absolute layer として描画する用の CSS（text と分離、blur は text に影響しない）。
 // inset で padding 分外側に広げる。
-function buildZabLayerCss(zab, toCqw, isVertical) {
-  if (!zab || !zab.enabled) return "";
+function buildZabLayerCss(zab, toCqw, isVertical, filterId) {
+  if (!zab || !zab.enabled) return { css: "", svgDef: "" };
   const px = toCqw(zab.paddingX ?? 0);
   const py = toCqw(zab.paddingY ?? 0);
   let radius = "0";
@@ -803,17 +807,18 @@ function buildZabLayerCss(zab, toCqw, isVertical) {
   }
   const bx = Number(zab.blurX) || 0;
   const by = Number(zab.blurY) || 0;
+  let svgDef = "";
   if (bx > 0 || by > 0) {
     if (bx === by) {
-      // X=Y のときは素直に CSS blur（一番確実）
+      // X=Y のときは CSS blur() が確実
       styles.push(`filter: blur(${bx}px)`);
     } else {
-      // X!=Y は SVG feGaussianBlur（フィルタ領域を明示して blur が clip されないように）
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg'><filter id='b' x='-50%' y='-50%' width='200%' height='200%'><feGaussianBlur stdDeviation='${bx} ${by}'/></filter></svg>`;
-      styles.push(`filter: url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}#b")`);
+      // X!=Y は SVG feGaussianBlur を DOM に埋め込んで参照
+      svgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${bx} ${by}"/></filter></svg>`;
+      styles.push(`filter: url(#${filterId})`);
     }
   }
-  return styles.join(';');
+  return { css: styles.join(';'), svgDef };
 }
 
 function buildZabCss(zab, toCqw) {
