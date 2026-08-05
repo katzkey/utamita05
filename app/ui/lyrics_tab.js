@@ -312,8 +312,9 @@ function renderDetail(project, ui) {
           <span style="font-size:10px;color:var(--gray-3);margin-left:8px">static のとき有効</span>
         </div>
         <div class="field">
-          <span class="field-label">エッジぼかし</span>
-          <input class="field-input" id="fldZabBlur" type="number" min="0" step="1" value="${line.zabuton?.blur ?? 0}" style="width:60px">
+          <span class="field-label">エッジぼかし X / Y</span>
+          <input class="field-input" id="fldZabBlurX" type="number" min="0" step="1" value="${line.zabuton?.blurX ?? 0}" style="width:60px">
+          <input class="field-input" id="fldZabBlurY" type="number" min="0" step="1" value="${line.zabuton?.blurY ?? 0}" style="width:60px;margin-left:4px">
           <span style="font-size:10px;color:var(--gray-3);margin-left:8px">px（0=なし）</span>
         </div>
         <div class="field">
@@ -515,8 +516,10 @@ function renderDetail(project, ui) {
   document.getElementById("fldZabPerBlock").addEventListener("change", (e) => {
     setProject(ops.setLineZabuton(getProject(), id, { perBlock: e.target.checked }));
   });
-  zabHandler("fldZabBlur", "blur", v => Math.max(0, Number(v) || 0));
-  attachArrowStep("fldZabBlur", (v) => setProject(ops.setLineZabuton(getProject(), id, { blur: Math.max(0, v) })));
+  zabHandler("fldZabBlurX", "blurX", v => Math.max(0, Number(v) || 0));
+  zabHandler("fldZabBlurY", "blurY", v => Math.max(0, Number(v) || 0));
+  attachArrowStep("fldZabBlurX", (v) => setProject(ops.setLineZabuton(getProject(), id, { blurX: Math.max(0, v) })));
+  attachArrowStep("fldZabBlurY", (v) => setProject(ops.setLineZabuton(getProject(), id, { blurY: Math.max(0, v) })));
   // グラデーションのハンドラ
   const gradOnEl = document.getElementById("fldZabGradOn");
   const setGrad = (partial) => {
@@ -785,10 +788,15 @@ function buildZabCss(zab, toCqw) {
   } else {
     styles.push(`background: ${bgCss}`);
   }
-  // エッジぼかし：filter: blur。text にも掛かる制限あり（TODO: 別要素化で解決可）
-  const blurPx = Number(zab.blur) || 0;
-  if (blurPx > 0) {
-    styles.push(`filter: blur(${toCqw(blurPx).toFixed(3)}cqw)`);
+  // エッジぼかし X/Y：SVG feGaussianBlur で個別指定
+  const bx = Number(zab.blurX) || 0;
+  const by = Number(zab.blurY) || 0;
+  if (bx > 0 || by > 0) {
+    // cqw で数値を大きくしても SVG filter は px 相当に解釈するので、
+    // まず AE px を preview scale に近似変換する: 1cqw ≒ (stageWidth/100)px
+    // ここでは簡易的に AE px の値を SVG stdDeviation に流用（ステージスケールが変わっても目安として使える）
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg'><filter id='b'><feGaussianBlur stdDeviation='${bx} ${by}'/></filter></svg>`;
+    styles.push(`filter: url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}#b")`);
   }
   return styles;
 }

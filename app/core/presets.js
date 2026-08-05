@@ -28,9 +28,9 @@ export const PRESETS = [
     },
   },
   {
-    id: "pop_mplus_color",
+    id: "pop_mplus_gradient",
     category: "可愛い・ポップ",
-    label: "M+ Rounded × カラー座布団",
+    label: "M+ Rounded × カラフルグラデ座布団",
     apply: {
       fontOverride: { family: "rounded-mplus-1p-medium", size: 36 },
       layout: "h_bottom",
@@ -40,6 +40,8 @@ export const PRESETS = [
         paddingX: 0, paddingY: 0, cornerRadius: 20,
         timingMode: "follow", fade: 0.3,
         strokeWidth: 2, perBlock: false,
+        blurX: 0, blurY: 0,
+        gradient: { enabled: true, angle: 90, colorA: "#FF69B4", colorB: "#FFD54A", colorC: "#4FC3F7" },
       },
     },
   },
@@ -88,18 +90,20 @@ export const PRESETS = [
     },
   },
   {
-    id: "cool_senobi_outline",
+    id: "cool_senobi_gradient",
     category: "かっこいい・クール",
-    label: "せのびゴ × アウトライン",
+    label: "せのびゴ × グラデ座布団",
     apply: {
       fontOverride: { family: "Senobi-Gothic-Regular", size: 36 },
       layout: "h_bottom",
       zabuton: {
-        enabled: true, shape: "round", mode: "stroke",
-        color: "#FFFFFF", opacity: 1.0,
+        enabled: true, shape: "round", mode: "fill",
+        color: "#4A6FA5", opacity: 0.85,
         paddingX: 0, paddingY: 0, cornerRadius: 12,
         strokeWidth: 3,
         timingMode: "follow", fade: 0.3, perBlock: false,
+        blurX: 0, blurY: 0,
+        gradient: { enabled: true, angle: 90, colorA: "#4A6FA5", colorB: "#B0BEC5", colorC: null },
       },
     },
   },
@@ -203,9 +207,9 @@ export const PRESETS = [
   // ========== ダーク・妖艶 ==========
   // 筑紫オールド、DNP 秀英にじみ は AE 未搭載のため 源ノ明朝の類似 weight で代替
   {
-    id: "dark_tsukushi_box",
+    id: "dark_tsukushi_blur",
     category: "ダーク・妖艶",
-    label: "FOT-筑紫Aオールド明朝 Pr6N L × 色ボックス",
+    label: "FOT-筑紫Aオールド明朝 Pr6N L × ぼかし座布団",
     apply: {
       fontOverride: { family: "TsukuAOldMinPr6N-L", size: 36 },
       layout: "h_bottom",
@@ -215,6 +219,7 @@ export const PRESETS = [
         paddingX: 0, paddingY: 0, cornerRadius: 0,
         timingMode: "follow", fade: 0.5,
         strokeWidth: 2, perBlock: false,
+        blurX: 8, blurY: 8, gradient: null,
       },
     },
   },

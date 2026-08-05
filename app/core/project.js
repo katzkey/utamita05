@@ -50,7 +50,8 @@ export function defaultZabuton() {
     mode: "fill",         // "fill": 塗り / "stroke": 枠だけ
     strokeWidth: 2,       // stroke のときの線の太さ（AE px）
     perBlock: false,      // true: ジッター区切り "/" ごとに敷く / false: 行全体で 1 個
-    blur: 0,              // 座布団のエッジぼかし量（AE px）0 = ぼかさない
+    blurX: 0,             // 座布団のエッジぼかし量 X 方向（AE px）0 = ぼかさない
+    blurY: 0,             // 座布団のエッジぼかし量 Y 方向（AE px）
     gradient: null,       // グラデーション設定 or null。定義時：{ enabled, angle, colorA, colorB, colorC (省略可) }
   };
 }
