@@ -311,6 +311,32 @@ function renderDetail(project, ui) {
           <input class="field-input" id="fldZabFade" type="number" min="0" step="0.05" value="${line.zabuton?.fade ?? 0.3}" style="width:60px">
           <span style="font-size:10px;color:var(--gray-3);margin-left:8px">static のとき有効</span>
         </div>
+        <div class="field">
+          <span class="field-label">エッジぼかし</span>
+          <input class="field-input" id="fldZabBlur" type="number" min="0" step="1" value="${line.zabuton?.blur ?? 0}" style="width:60px">
+          <span style="font-size:10px;color:var(--gray-3);margin-left:8px">px（0=なし）</span>
+        </div>
+        <div class="field">
+          <span class="field-label">グラデ</span>
+          <label class="lock-toggle"><input type="checkbox" id="fldZabGradOn" ${line.zabuton?.gradient?.enabled ? "checked" : ""}><span>色をグラデーションで塗る</span></label>
+        </div>
+        <div id="zabGradFields" style="${line.zabuton?.gradient?.enabled ? "" : "display:none"}">
+          <div class="field">
+            <span class="field-label">角度</span>
+            <input class="field-input" id="fldZabGradAngle" type="number" step="15" value="${line.zabuton?.gradient?.angle ?? 90}" style="width:60px">
+            <span style="font-size:10px;color:var(--gray-3);margin-left:8px">0=右, 90=下, 180=左, 270=上</span>
+          </div>
+          <div class="field">
+            <span class="field-label">色 A / B</span>
+            <input type="color" id="fldZabGradA" value="${line.zabuton?.gradient?.colorA || "#FF69B4"}" style="width:40px;height:24px;padding:0;border:none">
+            <input type="color" id="fldZabGradB" value="${line.zabuton?.gradient?.colorB || "#FFD54A"}" style="width:40px;height:24px;padding:0;border:none;margin-left:4px">
+          </div>
+          <div class="field">
+            <span class="field-label">色 C</span>
+            <input type="color" id="fldZabGradC" value="${line.zabuton?.gradient?.colorC || "#00FFFF"}" style="width:40px;height:24px;padding:0;border:none">
+            <label class="lock-toggle" style="margin-left:8px"><input type="checkbox" id="fldZabGradCOn" ${line.zabuton?.gradient?.colorC ? "checked" : ""}><span>3 色目を使う</span></label>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -488,6 +514,24 @@ function renderDetail(project, ui) {
   attachArrowStep("fldZabStrokeW", (v) => setProject(ops.setLineZabuton(getProject(), id, { strokeWidth: Math.max(0, v) })));
   document.getElementById("fldZabPerBlock").addEventListener("change", (e) => {
     setProject(ops.setLineZabuton(getProject(), id, { perBlock: e.target.checked }));
+  });
+  zabHandler("fldZabBlur", "blur", v => Math.max(0, Number(v) || 0));
+  attachArrowStep("fldZabBlur", (v) => setProject(ops.setLineZabuton(getProject(), id, { blur: Math.max(0, v) })));
+  // グラデーションのハンドラ
+  const gradOnEl = document.getElementById("fldZabGradOn");
+  const setGrad = (partial) => {
+    const p = getProject();
+    const line2 = p.lines.find(l => l.id === id);
+    const cur = line2?.zabuton?.gradient || { enabled: false, angle: 90, colorA: "#FF69B4", colorB: "#FFD54A", colorC: null };
+    setProject(ops.setLineZabuton(p, id, { gradient: { ...cur, ...partial } }));
+  };
+  gradOnEl.addEventListener("change", (e) => setGrad({ enabled: e.target.checked }));
+  document.getElementById("fldZabGradAngle").addEventListener("change", (e) => setGrad({ angle: Number(e.target.value) || 0 }));
+  document.getElementById("fldZabGradA").addEventListener("change", (e) => setGrad({ colorA: e.target.value }));
+  document.getElementById("fldZabGradB").addEventListener("change", (e) => setGrad({ colorB: e.target.value }));
+  document.getElementById("fldZabGradC").addEventListener("change", (e) => setGrad({ colorC: e.target.value }));
+  document.getElementById("fldZabGradCOn").addEventListener("change", (e) => {
+    setGrad({ colorC: e.target.checked ? (document.getElementById("fldZabGradC")?.value || "#00FFFF") : null });
   });
 
   // ジッター
@@ -712,17 +756,39 @@ function buildZabCss(zab, toCqw) {
   if (zab.shape === "round") radius = `${toCqw(zab.cornerRadius ?? 16).toFixed(3)}cqw`;
   else if (zab.shape === "pill") radius = "999em";
   else if (zab.shape === "circle") radius = "50%";
-  const rgba = hexToRgba(zab.color || "#000000", zab.opacity ?? 0.5);
+  const opacity = zab.opacity ?? 0.5;
+  const rgba = hexToRgba(zab.color || "#000000", opacity);
+  // グラデーション設定：あれば background に linear-gradient を使用
+  const grad = zab.gradient;
+  let bgCss = rgba;
+  if (grad && grad.enabled) {
+    const cA = hexToRgba(grad.colorA || "#FF69B4", opacity);
+    const cB = hexToRgba(grad.colorB || "#FFD54A", opacity);
+    const angle = Number(grad.angle) || 90;
+    if (grad.colorC) {
+      const cC = hexToRgba(grad.colorC, opacity);
+      bgCss = `linear-gradient(${angle}deg, ${cA}, ${cB}, ${cC})`;
+    } else {
+      bgCss = `linear-gradient(${angle}deg, ${cA}, ${cB})`;
+    }
+  }
   const styles = [
     `padding: ${py.toFixed(3)}cqw ${px.toFixed(3)}cqw`,
     `margin: -${py.toFixed(3)}cqw -${px.toFixed(3)}cqw`,
     `border-radius: ${radius}`,
   ];
   if (zab.mode === "stroke") {
+    // stroke モードではグラデ非対応（AE 側も同様）、色 A or 単色で描画
+    const strokeColor = (grad && grad.enabled) ? hexToRgba(grad.colorA || "#FF69B4", opacity) : rgba;
     const sw = toCqw(zab.strokeWidth ?? 2);
-    styles.push(`box-shadow: inset 0 0 0 ${sw.toFixed(3)}cqw ${rgba}`);
+    styles.push(`box-shadow: inset 0 0 0 ${sw.toFixed(3)}cqw ${strokeColor}`);
   } else {
-    styles.push(`background: ${rgba}`);
+    styles.push(`background: ${bgCss}`);
+  }
+  // エッジぼかし：filter: blur。text にも掛かる制限あり（TODO: 別要素化で解決可）
+  const blurPx = Number(zab.blur) || 0;
+  if (blurPx > 0) {
+    styles.push(`filter: blur(${toCqw(blurPx).toFixed(3)}cqw)`);
   }
   return styles;
 }

@@ -50,6 +50,19 @@ export function defaultZabuton() {
     mode: "fill",         // "fill": 塗り / "stroke": 枠だけ
     strokeWidth: 2,       // stroke のときの線の太さ（AE px）
     perBlock: false,      // true: ジッター区切り "/" ごとに敷く / false: 行全体で 1 個
+    blur: 0,              // 座布団のエッジぼかし量（AE px）0 = ぼかさない
+    gradient: null,       // グラデーション設定 or null。定義時：{ enabled, angle, colorA, colorB, colorC (省略可) }
+  };
+}
+
+// グラデーションのデフォルト
+export function defaultGradient() {
+  return {
+    enabled: true,
+    angle: 90,        // 度（0=右, 90=下, 180=左, 270=上）
+    colorA: "#FF69B4",
+    colorB: "#FFD54A",
+    colorC: null,     // 3 色目、null なら 2 色グラデ
   };
 }
 
