@@ -47,6 +47,7 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: null,
       glow: { enabled: true, color: "#B620AD", opacity: 1.0, blur: 3 },
+      textColor: "#FFFFFF",
     },
   },
   {
@@ -58,6 +59,7 @@ export const ZABUTON_PRESETS = [
         paddingX: 30, paddingY: 10,
       },
       glow: null,
+      textColor: "#FFFFFF",
     },
   },
   {
@@ -70,6 +72,7 @@ export const ZABUTON_PRESETS = [
         gradient: { enabled: true, angle: 90, colorA: "#A0E3DF", colorB: "#B0D8E4", colorC: "#E5B5D5" },
       },
       glow: null,
+      textColor: "#000000",
     },
   },
 

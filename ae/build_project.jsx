@@ -817,6 +817,17 @@
                 if (line.fontOverride && line.fontOverride.italic) {
                     try { td.fauxItalic = true; } catch (eFI) {}
                 }
+                // テキスト色（line.textColor）
+                if (line.textColor) {
+                    try {
+                        var tc = line.textColor.replace("#","");
+                        td.fillColor = [
+                            parseInt(tc.substring(0,2),16)/255,
+                            parseInt(tc.substring(2,4),16)/255,
+                            parseInt(tc.substring(4,6),16)/255,
+                        ];
+                    } catch (eTC) {}
+                }
                 textProp.setValue(td);
 
                 // ベース位置（累積カーソル + 自身の幅の半分 = 中心）

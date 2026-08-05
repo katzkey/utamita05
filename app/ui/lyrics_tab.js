@@ -263,6 +263,11 @@ function renderDetail(project, ui) {
         <span class="field-label">italic</span>
         <label class="lock-toggle"><input type="checkbox" id="fldFontItalic" ${line.fontOverride?.italic ? "checked" : ""}><span>擬似イタリック</span></label>
       </div>
+      <div class="field">
+        <span class="field-label">文字色</span>
+        <input type="color" id="fldTextColor" value="${line.textColor || '#FFFFFF'}" style="width:40px;height:24px;padding:0;border:none">
+        <button class="tool-btn" id="btnTextColorClear" style="margin-left:8px;padding:2px 8px">クリア（白既定）</button>
+      </div>
     </div>
 
     <div class="section">
@@ -531,6 +536,12 @@ function renderDetail(project, ui) {
     const line2 = p.lines.find(l => l.id === id);
     if (line2) setProject({ ...p, lines: p.lines.map(l => l.id === id ? { ...l, interTypeGap: v } : l) });
   });
+  document.getElementById("fldTextColor").addEventListener("change", (e) => {
+    setProject(ops.setLineTextColor(getProject(), id, e.target.value));
+  });
+  document.getElementById("btnTextColorClear").addEventListener("click", () => {
+    setProject(ops.setLineTextColor(getProject(), id, null));
+  });
   document.getElementById("fldTracking").addEventListener("change", (e) => {
     setProject(ops.setLineTracking(getProject(), id, e.target.value));
   });
@@ -781,7 +792,7 @@ function renderLinePreviewHtml(line, project) {
     `font-size: ${fontCqw.toFixed(3)}cqw`,
     `letter-spacing: ${letterCqw.toFixed(3)}cqw`,
     `line-height: ${vertical ? 1 : 1.3}`,
-    `color: #fff`,
+    `color: ${line.textColor || "#fff"}`,
     `text-align: center`,
     italic ? `font-style: italic` : ``,
     vertical ? `writing-mode: vertical-rl` : ``,

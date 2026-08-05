@@ -258,8 +258,16 @@ export function applyZabutonPresetToLine(project, id, presetId) {
         ? JSON.parse(JSON.stringify(preset.apply.glow))
         : null;
     }
+    if (Object.prototype.hasOwnProperty.call(preset.apply, "textColor")) {
+      next.textColor = preset.apply.textColor;
+    }
     return next;
   });
+}
+
+// テキスト色を設定
+export function setLineTextColor(project, id, color) {
+  return updateLine(project, id, (line) => ({ ...line, textColor: color || null }));
 }
 
 // 光彩：partial をマージ。null で削除

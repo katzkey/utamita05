@@ -161,6 +161,7 @@ export function createLine(id, opts = {}) {
     stagger: opts.stagger ?? 0,  // 文字ごとの開始ずらし秒数（0 = 同時）
     tracking: opts.tracking ?? 0, // カーニング調整（負で詰め、正で開く）
     interTypeGap: opts.interTypeGap ?? 0, // 文字種別ギャップ（em）ASCII/カナ/漢字等の切替時に空きを追加
+    textColor: opts.textColor ?? null,    // テキスト色 (null = 既定 = 白)
     zabuton: opts.zabuton ?? null, // null = 無し / defaultZabuton() 形式のオブジェクト
     glow: opts.glow ?? null,       // テキストの光彩（グロー）。null = なし / { enabled, color, opacity, blur }
     jitter: opts.jitter ?? null,   // null = 無し / defaultJitter() 形式のオブジェクト
