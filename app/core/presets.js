@@ -16,9 +16,9 @@ export const FONT_PRESETS = [
   { id: "font_cool_mincho", category: "かっこいい・クール", label: "源ノ明朝 Medium", apply: { fontOverride: { family: "SourceHanSerifJP-Medium", size: 36 }, layout: "h_bottom" } },
   { id: "font_cool_senobi", category: "かっこいい・クール", label: "せのびゴシック",  apply: { fontOverride: { family: "Senobi-Gothic-Regular",   size: 36 }, layout: "h_bottom" } },
   // ========== 激しい・情熱的 ==========
-  { id: "font_hot_sanp",   category: "激しい・情熱的", label: "源ノ角ゴ Heavy",  apply: { fontOverride: { family: "SourceHanSansJP-Heavy",  size: 36 }, layout: "h_bottom" } },
-  { id: "font_hot_mincho", category: "激しい・情熱的", label: "源ノ明朝 Heavy",  apply: { fontOverride: { family: "SourceHanSerifJP-Heavy", size: 36 }, layout: "h_bottom" } },
-  { id: "font_hot_chiaro", category: "激しい・情熱的", label: "FOT-キアロ Std B", apply: { fontOverride: { family: "ChiaroStd-B",             size: 36 }, layout: "h_bottom" } },
+  { id: "font_hot_sanp",   category: "激しい・情熱的", label: "源ノ角ゴ Heavy（斜体）",  apply: { fontOverride: { family: "SourceHanSansJP-Heavy",  size: 36, italic: true }, layout: "h_bottom" } },
+  { id: "font_hot_mincho", category: "激しい・情熱的", label: "源ノ明朝 Heavy（斜体）",  apply: { fontOverride: { family: "SourceHanSerifJP-Heavy", size: 36, italic: true }, layout: "h_bottom" } },
+  { id: "font_hot_chiaro", category: "激しい・情熱的", label: "FOT-キアロ Std B（斜体）", apply: { fontOverride: { family: "ChiaroStd-B",             size: 36, italic: true }, layout: "h_bottom" } },
   // ========== 切ない・エモい ==========
   { id: "font_emo_shippori", category: "切ない・エモい", label: "しっぽり明朝 SemiBold", apply: { fontOverride: { family: "ShipporiMincho-SemiBold",   size: 36 }, layout: "vc_center" } },
   { id: "font_emo_mincho",   category: "切ない・エモい", label: "源ノ明朝 Light",         apply: { fontOverride: { family: "SourceHanSerifJP-Light",   size: 36 }, layout: "vc_center" } },

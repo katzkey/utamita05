@@ -491,6 +491,9 @@
                 try { td.font = lineFontPS; } catch (e2) {}
             }
             if (lineSizeExplicit) { try { td.fontSize = lineSizeExplicit; } catch (e) {} }
+            if (line.fontOverride && line.fontOverride.italic) {
+                try { td.fauxItalic = true; } catch (eFI) {}
+            }
             try { td.justification = ParagraphJustification.CENTER_JUSTIFY; } catch (e) {}
             textProp.setValue(td);
 
@@ -810,6 +813,10 @@
                     try { td.font = lineFontPS2; } catch (eFont) {}
                 }
                 if (lineSizeExplicit) { try { td.fontSize = lineSizeExplicit; } catch (eSize) {} }
+                // 擬似イタリック（fontOverride.italic）
+                if (line.fontOverride && line.fontOverride.italic) {
+                    try { td.fauxItalic = true; } catch (eFI) {}
+                }
                 textProp.setValue(td);
 
                 // ベース位置（累積カーソル + 自身の幅の半分 = 中心）

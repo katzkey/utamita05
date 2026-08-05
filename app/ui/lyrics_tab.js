@@ -254,6 +254,10 @@ function renderDetail(project, ui) {
         <input class="field-input" id="fldTracking" type="number" step="0.01" value="${line.tracking ?? 0}" style="width:80px">
         <span style="font-size:10px;color:var(--gray-3);margin-left:8px">負で詰め、正で開く</span>
       </div>
+      <div class="field">
+        <span class="field-label">italic</span>
+        <label class="lock-toggle"><input type="checkbox" id="fldFontItalic" ${line.fontOverride?.italic ? "checked" : ""}><span>擬似イタリック</span></label>
+      </div>
     </div>
 
     <div class="section">
@@ -494,6 +498,9 @@ function renderDetail(project, ui) {
       }
     }
   });
+  document.getElementById("fldFontItalic").addEventListener("change", (e) => {
+    setProject(ops.setLineFont(getProject(), id, { italic: e.target.checked ? true : null }));
+  });
   document.getElementById("fldTracking").addEventListener("change", (e) => {
     setProject(ops.setLineTracking(getProject(), id, e.target.value));
   });
@@ -708,6 +715,7 @@ function renderLinePreviewHtml(line, project) {
   ].join(";");
 
   // text 要素は wrapper 内に置く。位置指定なし（wrapper が位置を持つ）、z-index で座布団 layer の上に。
+  const italic = !!line.fontOverride?.italic;
   const textStyle = [
     `position: relative`,
     `z-index: 1`,
@@ -717,6 +725,7 @@ function renderLinePreviewHtml(line, project) {
     `line-height: ${vertical ? 1 : 1.3}`,
     `color: #fff`,
     `text-align: center`,
+    italic ? `font-style: italic` : ``,
     vertical ? `writing-mode: vertical-rl` : ``,
   ].filter(Boolean).join(";");
 
