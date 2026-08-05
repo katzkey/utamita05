@@ -663,29 +663,37 @@ function renderLinePreviewHtml(line, project) {
     translate = "translate(-50%, -50%)";
   }
 
-  // 座布団：perBlock=false のとき外側テキスト boxに敷く
+  // 座布団：perBlock=false のとき text と分離した absolute layer で描画
+  // （blur 等が text に影響しないよう別 div にする）
   const zab = line.zabuton;
   const perBlockZab = !!(zab && zab.enabled && zab.perBlock);
-  const zabStyles = (zab && zab.enabled && !perBlockZab) ? buildZabCss(zab, toCqw) : [];
+  const zabLayerHtml = (zab && zab.enabled && !perBlockZab)
+    ? `<div style="${buildZabLayerCss(zab, toCqw)}"></div>`
+    : '';
 
-  const textStyle = [
+  // 外枠 wrapper: 位置・変形はここに（子は shrink-to-fit で text natural size）
+  const wrapperStyle = [
     `position:absolute`,
     `left: ${leftPct.toFixed(3)}%`,
     `top: ${topPct.toFixed(3)}%`,
     `transform: ${translate}${vertical ? " translate(-0.1em, 0)" : ""} rotate(${rot}deg) scale(${scale})`,
+    `white-space: nowrap`,
+  ].join(";");
+
+  // text 要素は wrapper 内に置く。位置指定なし（wrapper が位置を持つ）、z-index で座布団 layer の上に。
+  const textStyle = [
+    `position: relative`,
+    `z-index: 1`,
     `font-family: '${(cssFam || "").replace(/'/g, "\\'")}', system-ui, sans-serif`,
     `font-size: ${fontCqw.toFixed(3)}cqw`,
     `letter-spacing: ${letterCqw.toFixed(3)}cqw`,
     `line-height: ${vertical ? 1 : 1.3}`,
     `color: #fff`,
-    `white-space: nowrap`,
     `text-align: center`,
     vertical ? `writing-mode: vertical-rl` : ``,
-    ...zabStyles,
   ].filter(Boolean).join(";");
 
   // 配置ガイド（15/50/85% の水平線 + 中央縦線）
-  // 中央縦線は目視で分かりやすく赤系＋ opacity 高めに
   const guide = (pct) => `<div style="position:absolute;left:0;right:0;top:${pct}%;border-top:1px dashed rgba(255,255,255,.12)"></div>`;
   const vGuide = `<div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(255,80,80,.55)"></div>`;
 
@@ -695,7 +703,10 @@ function renderLinePreviewHtml(line, project) {
       ${renderPreviewBackgrounds(line, project)}
       ${guide(15)}${guide(50)}${guide(85)}
       ${vGuide}
-      <div style="${textStyle}">${htmlText}</div>
+      <div style="${wrapperStyle}">
+        ${zabLayerHtml}
+        <div style="${textStyle}">${htmlText}</div>
+      </div>
     </div>
     <div style="margin-top:6px;font-size:10px;color:var(--gray-3, #999)">${escapeHtml(meta)}</div>
   `;
@@ -751,6 +762,52 @@ function hexToRgba(hex, opacity) {
 // 色はアプリ内の目印（AE の design 色とは別物）
 const EMPHASIS_COLORS = { 1: "#ffd54a", 2: "#ff8a65", 3: "#ff5252" };
 // 座布団の CSS スタイル配列を返す（外側でも per-block span でも共用）
+// 座布団を absolute layer として描画する用の CSS（text と分離、blur は text に影響しない）。
+// inset で padding 分外側に広げる。
+function buildZabLayerCss(zab, toCqw) {
+  if (!zab || !zab.enabled) return "";
+  const px = toCqw(zab.paddingX ?? 0);
+  const py = toCqw(zab.paddingY ?? 0);
+  let radius = "0";
+  if (zab.shape === "round") radius = `${toCqw(zab.cornerRadius ?? 16).toFixed(3)}cqw`;
+  else if (zab.shape === "pill") radius = "999em";
+  else if (zab.shape === "circle") radius = "50%";
+  const opacity = zab.opacity ?? 0.5;
+  const rgba = hexToRgba(zab.color || "#000000", opacity);
+  const grad = zab.gradient;
+  let bgCss = rgba;
+  if (grad && grad.enabled) {
+    const cA = hexToRgba(grad.colorA || "#FF69B4", opacity);
+    const cB = hexToRgba(grad.colorB || "#FFD54A", opacity);
+    const angle = Number(grad.angle) || 90;
+    bgCss = grad.colorC
+      ? `linear-gradient(${angle}deg, ${cA}, ${cB}, ${hexToRgba(grad.colorC, opacity)})`
+      : `linear-gradient(${angle}deg, ${cA}, ${cB})`;
+  }
+  const styles = [
+    `position:absolute`,
+    `inset: -${py.toFixed(3)}cqw -${px.toFixed(3)}cqw`,
+    `border-radius: ${radius}`,
+    `z-index: 0`,
+    `pointer-events: none`,
+  ];
+  if (zab.mode === "stroke") {
+    const strokeColor = (grad && grad.enabled) ? hexToRgba(grad.colorA || "#FF69B4", opacity) : rgba;
+    const sw = toCqw(zab.strokeWidth ?? 2);
+    styles.push(`background: transparent`);
+    styles.push(`box-shadow: inset 0 0 0 ${sw.toFixed(3)}cqw ${strokeColor}`);
+  } else {
+    styles.push(`background: ${bgCss}`);
+  }
+  const bx = Number(zab.blurX) || 0;
+  const by = Number(zab.blurY) || 0;
+  if (bx > 0 || by > 0) {
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg'><filter id='b'><feGaussianBlur stdDeviation='${bx} ${by}'/></filter></svg>`;
+    styles.push(`filter: url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}#b")`);
+  }
+  return styles.join(';');
+}
+
 function buildZabCss(zab, toCqw) {
   if (!zab || !zab.enabled) return [];
   const px = toCqw(zab.paddingX ?? 0);
