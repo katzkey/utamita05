@@ -814,7 +814,8 @@ function buildZabLayerCss(zab, toCqw, isVertical, filterId) {
       styles.push(`filter: blur(${bx}px)`);
     } else {
       // X!=Y は SVG feGaussianBlur を DOM に埋め込んで参照
-      svgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${bx} ${by}"/></filter></svg>`;
+      // filter 領域を大幅に広げて大きな blur でも clip されないよう
+      svgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${filterId}" x="-500%" y="-500%" width="1100%" height="1100%"><feGaussianBlur stdDeviation="${bx} ${by}"/></filter></svg>`;
       styles.push(`filter: url(#${filterId})`);
     }
   }
