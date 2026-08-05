@@ -46,7 +46,7 @@ export const ZABUTON_PRESETS = [
     id: "zab_pop_glow", category: "可愛い・ポップ", label: "光彩（マゼンタ）",
     apply: {
       zabuton: null,
-      glow: { enabled: true, color: "#B620AD", opacity: 0.95, blur: 5 },
+      glow: { enabled: true, color: "#B620AD", opacity: 1.0, blur: 3 },
     },
   },
   {

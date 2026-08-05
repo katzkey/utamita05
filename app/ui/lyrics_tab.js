@@ -767,15 +767,11 @@ function renderLinePreviewHtml(line, project) {
   if (glow && glow.enabled) {
     const gc = hexToRgba(glow.color || "#FF69B4", glow.opacity ?? 0.9);
     const gb = Number(glow.blur) || 20;
-    // 濃い光彩：同一 blur を複数重ねて色を積み上げ + 外側に広がるハロー
-    const stack = [
-      `0 0 ${gb}px ${gc}`,
-      `0 0 ${gb}px ${gc}`,
-      `0 0 ${gb}px ${gc}`,
-      `0 0 ${gb}px ${gc}`,
-      `0 0 ${(gb*2).toFixed(1)}px ${gc}`,
-      `0 0 ${(gb*3).toFixed(1)}px ${gc}`,
-    ];
+    // 極濃い光彩：同一 blur を 8 回重ねて色を積み上げ + 外側 2 段ハロー
+    const stack = [];
+    for (let i = 0; i < 8; i++) stack.push(`0 0 ${gb}px ${gc}`);
+    stack.push(`0 0 ${(gb*2).toFixed(1)}px ${gc}`);
+    stack.push(`0 0 ${(gb*4).toFixed(1)}px ${gc}`);
     glowCss = `text-shadow: ${stack.join(", ")}`;
   }
   const textStyle = [
