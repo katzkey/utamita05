@@ -240,7 +240,7 @@ export function applyFontPresetToLine(project, id, presetId) {
   });
 }
 
-// 座布団プリセット適用：zabuton だけ上書き（null で座布団オフ）
+// 座布団プリセット適用：zabuton / glow を上書き（null で該当オフ）
 export function applyZabutonPresetToLine(project, id, presetId) {
   const preset = getZabutonPresetById(presetId);
   if (!preset) return project;
@@ -251,7 +251,24 @@ export function applyZabutonPresetToLine(project, id, presetId) {
         ? JSON.parse(JSON.stringify(preset.apply.zabuton))
         : null;
     }
+    if (Object.prototype.hasOwnProperty.call(preset.apply, "glow")) {
+      next.glow = preset.apply.glow
+        ? JSON.parse(JSON.stringify(preset.apply.glow))
+        : null;
+    }
     return next;
+  });
+}
+
+// 光彩：partial をマージ。null で削除
+export function setLineGlow(project, id, partial) {
+  return updateLine(project, id, (line) => {
+    if (partial === null) {
+      const { glow, ...rest } = line;
+      return { ...rest, glow: null };
+    }
+    const base = line.glow || { enabled: true, color: "#FF69B4", opacity: 0.9, blur: 20 };
+    return { ...line, glow: { ...base, ...partial } };
   });
 }
 

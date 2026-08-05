@@ -41,20 +41,30 @@ const ZABUTON_BASE = {
 
 export const ZABUTON_PRESETS = [
   // ========== 可愛い・ポップ ==========
+  // PDF: 光彩 / カラー座布団 / カラフルグラデーション座布団
   {
-    id: "zab_pop_color", category: "可愛い・ポップ", label: "カラー座布団（ピンク）",
-    apply: { zabuton: { ...ZABUTON_BASE, color: "#FF69B4", opacity: 0.85 } },
+    id: "zab_pop_glow", category: "可愛い・ポップ", label: "光彩（テキストグロー・ピンク）",
+    apply: {
+      zabuton: null,
+      glow: { enabled: true, color: "#FF69B4", opacity: 0.95, blur: 24 },
+    },
   },
   {
-    id: "zab_pop_gradient", category: "可愛い・ポップ", label: "カラフルグラデ座布団",
-    apply: { zabuton: {
-      ...ZABUTON_BASE, color: "#FFB6C1", opacity: 0.85,
-      gradient: { enabled: true, angle: 90, colorA: "#FF69B4", colorB: "#FFD54A", colorC: "#4FC3F7" },
-    } },
+    id: "zab_pop_color", category: "可愛い・ポップ", label: "カラー座布団（ピンク pill）",
+    apply: {
+      zabuton: { ...ZABUTON_BASE, shape: "pill", color: "#E91E63", opacity: 0.85 },
+      glow: null,
+    },
   },
   {
-    id: "zab_pop_none", category: "可愛い・ポップ", label: "座布団なし",
-    apply: { zabuton: null },
+    id: "zab_pop_gradient", category: "可愛い・ポップ", label: "カラフルグラデ座布団（pill）",
+    apply: {
+      zabuton: {
+        ...ZABUTON_BASE, shape: "pill", color: "#FFB6C1", opacity: 0.85,
+        gradient: { enabled: true, angle: 90, colorA: "#FF69B4", colorB: "#FFD54A", colorC: "#4FC3F7" },
+      },
+      glow: null,
+    },
   },
 
   // ========== かっこいい・クール ==========

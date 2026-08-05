@@ -364,6 +364,25 @@ function renderDetail(project, ui) {
     </div>
 
     <div class="section">
+      <div class="section-title">光彩（テキストグロー）</div>
+      <div class="field">
+        <span class="field-label">有効</span>
+        <label class="lock-toggle"><input type="checkbox" id="fldGlowOn" ${line.glow?.enabled ? "checked" : ""}><span>文字の周りに発光</span></label>
+      </div>
+      <div id="glowFields" style="${line.glow?.enabled ? "" : "display:none"}">
+        <div class="field">
+          <span class="field-label">色 / 不透明</span>
+          <input type="color" id="fldGlowColor" value="${line.glow?.color || "#FF69B4"}" style="width:40px;height:24px;padding:0;border:none">
+          <input class="field-input" id="fldGlowOpacity" type="number" min="0" max="1" step="0.05" value="${line.glow?.opacity ?? 0.9}" style="width:60px;margin-left:8px">
+        </div>
+        <div class="field">
+          <span class="field-label">ぼかし px</span>
+          <input class="field-input" id="fldGlowBlur" type="number" min="0" step="1" value="${line.glow?.blur ?? 20}" style="width:60px">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
       <div class="section-title">ジッター（ブロック単位のランダム位置ずれ）</div>
       <div class="field">
         <span class="field-label">有効</span>
@@ -546,6 +565,21 @@ function renderDetail(project, ui) {
   document.getElementById("fldZabPerBlock").addEventListener("change", (e) => {
     setProject(ops.setLineZabuton(getProject(), id, { perBlock: e.target.checked }));
   });
+  // 光彩
+  document.getElementById("fldGlowOn").addEventListener("change", (e) => {
+    setProject(ops.setLineGlow(getProject(), id, { enabled: e.target.checked }));
+  });
+  const glowHandler = (elId, key, conv) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.addEventListener("change", (e) => {
+      setProject(ops.setLineGlow(getProject(), id, { [key]: conv ? conv(e.target.value) : e.target.value }));
+    });
+  };
+  glowHandler("fldGlowColor", "color");
+  glowHandler("fldGlowOpacity", "opacity", v => Math.max(0, Math.min(1, Number(v) || 0)));
+  glowHandler("fldGlowBlur", "blur", v => Math.max(0, Number(v) || 0));
+  attachArrowStep("fldGlowBlur", (v) => setProject(ops.setLineGlow(getProject(), id, { blur: Math.max(0, v) })));
   zabHandler("fldZabBlurX", "blurX", v => Math.max(0, Number(v) || 0));
   zabHandler("fldZabBlurY", "blurY", v => Math.max(0, Number(v) || 0));
   attachArrowStep("fldZabBlurX", (v) => setProject(ops.setLineZabuton(getProject(), id, { blurX: Math.max(0, v) })));
@@ -716,6 +750,15 @@ function renderLinePreviewHtml(line, project) {
 
   // text 要素は wrapper 内に置く。位置指定なし（wrapper が位置を持つ）、z-index で座布団 layer の上に。
   const italic = !!line.fontOverride?.italic;
+  // 光彩（テキストグロー）：text-shadow を多層で塗って強めのグローを再現
+  const glow = line.glow;
+  let glowCss = "";
+  if (glow && glow.enabled) {
+    const gc = hexToRgba(glow.color || "#FF69B4", glow.opacity ?? 0.9);
+    const gb = Number(glow.blur) || 20;
+    // 3 段で重ねると柔らかい光彩に
+    glowCss = `text-shadow: 0 0 ${(gb/2).toFixed(1)}px ${gc}, 0 0 ${gb}px ${gc}, 0 0 ${(gb*1.5).toFixed(1)}px ${gc}`;
+  }
   const textStyle = [
     `position: relative`,
     `z-index: 1`,
@@ -727,6 +770,7 @@ function renderLinePreviewHtml(line, project) {
     `text-align: center`,
     italic ? `font-style: italic` : ``,
     vertical ? `writing-mode: vertical-rl` : ``,
+    glowCss,
   ].filter(Boolean).join(";");
 
   // 配置ガイド（15/50/85% の水平線 + 中央縦線）

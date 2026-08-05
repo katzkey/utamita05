@@ -56,6 +56,16 @@ export function defaultZabuton() {
   };
 }
 
+// 光彩（テキストのグロー効果、座布団とは別）
+export function defaultGlow() {
+  return {
+    enabled: true,
+    color: "#FF69B4",
+    opacity: 0.9,
+    blur: 20,   // px
+  };
+}
+
 // グラデーションのデフォルト
 export function defaultGradient() {
   return {
@@ -151,6 +161,7 @@ export function createLine(id, opts = {}) {
     stagger: opts.stagger ?? 0,  // 文字ごとの開始ずらし秒数（0 = 同時）
     tracking: opts.tracking ?? 0, // カーニング調整（負で詰め、正で開く）
     zabuton: opts.zabuton ?? null, // null = 無し / defaultZabuton() 形式のオブジェクト
+    glow: opts.glow ?? null,       // テキストの光彩（グロー）。null = なし / { enabled, color, opacity, blur }
     jitter: opts.jitter ?? null,   // null = 無し / defaultJitter() 形式のオブジェクト
     skip: opts.skip || false,
     note: opts.note || "",
