@@ -828,6 +828,23 @@
                         ];
                     } catch (eTC) {}
                 }
+                // 文字縁取り (line.textStroke)
+                if (line.textStroke && line.textStroke.color) {
+                    try {
+                        var sc = line.textStroke.color.replace("#","");
+                        td.applyStroke = true;
+                        td.strokeColor = [
+                            parseInt(sc.substring(0,2),16)/255,
+                            parseInt(sc.substring(2,4),16)/255,
+                            parseInt(sc.substring(4,6),16)/255,
+                        ];
+                        td.strokeWidth = Number(line.textStroke.width) || 2;
+                        // 縁取りを塗りの外側に描画（stroke over fill だと文字が細く見えるのを回避）
+                        try { td.strokeOverFill = false; } catch (eSF) {}
+                    } catch (eTS) {}
+                } else {
+                    try { td.applyStroke = false; } catch (eSFO) {}
+                }
                 textProp.setValue(td);
 
                 // ベース位置（累積カーソル + 自身の幅の半分 = 中心）

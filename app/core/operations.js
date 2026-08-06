@@ -261,7 +261,21 @@ export function applyZabutonPresetToLine(project, id, presetId) {
     if (Object.prototype.hasOwnProperty.call(preset.apply, "textColor")) {
       next.textColor = preset.apply.textColor;
     }
+    if (Object.prototype.hasOwnProperty.call(preset.apply, "textStroke")) {
+      next.textStroke = preset.apply.textStroke
+        ? JSON.parse(JSON.stringify(preset.apply.textStroke))
+        : null;
+    }
     return next;
+  });
+}
+
+// 文字縁取り設定
+export function setLineTextStroke(project, id, partial) {
+  return updateLine(project, id, (line) => {
+    if (partial === null) return { ...line, textStroke: null };
+    const base = line.textStroke || { color: "#000000", width: 2 };
+    return { ...line, textStroke: { ...base, ...partial } };
   });
 }
 

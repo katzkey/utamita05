@@ -79,14 +79,12 @@ export const ZABUTON_PRESETS = [
   // ========== かっこいい・クール ==========
   // PDF: アウトライン / 斜線座布団 / カラー座布団 (グラデ)
   {
-    id: "zab_cool_outline", category: "かっこいい・クール", label: "アウトライン（青）",
+    id: "zab_cool_outline", category: "かっこいい・クール", label: "アウトライン（文字に青い縁取り）",
     apply: {
-      zabuton: {
-        ...ZABUTON_BASE, shape: "rect", mode: "stroke",
-        color: "#0000FF", opacity: 1.0, cornerRadius: 0, strokeWidth: 2,
-        paddingX: 20, paddingY: 8,
-      },
-      glow: null, textColor: "#FFFFFF",
+      zabuton: null,
+      glow: null,
+      textColor: "#FFFFFF",
+      textStroke: { color: "#0000FF", width: 3 },
     },
   },
   {

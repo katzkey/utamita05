@@ -268,6 +268,12 @@ function renderDetail(project, ui) {
         <input type="color" id="fldTextColor" value="${line.textColor || '#FFFFFF'}" style="width:40px;height:24px;padding:0;border:none">
         <button class="tool-btn" id="btnTextColorClear" style="margin-left:8px;padding:2px 8px">クリア（白既定）</button>
       </div>
+      <div class="field">
+        <span class="field-label">文字縁取り</span>
+        <input type="color" id="fldTextStrokeColor" value="${line.textStroke?.color || '#000000'}" style="width:40px;height:24px;padding:0;border:none">
+        <input class="field-input" id="fldTextStrokeWidth" type="number" min="0" step="0.5" value="${line.textStroke?.width ?? 2}" style="width:60px;margin-left:8px" title="太さ px">
+        <label class="lock-toggle" style="margin-left:8px"><input type="checkbox" id="fldTextStrokeOn" ${line.textStroke ? "checked" : ""}><span>有効</span></label>
+      </div>
     </div>
 
     <div class="section">
@@ -542,6 +548,16 @@ function renderDetail(project, ui) {
   document.getElementById("btnTextColorClear").addEventListener("click", () => {
     setProject(ops.setLineTextColor(getProject(), id, null));
   });
+  const applyStrokeFromUi = () => {
+    const on = document.getElementById("fldTextStrokeOn").checked;
+    if (!on) { setProject(ops.setLineTextStroke(getProject(), id, null)); return; }
+    const color = document.getElementById("fldTextStrokeColor").value;
+    const width = Math.max(0, Number(document.getElementById("fldTextStrokeWidth").value) || 2);
+    setProject(ops.setLineTextStroke(getProject(), id, { color, width }));
+  };
+  document.getElementById("fldTextStrokeOn").addEventListener("change", applyStrokeFromUi);
+  document.getElementById("fldTextStrokeColor").addEventListener("change", applyStrokeFromUi);
+  document.getElementById("fldTextStrokeWidth").addEventListener("change", applyStrokeFromUi);
   document.getElementById("fldTracking").addEventListener("change", (e) => {
     setProject(ops.setLineTracking(getProject(), id, e.target.value));
   });
@@ -793,6 +809,8 @@ function renderLinePreviewHtml(line, project) {
     `letter-spacing: ${letterCqw.toFixed(3)}cqw`,
     `line-height: ${vertical ? 1 : 1.3}`,
     `color: ${line.textColor || "#fff"}`,
+    line.textStroke ? `-webkit-text-stroke: ${Number(line.textStroke.width)||2}px ${line.textStroke.color || "#000"}` : ``,
+    line.textStroke ? `paint-order: stroke fill` : ``,
     `text-align: center`,
     italic ? `font-style: italic` : ``,
     vertical ? `writing-mode: vertical-rl` : ``,
