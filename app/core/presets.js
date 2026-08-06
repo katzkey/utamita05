@@ -99,7 +99,8 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: {
         ...ZABUTON_BASE, shape: "rect", color: "#0000C0", opacity: 0.95, cornerRadius: 0,
-        paddingX: 40, paddingY: 12,
+        paddingX: 80, paddingY: 12,
+        blurX: 80, blurY: 0,
         gradient: { enabled: true, angle: 90, colorA: "#0000C0", colorB: "#0000E0", colorC: null },
       },
       glow: null, textColor: "#FFFFFF", textStroke: null,
@@ -176,13 +177,14 @@ export const ZABUTON_PRESETS = [
     apply: { zabuton: null, glow: null, textColor: "#FFFFFF", textStroke: null },
   },
   {
-    id: "zab_dark_box", category: "ダーク・妖艶", label: "色ボックス（アクア）",
+    id: "zab_dark_box", category: "ダーク・妖艶", label: "色ボックス（紺→アクア→紺 グラデ）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#40C0C0", opacity: 0.9,
+        ...ZABUTON_BASE, shape: "rect", color: "#001080", opacity: 0.95,
         cornerRadius: 0, paddingX: 30, paddingY: 10,
+        gradient: { enabled: true, angle: 90, colorA: "#001080", colorB: "#00A0EF", colorC: "#001080" },
       },
-      glow: null, textColor: "#000000", textStroke: null,
+      glow: null, textColor: "#FFFFFF", textStroke: null,
     },
   },
 ];
