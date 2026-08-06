@@ -67,7 +67,7 @@ export const ZABUTON_PRESETS = [
     id: "zab_pop_gradient", category: "可愛い・ポップ", label: "カラフルグラデ座布団（アクア→ピンク）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "round", cornerRadius: 24,
+        ...ZABUTON_BASE, shape: "rect", cornerRadius: 0,
         color: "#A0E3DF", opacity: 0.9, paddingX: 30, paddingY: 10,
         gradient: { enabled: true, angle: 90, colorA: "#A0E3DF", colorB: "#B0D8E4", colorC: "#E0B0D0" },
       },
