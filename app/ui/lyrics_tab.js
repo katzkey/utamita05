@@ -6,7 +6,7 @@ import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js";
 import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js";
 import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js";
 import { parseJitterBlocks, jitterOffsetFor } from "../core/utils.js";
-import { getFontPresetsByCategory, getZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js";
 import { SMALL_KANA, classifyChar } from "../core/char_type.js";
 
 let detailPaneEl;
@@ -183,21 +183,24 @@ function renderDetail(project, ui) {
       </div>
       <div class="field">
         <span class="field-label">座布団</span>
-        <select class="field-select" id="fldZabutonPreset" style="flex:1" ${!line.fontPresetId ? "disabled" : ""}>
+        <select class="field-select" id="fldZabutonPreset" style="flex:1">
           <option value="">— 未適用 —</option>
           ${(() => {
-            const fontPreset = getFontPresetById(line.fontPresetId);
-            if (!fontPreset) return "";
-            const list = getZabutonPresetsByCategory(fontPreset.category);
-            return list.map(p => {
-              const sel = line.zabutonPresetId === p.id ? "selected" : "";
-              return `<option value="${p.id}" ${sel}>${escapeHtml(p.label)}</option>`;
-            }).join("");
+            let html = "";
+            for (const [cat, list] of getAllZabutonPresetsByCategory()) {
+              html += `<optgroup label="${escapeHtml(cat)}">`;
+              for (const p of list) {
+                const sel = line.zabutonPresetId === p.id ? "selected" : "";
+                html += `<option value="${p.id}" ${sel}>${escapeHtml(p.label)}</option>`;
+              }
+              html += "</optgroup>";
+            }
+            return html;
           })()}
         </select>
       </div>
       <div style="font-size:10px;color:var(--gray-3);margin-top:4px">
-        フォント選択 → 同カテゴリの座布団候補が並びます（適用後も個別編集可）
+        フォント／座布団は独立して選択できます（適用後も個別編集可）
       </div>
     </div>
 

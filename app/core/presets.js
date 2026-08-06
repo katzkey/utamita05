@@ -204,6 +204,16 @@ export function getZabutonPresetsByCategory(category) {
   return ZABUTON_PRESETS.filter(p => p.category === category);
 }
 
+// 全カテゴリの座布団プリセットを Map<category, preset[]> で返す
+export function getAllZabutonPresetsByCategory() {
+  const map = new Map();
+  for (const p of ZABUTON_PRESETS) {
+    if (!map.has(p.category)) map.set(p.category, []);
+    map.get(p.category).push(p);
+  }
+  return map;
+}
+
 export function getFontPresetById(id) {
   return FONT_PRESETS.find(p => p.id === id) || null;
 }
