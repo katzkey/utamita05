@@ -39,15 +39,18 @@ const ZABUTON_BASE = {
   blurX: 0, blurY: 0, gradient: null,
 };
 
+// 各 preset は zabuton / glow / textColor / textStroke を明示的に設定。
+// (未設定だと前 preset の値が残るので、すべての preset で 4 フィールド触る)
 export const ZABUTON_PRESETS = [
   // ========== 可愛い・ポップ ==========
   // PDF: 光彩 / カラー座布団 / カラフルグラデーション座布団（色は PDF ピクセル実測）
+  // 01 可愛い・ポップ  ─ PDF 実測ベース
   {
     id: "zab_pop_glow", category: "可愛い・ポップ", label: "光彩（マゼンタ）",
     apply: {
       zabuton: null,
       glow: { enabled: true, color: "#B620AD", opacity: 1.0, blur: 3 },
-      textColor: "#FFFFFF",
+      textColor: "#FFFFFF", textStroke: null,
     },
   },
   {
@@ -55,11 +58,9 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: {
         ...ZABUTON_BASE, shape: "round", cornerRadius: 24,
-        color: "#A448AB", opacity: 0.85,
-        paddingX: 30, paddingY: 10,
+        color: "#802080", opacity: 0.9, paddingX: 30, paddingY: 10,
       },
-      glow: null,
-      textColor: "#FFFFFF",
+      glow: null, textColor: "#FFFFFF", textStroke: null,
     },
   },
   {
@@ -67,50 +68,45 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: {
         ...ZABUTON_BASE, shape: "round", cornerRadius: 24,
-        color: "#A0E3DF", opacity: 0.85,
-        paddingX: 30, paddingY: 10,
-        gradient: { enabled: true, angle: 90, colorA: "#A0E3DF", colorB: "#B0D8E4", colorC: "#E5B5D5" },
+        color: "#A0E3DF", opacity: 0.9, paddingX: 30, paddingY: 10,
+        gradient: { enabled: true, angle: 90, colorA: "#A0E3DF", colorB: "#B0D8E4", colorC: "#E0B0D0" },
       },
-      glow: null,
-      textColor: "#000000",
+      glow: null, textColor: "#000000", textStroke: null,
     },
   },
 
-  // ========== かっこいい・クール ==========
-  // PDF: アウトライン / 斜線座布団 / カラー座布団 (グラデ)
+  // 02 かっこいい・クール  ─ PDF 実測ベース
   {
-    id: "zab_cool_outline", category: "かっこいい・クール", label: "アウトライン（文字に青い縁取り）",
+    id: "zab_cool_outline", category: "かっこいい・クール", label: "アウトライン（青い縁取り）",
     apply: {
-      zabuton: null,
-      glow: null,
+      zabuton: null, glow: null,
       textColor: "#FFFFFF",
-      textStroke: { color: "#0000FF", width: 3 },
+      textStroke: { color: "#0000E0", width: 3 },
     },
   },
   {
     id: "zab_cool_diag", category: "かっこいい・クール", label: "斜線座布団（近似：ダーク box）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#111619", opacity: 0.9,
-        cornerRadius: 0, paddingX: 24, paddingY: 10,
+        ...ZABUTON_BASE, shape: "rect", color: "#002040", opacity: 0.9,
+        cornerRadius: 0, paddingX: 30, paddingY: 12,
       },
-      glow: null, textColor: "#FFFFFF",
+      glow: null, textColor: "#FFFFFF", textStroke: null,
     },
   },
   {
     id: "zab_cool_gradient", category: "かっこいい・クール", label: "カラー座布団（ブルーグラデ）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#0000E1", opacity: 0.95, cornerRadius: 0,
+        ...ZABUTON_BASE, shape: "rect", color: "#0000C0", opacity: 0.95, cornerRadius: 0,
         paddingX: 40, paddingY: 12,
-        gradient: { enabled: true, angle: 90, colorA: "#003BE1", colorB: "#0060FF", colorC: null },
+        gradient: { enabled: true, angle: 90, colorA: "#0000C0", colorB: "#0000E0", colorC: null },
       },
-      glow: null, textColor: "#FFFFFF",
+      glow: null, textColor: "#FFFFFF", textStroke: null,
     },
   },
 
-  // ========== 激しい・情熱的 ==========
-  // PDF: 黒座布団(乗算70%) / ギザギザ / ライン
+  // 03 激しい・情熱的  ─ 全て斜体（font preset 側で italic:true）
   {
     id: "zab_hot_black", category: "激しい・情熱的", label: "黒座布団（70%）",
     apply: {
@@ -118,35 +114,33 @@ export const ZABUTON_PRESETS = [
         ...ZABUTON_BASE, shape: "rect", color: "#000000", opacity: 0.7,
         cornerRadius: 0, paddingX: 30, paddingY: 10,
       },
-      glow: null, textColor: "#FFFFFF",
+      glow: null, textColor: "#FFFFFF", textStroke: null,
     },
   },
   {
-    id: "zab_hot_jagged", category: "激しい・情熱的", label: "ギザギザ（近似：白ボックス）",
+    id: "zab_hot_jagged", category: "激しい・情熱的", label: "ギザギザ（近似：クリーム box）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#F5EEDF", opacity: 0.98,
+        ...ZABUTON_BASE, shape: "rect", color: "#E0D0C0", opacity: 0.98,
         cornerRadius: 0, paddingX: 30, paddingY: 10,
       },
-      glow: null, textColor: "#000000",
+      glow: null, textColor: "#000000", textStroke: null,
     },
   },
   {
     id: "zab_hot_line", category: "激しい・情熱的", label: "ライン（近似：座布団なし）",
-    apply: { zabuton: null, glow: null, textColor: "#FFFFFF" },
+    apply: { zabuton: null, glow: null, textColor: "#FFFFFF", textStroke: null },
   },
 
-  // ========== 切ない・エモい ==========
-  // PDF: 縦組み右列 x 2、ボックス / アウトラインボックス / ライン
-  // ※ layout は font preset 側で vr_center に指定
+  // 04 切ない・エモい  ─ 縦組み右列（font preset 側で layout:vr_center）
   {
     id: "zab_emo_box", category: "切ない・エモい", label: "白ボックス（黒テキスト）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#F8F5EE", opacity: 0.95,
-        cornerRadius: 0, paddingX: 12, paddingY: 20,
+        ...ZABUTON_BASE, shape: "rect", color: "#E8E8E8", opacity: 0.95,
+        cornerRadius: 0, paddingX: 14, paddingY: 22,
       },
-      glow: null, textColor: "#000000",
+      glow: null, textColor: "#000000", textStroke: null,
     },
   },
   {
@@ -157,39 +151,38 @@ export const ZABUTON_PRESETS = [
         color: "#FFFFFF", opacity: 0.95, cornerRadius: 0, strokeWidth: 2,
         paddingX: 16, paddingY: 24,
       },
-      glow: null, textColor: "#FFFFFF",
+      glow: null, textColor: "#FFFFFF", textStroke: null,
     },
   },
   {
     id: "zab_emo_line", category: "切ない・エモい", label: "ライン（近似：座布団なし）",
-    apply: { zabuton: null, glow: null, textColor: "#FFFFFF" },
+    apply: { zabuton: null, glow: null, textColor: "#FFFFFF", textStroke: null },
   },
 
-  // ========== ダーク・妖艶 ==========
-  // PDF: ぼかし座布団(白+ blur, 黒テキスト) / ライン / 色ボックス(アクア)
+  // 05 ダーク・妖艶  ─ 明るい box + 黒テキストが基調
   {
-    id: "zab_dark_blur", category: "ダーク・妖艶", label: "ぼかし座布団（白+ぼかし、黒テキスト）",
+    id: "zab_dark_blur", category: "ダーク・妖艶", label: "ぼかし座布団（明るい box + 黒テキスト）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#F5EEDF", opacity: 0.90,
+        ...ZABUTON_BASE, shape: "rect", color: "#DDE8F0", opacity: 0.9,
         cornerRadius: 0, paddingX: 40, paddingY: 12,
         blurX: 12, blurY: 6,
       },
-      glow: null, textColor: "#000000",
+      glow: null, textColor: "#000000", textStroke: null,
     },
   },
   {
     id: "zab_dark_line", category: "ダーク・妖艶", label: "ライン（近似：座布団なし）",
-    apply: { zabuton: null, glow: null, textColor: "#FFFFFF" },
+    apply: { zabuton: null, glow: null, textColor: "#FFFFFF", textStroke: null },
   },
   {
     id: "zab_dark_box", category: "ダーク・妖艶", label: "色ボックス（アクア）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#7DD9C7", opacity: 0.85,
+        ...ZABUTON_BASE, shape: "rect", color: "#40C0C0", opacity: 0.9,
         cornerRadius: 0, paddingX: 30, paddingY: 10,
       },
-      glow: null, textColor: "#000000",
+      glow: null, textColor: "#000000", textStroke: null,
     },
   },
 ];
