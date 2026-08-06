@@ -101,7 +101,7 @@ export const ZABUTON_PRESETS = [
         ...ZABUTON_BASE, shape: "rect", color: "#0000C0", opacity: 0.95, cornerRadius: 0,
         paddingX: 80, paddingY: 12,
         blurX: 80, blurY: 0,
-        gradient: { enabled: true, angle: 90, colorA: "#0000C0", colorB: "#0000E0", colorC: null },
+        gradient: null,
       },
       glow: null, textColor: "#FFFFFF", textStroke: null,
     },
