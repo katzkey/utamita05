@@ -53,6 +53,7 @@ export function defaultZabuton() {
     blurX: 0,             // 座布団のエッジぼかし量 X 方向（AE px）0 = ぼかさない
     blurY: 0,             // 座布団のエッジぼかし量 Y 方向（AE px）
     gradient: null,       // グラデーション設定 or null。定義時：{ enabled, angle, colorA, colorB, colorC (省略可) }
+    pattern: null,        // 斜線等のパターン塗り or null。{ type:"stripe", color, angle, size, gap } 形式
   };
 }
 
@@ -164,6 +165,7 @@ export function createLine(id, opts = {}) {
     textColor: opts.textColor ?? null,    // テキスト色 (null = 既定 = 白)
     textStroke: opts.textStroke ?? null,  // 文字の縁取り { color, width } / null で無し
     zabuton: opts.zabuton ?? null, // null = 無し / defaultZabuton() 形式のオブジェクト
+    underline: opts.underline ?? null, // 下線装飾。null = 無し / { enabled, color, width(px), offset(px) }
     glow: opts.glow ?? null,       // テキストの光彩（グロー）。null = なし / { enabled, color, opacity, blur }
     jitter: opts.jitter ?? null,   // null = 無し / defaultJitter() 形式のオブジェクト
     skip: opts.skip || false,

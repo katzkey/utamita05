@@ -266,7 +266,20 @@ export function applyZabutonPresetToLine(project, id, presetId) {
         ? JSON.parse(JSON.stringify(preset.apply.textStroke))
         : null;
     }
+    // underline は「指定なし = null に戻す」扱い（残留を防ぐため）
+    next.underline = preset.apply.underline
+      ? JSON.parse(JSON.stringify(preset.apply.underline))
+      : null;
     return next;
+  });
+}
+
+// 下線装飾設定
+export function setLineUnderline(project, id, partial) {
+  return updateLine(project, id, (line) => {
+    if (partial === null) return { ...line, underline: null };
+    const base = line.underline || { enabled: true, color: "#FFFFFF", width: 3, offset: 6 };
+    return { ...line, underline: { ...base, ...partial } };
   });
 }
 

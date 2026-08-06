@@ -36,7 +36,7 @@ const ZABUTON_BASE = {
   paddingX: 0, paddingY: 0, cornerRadius: 20,
   timingMode: "follow", fade: 0.3,
   strokeWidth: 2, perBlock: false,
-  blurX: 0, blurY: 0, gradient: null,
+  blurX: 0, blurY: 0, gradient: null, pattern: null,
 };
 
 // 各 preset は zabuton / glow / textColor / textStroke を明示的に設定。
@@ -85,13 +85,14 @@ export const ZABUTON_PRESETS = [
     },
   },
   {
-    id: "zab_cool_diag", category: "かっこいい・クール", label: "斜線座布団（近似：ダーク box）",
+    id: "zab_cool_diag", category: "かっこいい・クール", label: "斜線座布団（ブルーストライプ）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#002040", opacity: 0.9,
+        ...ZABUTON_BASE, shape: "rect", color: "#000000", opacity: 0.0,
         cornerRadius: 0, paddingX: 30, paddingY: 12,
+        pattern: { type: "stripe", color: "#0000E0", angle: -45, size: 6, gap: 6 },
       },
-      glow: null, textColor: "#FFFFFF", textStroke: null,
+      glow: null, textColor: "#FFFFFF", textStroke: null, underline: null,
     },
   },
   {
@@ -129,8 +130,12 @@ export const ZABUTON_PRESETS = [
     },
   },
   {
-    id: "zab_hot_line", category: "激しい・情熱的", label: "ライン（近似：座布団なし）",
-    apply: { zabuton: null, glow: null, textColor: "#FFFFFF", textStroke: null },
+    id: "zab_hot_line", category: "激しい・情熱的", label: "ライン（赤アンダーライン）",
+    apply: {
+      zabuton: null, glow: null,
+      textColor: "#FFFFFF", textStroke: null,
+      underline: { enabled: true, color: "#E60028", width: 4, offset: 6 },
+    },
   },
 
   // 04 切ない・エモい  ─ 縦組み右列（font preset 側で layout:vr_center）
@@ -156,8 +161,12 @@ export const ZABUTON_PRESETS = [
     },
   },
   {
-    id: "zab_emo_line", category: "切ない・エモい", label: "ライン（近似：座布団なし）",
-    apply: { zabuton: null, glow: null, textColor: "#FFFFFF", textStroke: null },
+    id: "zab_emo_line", category: "切ない・エモい", label: "ライン（白細線、縦組み左）",
+    apply: {
+      zabuton: null, glow: null,
+      textColor: "#FFFFFF", textStroke: null,
+      underline: { enabled: true, color: "#FFFFFF", width: 2, offset: 8 },
+    },
   },
 
   // 05 ダーク・妖艶  ─ 明るい box + 黒テキストが基調
@@ -173,8 +182,12 @@ export const ZABUTON_PRESETS = [
     },
   },
   {
-    id: "zab_dark_line", category: "ダーク・妖艶", label: "ライン（近似：座布団なし）",
-    apply: { zabuton: null, glow: null, textColor: "#FFFFFF", textStroke: null },
+    id: "zab_dark_line", category: "ダーク・妖艶", label: "ライン（アクア細線）",
+    apply: {
+      zabuton: null, glow: null,
+      textColor: "#FFFFFF", textStroke: null,
+      underline: { enabled: true, color: "#00A0EF", width: 2, offset: 8 },
+    },
   },
   {
     id: "zab_dark_box", category: "ダーク・妖艶", label: "色ボックス（紺→アクア→紺 グラデ）",

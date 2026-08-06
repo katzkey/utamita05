@@ -780,6 +780,19 @@ function renderLinePreviewHtml(line, project) {
     ? `${zabResult.svgDef}<div style="${zabResult.css}"></div>`
     : '';
 
+  // 下線（アンダーライン）：横組みは text の下、縦組みは左
+  const ul = line.underline;
+  let underlineHtml = '';
+  if (ul && ul.enabled) {
+    const w = toCqw(Math.max(1, Number(ul.width) || 2));
+    const off = toCqw(Math.max(0, Number(ul.offset) || 4));
+    const col = ul.color || "#FFFFFF";
+    const s = vertical
+      ? `position:absolute;top:0;bottom:0;left:-${off.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;background:${col};z-index:0;pointer-events:none`
+      : `position:absolute;left:0;right:0;bottom:-${off.toFixed(3)}cqw;height:${w.toFixed(3)}cqw;background:${col};z-index:0;pointer-events:none`;
+    underlineHtml = `<div style="${s}"></div>`;
+  }
+
   // 外枠 wrapper: 位置・変形はここに（子は shrink-to-fit で text natural size）
   const wrapperStyle = [
     `position:absolute`,
@@ -832,6 +845,7 @@ function renderLinePreviewHtml(line, project) {
       ${vGuide}
       <div style="${wrapperStyle}">
         ${zabLayerHtml}
+        ${underlineHtml}
         <div style="${textStyle}">${htmlText}</div>
       </div>
     </div>
@@ -926,7 +940,18 @@ function buildZabLayerCss(zab, toCqw, isVertical, filterId) {
     styles.push(`background: transparent`);
     styles.push(`box-shadow: inset 0 0 0 ${sw.toFixed(3)}cqw ${strokeColor}`);
   } else {
-    styles.push(`background: ${bgCss}`);
+    // 斜線などのパターンがあれば土台色の上に重ねる
+    const pat = zab.pattern;
+    if (pat && pat.type === "stripe") {
+      const stripeCol = hexToRgba(pat.color || "#0000E0", 1.0);
+      const size = toCqw(Math.max(1, Number(pat.size) || 6));
+      const gap  = toCqw(Math.max(1, Number(pat.gap)  || size));
+      const ang  = (isVertical ? (Number(pat.angle) || 0) + 90 : (Number(pat.angle) || 0));
+      const stripeBg = `repeating-linear-gradient(${ang}deg, ${stripeCol} 0 ${size.toFixed(3)}cqw, transparent ${size.toFixed(3)}cqw ${(size+gap).toFixed(3)}cqw)`;
+      styles.push(`background: ${stripeBg}, ${bgCss}`);
+    } else {
+      styles.push(`background: ${bgCss}`);
+    }
   }
   const bx = Number(zab.blurX) || 0;
   const by = Number(zab.blurY) || 0;
