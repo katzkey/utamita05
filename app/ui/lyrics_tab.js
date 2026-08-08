@@ -798,23 +798,26 @@ function renderLinePreviewHtml(line, project) {
     if (ul.texture === "scratchy") {
       const ulFid = `ul-scratchy-${line.id}`;
       const seed = ((Number(line.id) || 0) * 17 + 3) % 100;
-      // 線はほぼ連続、細長い方向にだけ低頻度ノイズで濃度をわずかに変える（カスレ）
+      // 線が伸びる方向は低頻度（＝濃淡がゆるく波打つ）、太さ方向は高頻度にして掠れを出す。
+      // brackets は「読む方向と平行」なので、縦組み＝線は縦 / 横組み＝線は横。
+      const lineIsVertical = (style === "brackets") ? vertical : !vertical;
+      const baseFreq = lineIsVertical ? "0.8 0.12" : "0.12 0.8";
       // alpha = 0.55(R+G+B) + 0.1 → 0.55〜1.0 でクランプ、完全透過にはならない
-      underlineSvgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${ulFid}" x="-5%" y="-20%" width="110%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.12 0.8" numOctaves="1" seed="${seed}" result="noise"/><feColorMatrix in="noise" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0.55 0.55 0 0.1" result="mask"/><feComposite in="SourceGraphic" in2="mask" operator="in"/></filter></svg>`;
+      underlineSvgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${ulFid}" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="${baseFreq}" numOctaves="1" seed="${seed}" result="noise"/><feColorMatrix in="noise" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0.55 0.55 0 0.1" result="mask"/><feComposite in="SourceGraphic" in2="mask" operator="in"/></filter></svg>`;
       filterCss = `;filter:url(#${ulFid})`;
     }
     const bgStyle = `background:${col};z-index:0;pointer-events:none${filterCss}`;
     if (style === "brackets") {
+      // 線は「読む方向と平行」にテキストの両脇へ。
+      // 縦組み（上→下に読む）＝左右に縦線 / 横組み（左→右）＝上下に横線
       if (vertical) {
-        // 縦組み：テキスト上下に横線
+        const left  = `position:absolute;left:-${off.toFixed(3)}cqw;top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;${bgStyle}`;
+        const right = `position:absolute;right:-${off.toFixed(3)}cqw;top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;${bgStyle}`;
+        underlineHtml = `<div style="${left}"></div><div style="${right}"></div>`;
+      } else {
         const top = `position:absolute;top:-${off.toFixed(3)}cqw;left:-${ext.toFixed(3)}cqw;right:-${ext.toFixed(3)}cqw;height:${w.toFixed(3)}cqw;${bgStyle}`;
         const bot = `position:absolute;bottom:-${off.toFixed(3)}cqw;left:-${ext.toFixed(3)}cqw;right:-${ext.toFixed(3)}cqw;height:${w.toFixed(3)}cqw;${bgStyle}`;
         underlineHtml = `<div style="${top}"></div><div style="${bot}"></div>`;
-      } else {
-        // 横組み：テキスト左右に縦線
-        const left = `position:absolute;left:-${off.toFixed(3)}cqw;top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;${bgStyle}`;
-        const right = `position:absolute;right:-${off.toFixed(3)}cqw;top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;${bgStyle}`;
-        underlineHtml = `<div style="${left}"></div><div style="${right}"></div>`;
       }
     } else {
       // solid（従来）：横組み=下 / 縦組み=左
