@@ -47,6 +47,22 @@ export function classifyChar(c) {
   return "other";
 }
 
+// 文字種ペアごとの自動カーニング量（em 単位＝フォントサイズ比なのでサイズに比例する）
+//
+// PDF 実測（cool/hot/dark の 5 ページ）では、かな・カタカナ・漢字どうしの字送りは
+// 0.977〜1.037 em、つまり 1em ちょうどのベタ組みで、追加の空きは入っていなかった。
+// 和文の中で空きが違って見えるのは、かなの字面が漢字より小さいというグリフ側の差。
+// よって空けるのは和文と欧文・数字の境界だけにする（四分アキ = 0.25em が組版の慣習）。
+const WABUN = new Set(["hiragana", "katakana", "kanji", "small_kana"]);
+const OUBUN = new Set(["ascii", "digit"]);
+
+export function autoKerningEm(prevType, curType) {
+  if (!prevType || !curType) return 0;
+  const wa2ou = WABUN.has(prevType) && OUBUN.has(curType);
+  const ou2wa = OUBUN.has(prevType) && WABUN.has(curType);
+  return (wa2ou || ou2wa) ? 0.25 : 0;
+}
+
 export function isSmallKana(c) {
   return SMALL_KANA.has(c);
 }

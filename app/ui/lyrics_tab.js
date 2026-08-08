@@ -8,7 +8,7 @@ import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts
 import { parseJitterBlocks, jitterOffsetFor } from "../core/utils.js";
 import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js";
 import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js";
-import { SMALL_KANA, classifyChar } from "../core/char_type.js";
+import { SMALL_KANA, classifyChar, autoKerningEm } from "../core/char_type.js";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -273,9 +273,18 @@ function renderDetail(project, ui) {
         <span style="font-size:10px;color:var(--gray-3);margin-left:8px">負で詰め、正で開く</span>
       </div>
       <div class="field">
+        <span class="field-label">カーニング</span>
+        <label class="lock-toggle"><input type="checkbox" id="fldAutoKerning" ${line.autoKerning ? "checked" : ""}><span>オートカーニング</span></label>
+      </div>
+      <div class="field" style="${line.autoKerning ? "display:none" : ""}">
         <span class="field-label">文字種ギャップ</span>
         <input class="field-input" id="fldInterTypeGap" type="number" step="0.02" min="0" value="${line.interTypeGap ?? 0}" style="width:80px">
-        <span style="font-size:10px;color:var(--gray-3);margin-left:8px">em（英/カナ/漢字境界に空き）</span>
+        <span style="font-size:10px;color:var(--gray-3);margin-left:8px">em（種類が変わる所に一律で空き）</span>
+      </div>
+      <div style="font-size:10px;color:var(--gray-3);margin:-4px 0 8px">
+        ${line.autoKerning
+          ? "和文と英数字の境界だけ四分アキ(0.25em)。かな・カタカナ・漢字どうしはベタ組み（PDF 実測に準拠）"
+          : "手動：種類が変わる所すべてに同じ幅を入れます"}
       </div>
       <div class="field">
         <span class="field-label">italic</span>
@@ -607,6 +616,11 @@ function renderDetail(project, ui) {
     const p = getProject();
     const line2 = p.lines.find(l => l.id === id);
     if (line2) setProject({ ...p, lines: p.lines.map(l => l.id === id ? { ...l, interTypeGap: v } : l) });
+  });
+  document.getElementById("fldAutoKerning").addEventListener("change", (e) => {
+    const p = getProject();
+    const on = e.target.checked;
+    setProject({ ...p, lines: p.lines.map(l => l.id === id ? { ...l, autoKerning: on } : l) });
   });
   document.getElementById("fldTextColor").addEventListener("change", (e) => {
     setProject(ops.setLineTextColor(getProject(), id, e.target.value));
@@ -1306,6 +1320,7 @@ function buildLineInnerHtml(line, opts) {
 
   // 文字種別ギャップ（アキ設定）：異なる種別の文字間に padding-inline-start で空きを追加
   const interTypeGap = Number(line.interTypeGap) || 0;
+  const autoKerning = !!line.autoKerning;
 
   // HTML 組み立て
   let html = "";
@@ -1341,8 +1356,13 @@ function buildLineInnerHtml(line, opts) {
     // 文字種別ギャップ：スペースは判定・prev 更新に含めない（隣接種別の判定を跨がせる）
     if (!isSpace) {
       const curType = classifyChar(t.ch);
-      if (interTypeGap > 0 && prevType && curType && prevType !== curType) {
-        chHtml = `<span style="padding-inline-start:${interTypeGap}em">${chHtml}</span>`;
+      // オートカーニング ON なら組版ルール（和文↔欧文だけ空ける）、
+      // OFF なら従来どおり「種類が変わったら一律 interTypeGap」
+      const gap = autoKerning
+        ? autoKerningEm(prevType, curType)
+        : ((interTypeGap > 0 && prevType && curType && prevType !== curType) ? interTypeGap : 0);
+      if (gap > 0) {
+        chHtml = `<span style="padding-inline-start:${gap}em">${chHtml}</span>`;
       }
       prevType = curType;
     }
