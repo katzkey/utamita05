@@ -36,7 +36,7 @@ const ZABUTON_BASE = {
   paddingX: 0, paddingY: 0, cornerRadius: 20,
   timingMode: "follow", fade: 0.3,
   strokeWidth: 2, perBlock: false,
-  blurX: 0, blurY: 0, gradient: null, pattern: null,
+  blurX: 0, blurY: 0, gradient: null, pattern: null, edge: null,
 };
 
 // 各 preset は zabuton / glow / textColor / textStroke を明示的に設定。
@@ -120,21 +120,22 @@ export const ZABUTON_PRESETS = [
     },
   },
   {
-    id: "zab_hot_jagged", category: "激しい・情熱的", label: "ギザギザ（近似：クリーム box）",
+    id: "zab_hot_jagged", category: "激しい・情熱的", label: "ギザギザ（破れ紙エッジ）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#E0D0C0", opacity: 0.98,
-        cornerRadius: 0, paddingX: 30, paddingY: 10,
+        ...ZABUTON_BASE, shape: "rect", color: "#E8DED0", opacity: 0.98,
+        cornerRadius: 0, paddingX: 30, paddingY: 14,
+        edge: { type: "torn", amp: 0.35, freq: 26, seed: 7 },
       },
       glow: null, textColor: "#000000", textStroke: null,
     },
   },
   {
-    id: "zab_hot_line", category: "激しい・情熱的", label: "ライン（赤アンダーライン）",
+    id: "zab_hot_line", category: "激しい・情熱的", label: "ライン（白下線）",
     apply: {
       zabuton: null, glow: null,
       textColor: "#FFFFFF", textStroke: null,
-      underline: { enabled: true, color: "#E60028", width: 4, offset: 6 },
+      underline: { enabled: true, style: "solid", color: "#FFFFFF", width: 2, offset: 6 },
     },
   },
 
@@ -161,11 +162,14 @@ export const ZABUTON_PRESETS = [
     },
   },
   {
-    id: "zab_emo_line", category: "切ない・エモい", label: "ライン（白細線、縦組み左）",
+    id: "zab_emo_line", category: "切ない・エモい", label: "ライン（縦組み上下ブラケット・カスレ）",
     apply: {
       zabuton: null, glow: null,
       textColor: "#FFFFFF", textStroke: null,
-      underline: { enabled: true, color: "#FFFFFF", width: 2, offset: 8 },
+      underline: {
+        enabled: true, style: "brackets", texture: "scratchy",
+        color: "#FFFFFF", width: 1.5, offset: 10, extend: 8,
+      },
     },
   },
 
@@ -186,7 +190,7 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: null, glow: null,
       textColor: "#FFFFFF", textStroke: null,
-      underline: { enabled: true, color: "#00A0EF", width: 2, offset: 8 },
+      underline: { enabled: true, style: "solid", color: "#00A0EF", width: 2, offset: 8 },
     },
   },
   {

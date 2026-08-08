@@ -54,6 +54,7 @@ export function defaultZabuton() {
     blurY: 0,             // 座布団のエッジぼかし量 Y 方向（AE px）
     gradient: null,       // グラデーション設定 or null。定義時：{ enabled, angle, colorA, colorB, colorC (省略可) }
     pattern: null,        // 斜線等のパターン塗り or null。{ type:"stripe", color, angle, size, gap } 形式
+    edge: null,           // 縁の装飾 or null。{ type:"torn", amp(0-1 高さに対する凹み比), freq(横方向分割数), seed }
   };
 }
 

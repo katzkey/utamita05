@@ -780,17 +780,48 @@ function renderLinePreviewHtml(line, project) {
     ? `${zabResult.svgDef}<div style="${zabResult.css}"></div>`
     : '';
 
-  // 下線（アンダーライン）：横組みは text の下、縦組みは左
+  // 下線（アンダーライン）
+  //  style="solid"    : 横組みは text の下 / 縦組みは左（1 本の連続線）
+  //  style="brackets" : 読む方向の両端に線（横=左右、縦=上下）
+  //  texture="scratchy": SVG feTurbulence で線に カスレ 効果
   const ul = line.underline;
   let underlineHtml = '';
+  let underlineSvgDef = '';
   if (ul && ul.enabled) {
-    const w = toCqw(Math.max(1, Number(ul.width) || 2));
+    const w = toCqw(Math.max(0.5, Number(ul.width) || 2));
     const off = toCqw(Math.max(0, Number(ul.offset) || 4));
+    const ext = toCqw(Math.max(0, Number(ul.extend) || 0));
     const col = ul.color || "#FFFFFF";
-    const s = vertical
-      ? `position:absolute;top:0;bottom:0;left:-${off.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;background:${col};z-index:0;pointer-events:none`
-      : `position:absolute;left:0;right:0;bottom:-${off.toFixed(3)}cqw;height:${w.toFixed(3)}cqw;background:${col};z-index:0;pointer-events:none`;
-    underlineHtml = `<div style="${s}"></div>`;
+    const style = ul.style || "solid";
+    // scratchy filter を必要に応じ差し込む
+    let filterCss = "";
+    if (ul.texture === "scratchy") {
+      const ulFid = `ul-scratchy-${line.id}`;
+      const seed = ((Number(line.id) || 0) * 17 + 3) % 100;
+      underlineSvgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${ulFid}" x="-10%" y="-30%" width="120%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.9 0.4" numOctaves="1" seed="${seed}" result="noise"/><feColorMatrix in="noise" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 -1.1" result="mask"/><feComposite in="SourceGraphic" in2="mask" operator="in"/></filter></svg>`;
+      filterCss = `;filter:url(#${ulFid})`;
+    }
+    const bgStyle = `background:${col};z-index:0;pointer-events:none${filterCss}`;
+    if (style === "brackets") {
+      if (vertical) {
+        // 縦組み：テキスト上下に横線
+        const top = `position:absolute;top:-${off.toFixed(3)}cqw;left:-${ext.toFixed(3)}cqw;right:-${ext.toFixed(3)}cqw;height:${w.toFixed(3)}cqw;${bgStyle}`;
+        const bot = `position:absolute;bottom:-${off.toFixed(3)}cqw;left:-${ext.toFixed(3)}cqw;right:-${ext.toFixed(3)}cqw;height:${w.toFixed(3)}cqw;${bgStyle}`;
+        underlineHtml = `<div style="${top}"></div><div style="${bot}"></div>`;
+      } else {
+        // 横組み：テキスト左右に縦線
+        const left = `position:absolute;left:-${off.toFixed(3)}cqw;top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;${bgStyle}`;
+        const right = `position:absolute;right:-${off.toFixed(3)}cqw;top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;${bgStyle}`;
+        underlineHtml = `<div style="${left}"></div><div style="${right}"></div>`;
+      }
+    } else {
+      // solid（従来）：横組み=下 / 縦組み=左
+      const s = vertical
+        ? `position:absolute;top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;left:-${off.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;${bgStyle}`
+        : `position:absolute;left:-${ext.toFixed(3)}cqw;right:-${ext.toFixed(3)}cqw;bottom:-${off.toFixed(3)}cqw;height:${w.toFixed(3)}cqw;${bgStyle}`;
+      underlineHtml = `<div style="${s}"></div>`;
+    }
+    underlineHtml = underlineSvgDef + underlineHtml;
   }
 
   // 外枠 wrapper: 位置・変形はここに（子は shrink-to-fit で text natural size）
@@ -934,6 +965,28 @@ function buildZabLayerCss(zab, toCqw, isVertical, filterId) {
     `z-index: 0`,
     `pointer-events: none`,
   ];
+  // 破れ縁：不規則な上下エッジを clip-path で表現
+  const edge = zab.edge;
+  if (edge && edge.type === "torn") {
+    const amp = Math.min(0.9, Math.max(0, Number(edge.amp) || 0.3));
+    const freq = Math.max(6, Math.floor(Number(edge.freq) || 20));
+    let s = (Number(edge.seed) || 1) | 0; if (s <= 0) s = 1;
+    const rnd = () => { s = (s * 9301 + 49297) & 0x7fffffff; return (s % 100000) / 100000; };
+    const pts = [];
+    // 上辺（左→右）: y は 0..amp*100%（内側に凹む）
+    for (let i = 0; i <= freq; i++) {
+      const x = (i / freq) * 100;
+      const y = (i === 0 || i === freq) ? 0 : rnd() * amp * 100 * 0.5;
+      pts.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
+    }
+    // 下辺（右→左）
+    for (let i = freq; i >= 0; i--) {
+      const x = (i / freq) * 100;
+      const y = (i === 0 || i === freq) ? 100 : 100 - rnd() * amp * 100 * 0.5;
+      pts.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
+    }
+    styles.push(`clip-path: polygon(${pts.join(', ')})`);
+  }
   if (zab.mode === "stroke") {
     const strokeColor = (grad && grad.enabled) ? hexToRgba(grad.colorA || "#FF69B4", opacity) : rgba;
     const sw = toCqw(zab.strokeWidth ?? 2);
