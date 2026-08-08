@@ -68,8 +68,9 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: {
         ...ZABUTON_BASE, shape: "rect", cornerRadius: 0,
-        color: "#A0E3DF", opacity: 0.9, paddingX: 30, paddingY: 10,
-        gradient: { enabled: true, angle: 90, colorA: "#A0E3DF", colorB: "#B0D8E4", colorC: "#E0B0D0" },
+        color: "#9ADEE3", opacity: 0.9, paddingX: 30, paddingY: 10,
+        // PDF 実測（x=0.35/0.55/0.65）: アクア → ラベンダー → ピンク
+        gradient: { enabled: true, angle: 90, colorA: "#9ADEE3", colorB: "#C8BCE0", colorC: "#DFACD3" },
       },
       glow: null, textColor: "#000000", textStroke: null,
     },
@@ -88,9 +89,11 @@ export const ZABUTON_PRESETS = [
     id: "zab_cool_diag", category: "かっこいい・クール", label: "斜線座布団（ブルーストライプ）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#000000", opacity: 0.0,
+        // PDF 実測: 線間 (27,60,87) / 帯外背景 (41,89,129) → 比 0.67 = 黒 33% の下地
+        // 斜線は純黒、向きは "\"（CSS 45deg）、細かいピッチ
+        ...ZABUTON_BASE, shape: "rect", color: "#000000", opacity: 0.33,
         cornerRadius: 0, paddingX: 30, paddingY: 12,
-        pattern: { type: "stripe", color: "#0000E0", angle: -45, size: 6, gap: 6 },
+        pattern: { type: "stripe", color: "#000000", angle: 45, size: 1.5, gap: 3.5 },
       },
       glow: null, textColor: "#FFFFFF", textStroke: null, underline: null,
     },
@@ -99,7 +102,8 @@ export const ZABUTON_PRESETS = [
     id: "zab_cool_gradient", category: "かっこいい・クール", label: "カラー座布団（ブルーグラデ）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#0000C0", opacity: 0.95, cornerRadius: 0,
+        // PDF 実測 (4,10,217) → #0208D9
+        ...ZABUTON_BASE, shape: "rect", color: "#0208D9", opacity: 0.95, cornerRadius: 0,
         paddingX: 80, paddingY: 12,
         blurX: 80, blurY: 0,
         gradient: null,
@@ -123,9 +127,11 @@ export const ZABUTON_PRESETS = [
     id: "zab_hot_jagged", category: "激しい・情熱的", label: "ギザギザ（破れ紙エッジ）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#E8DED0", opacity: 0.98,
+        // PDF 実測 (216,209,204) を暗い背景(46,17,0)から逆算 → 白 80%（クリームではない）
+        // ちぎれ幅は帯高の 4〜5%、ピッチ約 4px の細かいギザ
+        ...ZABUTON_BASE, shape: "rect", color: "#FFFFFF", opacity: 0.80,
         cornerRadius: 0, paddingX: 30, paddingY: 14,
-        edge: { type: "torn", amp: 0.35, freq: 26, seed: 7 },
+        edge: { type: "torn", amp: 0.18, freq: 100, seed: 7 },
       },
       glow: null, textColor: "#000000", textStroke: null,
     },
@@ -194,14 +200,16 @@ export const ZABUTON_PRESETS = [
     },
   },
   {
-    id: "zab_dark_box", category: "ダーク・妖艶", label: "色ボックス（紺→アクア→紺 グラデ）",
+    id: "zab_dark_box", category: "ダーク・妖艶", label: "色ボックス（アクア→淡→アクア グラデ）",
     apply: {
       zabuton: {
-        ...ZABUTON_BASE, shape: "rect", color: "#001080", opacity: 0.95,
+        // PDF 実測（x=0.35/0.55/0.65）: #56D4D9 → #C6E9F8 → #59EDDE。
+        // 明るいアクア系で、テキストは黒。以前の「紺→アクア→紺・白文字」は誤り。
+        ...ZABUTON_BASE, shape: "rect", color: "#56D4D9", opacity: 0.95,
         cornerRadius: 0, paddingX: 30, paddingY: 10,
-        gradient: { enabled: true, angle: 90, colorA: "#001080", colorB: "#00A0EF", colorC: "#001080" },
+        gradient: { enabled: true, angle: 90, colorA: "#56D4D9", colorB: "#C6E9F8", colorC: "#59EDDE" },
       },
-      glow: null, textColor: "#FFFFFF", textStroke: null,
+      glow: null, textColor: "#000000", textStroke: null,
     },
   },
 ];
