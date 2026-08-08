@@ -798,12 +798,22 @@ function renderLinePreviewHtml(line, project) {
     if (ul.texture === "scratchy") {
       const ulFid = `ul-scratchy-${line.id}`;
       const seed = ((Number(line.id) || 0) * 17 + 3) % 100;
-      // 線が伸びる方向は低頻度（＝濃淡がゆるく波打つ）、太さ方向は高頻度にして掠れを出す。
+      // PDF 実測：線は途切れていない。手描きの線が横に微妙に揺れ、
+      // 太さがゆらいで縁がわずかに荒れている＝カスレ。
+      // → 透明度ムラだけでは出ないので feDisplacementMap で線自体を歪ませる。
       // brackets は「読む方向と平行」なので、縦組み＝線は縦 / 横組み＝線は横。
       const lineIsVertical = (style === "brackets") ? vertical : !vertical;
-      const baseFreq = lineIsVertical ? "0.8 0.12" : "0.12 0.8";
-      // alpha = 0.55(R+G+B) + 0.1 → 0.55〜1.0 でクランプ、完全透過にはならない
-      underlineSvgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${ulFid}" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="${baseFreq}" numOctaves="1" seed="${seed}" result="noise"/><feColorMatrix in="noise" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0.55 0.55 0 0.1" result="mask"/><feComposite in="SourceGraphic" in2="mask" operator="in"/></filter></svg>`;
+      // 線が伸びる方向のノイズは低周波（＝ゆるやかな蛇行）、
+      // 太さ方向は高周波（＝縁のざらつき）
+      const warpFreq = lineIsVertical ? "0.5 0.035" : "0.035 0.5";
+      const fadeFreq = lineIsVertical ? "0.7 0.09"  : "0.09 0.7";
+      // 細い辺に振れ幅を確保するためフィルタ領域を太さ方向へ大きく広げる
+      const region = lineIsVertical
+        ? `x="-400%" y="-2%" width="900%" height="104%"`
+        : `x="-2%" y="-400%" width="104%" height="900%"`;
+      const warp = Math.max(0.5, Number(ul.warp) || 2.5); // 蛇行の振れ幅(px)
+      // alpha = 0.45(R+G+B) + 0.35 → おおよそ 0.5〜1.0。完全に切れはしない
+      underlineSvgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${ulFid}" ${region}><feTurbulence type="fractalNoise" baseFrequency="${warpFreq}" numOctaves="3" seed="${seed}" result="warp"/><feDisplacementMap in="SourceGraphic" in2="warp" scale="${warp}" xChannelSelector="R" yChannelSelector="G" result="wobbly"/><feTurbulence type="fractalNoise" baseFrequency="${fadeFreq}" numOctaves="1" seed="${(seed + 41) % 100}" result="fade"/><feColorMatrix in="fade" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.45 0.45 0.45 0 0.35" result="mask"/><feComposite in="wobbly" in2="mask" operator="in"/></filter></svg>`;
       filterCss = `;filter:url(#${ulFid})`;
     }
     const bgStyle = `background:${col};z-index:0;pointer-events:none${filterCss}`;
