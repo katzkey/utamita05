@@ -379,6 +379,24 @@ function renderDetail(project, ui) {
             <label class="lock-toggle" style="margin-left:8px"><input type="checkbox" id="fldZabGradCOn" ${line.zabuton?.gradient?.colorC ? "checked" : ""}><span>3 色目を使う</span></label>
           </div>
         </div>
+        <div class="field">
+          <span class="field-label">斜線</span>
+          <label class="lock-toggle"><input type="checkbox" id="fldZabPatOn" ${line.zabuton?.pattern ? "checked" : ""}><span>ストライプを重ねる</span></label>
+        </div>
+        <div id="zabPatFields" style="${line.zabuton?.pattern ? "" : "display:none"}">
+          <div class="field">
+            <span class="field-label">線の太さ / 間隔</span>
+            <input class="field-input" id="fldZabPatSize" type="number" min="0.5" step="0.5" value="${line.zabuton?.pattern?.size ?? 1.5}" style="width:60px">
+            <input class="field-input" id="fldZabPatGap" type="number" min="0.5" step="0.5" value="${line.zabuton?.pattern?.gap ?? 3.5}" style="width:60px;margin-left:4px">
+            <span style="font-size:10px;color:var(--gray-3);margin-left:8px">px</span>
+          </div>
+          <div class="field">
+            <span class="field-label">角度 / 色</span>
+            <input class="field-input" id="fldZabPatAngle" type="number" step="15" value="${line.zabuton?.pattern?.angle ?? 45}" style="width:60px">
+            <input type="color" id="fldZabPatColor" value="${line.zabuton?.pattern?.color || "#000000"}" style="width:40px;height:24px;padding:0;border:none;margin-left:8px">
+            <span style="font-size:10px;color:var(--gray-3);margin-left:8px">45=「＼」, 135=「／」</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -641,6 +659,25 @@ function renderDetail(project, ui) {
   document.getElementById("fldZabGradCOn").addEventListener("change", (e) => {
     setGrad({ colorC: e.target.checked ? (document.getElementById("fldZabGradC")?.value || "#00FFFF") : null });
   });
+
+  // 斜線パターンのハンドラ
+  const setPat = (partial) => {
+    const p = getProject();
+    const line2 = p.lines.find(l => l.id === id);
+    const cur = line2?.zabuton?.pattern || { type: "stripe", color: "#000000", angle: 45, size: 1.5, gap: 3.5 };
+    setProject(ops.setLineZabuton(p, id, { pattern: { ...cur, ...partial } }));
+  };
+  document.getElementById("fldZabPatOn").addEventListener("change", (e) => {
+    if (e.target.checked) setPat({});
+    else setProject(ops.setLineZabuton(getProject(), id, { pattern: null }));
+  });
+  document.getElementById("fldZabPatSize").addEventListener("change", (e) => setPat({ size: Math.max(0.5, Number(e.target.value) || 1.5) }));
+  document.getElementById("fldZabPatGap").addEventListener("change", (e) => setPat({ gap: Math.max(0.5, Number(e.target.value) || 3.5) }));
+  document.getElementById("fldZabPatAngle").addEventListener("change", (e) => setPat({ angle: Number(e.target.value) || 0 }));
+  document.getElementById("fldZabPatColor").addEventListener("change", (e) => setPat({ color: e.target.value }));
+  attachArrowStep("fldZabPatSize", (v) => setPat({ size: Math.max(0.5, v) }));
+  attachArrowStep("fldZabPatGap", (v) => setPat({ gap: Math.max(0.5, v) }));
+  attachArrowStep("fldZabPatAngle", (v) => setPat({ angle: v }));
 
   // ジッター
   document.getElementById("fldJitOn").addEventListener("change", (e) => {
