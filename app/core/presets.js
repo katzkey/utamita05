@@ -168,7 +168,7 @@ export const ZABUTON_PRESETS = [
       textColor: "#FFFFFF", textStroke: null,
       underline: {
         enabled: true, style: "brackets", texture: "scratchy",
-        color: "#FFFFFF", width: 1.5, offset: 10, extend: 8,
+        color: "#FFFFFF", width: 1.5, offset: 12, extend: 24,
       },
     },
   },

@@ -798,7 +798,9 @@ function renderLinePreviewHtml(line, project) {
     if (ul.texture === "scratchy") {
       const ulFid = `ul-scratchy-${line.id}`;
       const seed = ((Number(line.id) || 0) * 17 + 3) % 100;
-      underlineSvgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${ulFid}" x="-10%" y="-30%" width="120%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.9 0.4" numOctaves="1" seed="${seed}" result="noise"/><feColorMatrix in="noise" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 -1.1" result="mask"/><feComposite in="SourceGraphic" in2="mask" operator="in"/></filter></svg>`;
+      // 線はほぼ連続、細長い方向にだけ低頻度ノイズで濃度をわずかに変える（カスレ）
+      // alpha = 0.55(R+G+B) + 0.1 → 0.55〜1.0 でクランプ、完全透過にはならない
+      underlineSvgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${ulFid}" x="-5%" y="-20%" width="110%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.12 0.8" numOctaves="1" seed="${seed}" result="noise"/><feColorMatrix in="noise" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0.55 0.55 0 0.1" result="mask"/><feComposite in="SourceGraphic" in2="mask" operator="in"/></filter></svg>`;
       filterCss = `;filter:url(#${ulFid})`;
     }
     const bgStyle = `background:${col};z-index:0;pointer-events:none${filterCss}`;
