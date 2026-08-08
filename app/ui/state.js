@@ -7,7 +7,7 @@ import { saveFileToStore, loadFileFromStore } from "../core/file_store.js";
 // プロジェクトの中身ではなく「どう表示していたか」を次回起動まで覚えておく。
 // ここに挙げたキーだけが localStorage に残る。
 const UI_PREFS_KEY = "utamita05.uiPrefs.v1";
-const PERSISTED_UI_KEYS = ["previewLarge"];
+const PERSISTED_UI_KEYS = ["previewLarge", "detailTab"];
 
 function loadUiPrefs() {
   try {
@@ -45,6 +45,7 @@ const state = {
     audioUrl: null,
     dirty: false,            // 保存前の変更あり
     previewLarge: false,     // プレビュー拡大（前回の状態を復元）
+    detailTab: "look",       // 詳細ペインのサブタブ "content" | "look" | "motion"
     ...loadUiPrefs(),        // 保存済みがあれば既定値を上書き
   },
   // 素材ファイルの Blob URL レジストリ（filename → { file, url }）。

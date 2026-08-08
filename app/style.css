@@ -240,6 +240,37 @@ body { display: flex; flex-direction: column; }
   margin-top: 4px; color: var(--dark);
   word-break: break-all;
 }
+/* 詳細ペインのサブタブ：内容 / 見た目 / 動き */
+.detail-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 10px 0 14px;
+  border-bottom: 1px solid var(--gray-2);
+}
+.detail-tab {
+  flex: 1;
+  padding: 7px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-4);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+}
+.detail-tab:hover { color: var(--dark); }
+.detail-tab.is-active {
+  color: var(--dark);
+  border-bottom-color: var(--accent, #f28c28);
+}
+/* data-pane 付きのセクションは選択中のタブのものだけ表示。
+   data-pane を持たないセクション（全体へ反映）は常に出す。 */
+.section[data-pane] { display: none; }
+[data-active-tab="content"] .section[data-pane="content"],
+[data-active-tab="look"]    .section[data-pane="look"],
+[data-active-tab="motion"]  .section[data-pane="motion"] { display: block; }
+
 .section { margin-bottom: 18px; }
 .section-title {
   font-size: 10px; color: var(--gray-4);

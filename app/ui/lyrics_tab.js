@@ -117,6 +117,7 @@ function renderDetail(project, ui) {
   const tIn = line.tIn != null ? secondsToTC(line.tIn, project.fps) : "";
   const tOut = line.tOut != null ? secondsToTC(line.tOut, project.fps) : "";
   const ttext = (line.text || "").replace(/\\n/g, "\n");
+  const detailTab = ["content", "look", "motion"].includes(ui.detailTab) ? ui.detailTab : "look";
 
   const resolved = resolveLineTemplate(line, project);
 
@@ -162,7 +163,13 @@ function renderDetail(project, ui) {
       ${renderLinePreviewHtml(line, project)}
     </div>
 
-    <div class="section">
+    <div class="detail-tabs">
+      ${[["content","内容"],["look","見た目"],["motion","動き"]].map(([k, label]) =>
+        `<button class="detail-tab ${detailTab === k ? "is-active" : ""}" data-tab="${k}">${label}</button>`
+      ).join("")}
+    </div>
+
+    <div class="section" data-pane="look">
       <div class="section-title">プリセット</div>
       <div class="field">
         <span class="field-label">フォント</span>
@@ -212,13 +219,13 @@ function renderDetail(project, ui) {
       </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-pane="content">
       <div class="section-title">歌詞テキスト</div>
       <textarea class="field-textarea" id="fldText">${escapeHtml(ttext)}</textarea>
       <div style="font-size:10px;color:var(--gray-3);margin-top:4px">改行は \\n リテラルか実改行どちらでも</div>
     </div>
 
-    <div class="section">
+    <div class="section" data-pane="content">
       <div class="section-title">TC</div>
       <div class="field">
         <span class="field-label">IN</span>
@@ -235,19 +242,19 @@ function renderDetail(project, ui) {
       </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-pane="motion">
       <div class="section-title">モーション</div>
       ${tmplSlotHtml("entry", "Entry")}
       ${tmplSlotHtml("hold", "Hold")}
       ${tmplSlotHtml("exit", "Exit")}
     </div>
 
-    <div class="section">
+    <div class="section" data-pane="motion">
       <div class="section-title">デザイン</div>
       ${tmplSlotHtml("design", "Design")}
     </div>
 
-    <div class="section">
+    <div class="section" data-pane="look">
       <div class="section-title">フォント（行で上書き）</div>
       <div class="field">
         <span class="field-label">family</span>
@@ -287,7 +294,7 @@ function renderDetail(project, ui) {
       </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-pane="look">
       <div class="section-title">配置</div>
       <div class="field">
         <span class="field-label">layout</span>
@@ -308,7 +315,7 @@ function renderDetail(project, ui) {
       </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-pane="look">
       <div class="section-title">座布団</div>
       <div class="field">
         <span class="field-label">有効</span>
@@ -408,7 +415,7 @@ function renderDetail(project, ui) {
       </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-pane="look">
       <div class="section-title">光彩（テキストグロー）</div>
       <div class="field">
         <span class="field-label">有効</span>
@@ -427,7 +434,7 @@ function renderDetail(project, ui) {
       </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-pane="look">
       <div class="section-title">ジッター（ブロック単位のランダム位置ずれ）</div>
       <div class="field">
         <span class="field-label">有効</span>
@@ -456,7 +463,7 @@ function renderDetail(project, ui) {
       </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-pane="content">
       <div class="section-title">強調</div>
       <textarea class="field-textarea" id="fldEmphasis" placeholder="例:&#10;ナイト:2&#10;君:1&#10;月:3:2  ← 月の2番目だけ Lv3">${escapeHtml(formatEmphasisSpecs(line.emphasis || []))}</textarea>
       <div style="font-size:10px;color:var(--gray-3);margin-top:4px">
@@ -464,7 +471,7 @@ function renderDetail(project, ui) {
       </div>
     </div>
 
-    <div class="section">
+    <div class="section" data-pane="content">
       <div class="section-title">メモ</div>
       <textarea class="field-textarea" id="fldNote">${escapeHtml(line.note)}</textarea>
     </div>
@@ -478,6 +485,12 @@ function renderDetail(project, ui) {
       </div>
     </div>
   `;
+
+  // サブタブ：セクションの DOM 並び順は変えず、data-active-tab で CSS 出し分け
+  detailPaneEl.dataset.activeTab = detailTab;
+  detailPaneEl.querySelectorAll(".detail-tab").forEach(btn => {
+    btn.addEventListener("click", () => setUi({ detailTab: btn.getAttribute("data-tab") }));
+  });
 
   // ハンドラ
   document.getElementById("fldFontPreset").addEventListener("change", (e) => {
