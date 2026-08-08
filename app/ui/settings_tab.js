@@ -3,6 +3,8 @@
 import { getProject, setProject } from "./state.js";
 import * as ops from "../core/operations.js";
 import { loadFonts, getFontEntries } from "../core/fonts_loader.js";
+import { getCustomZabutonPresets } from "../core/presets.js";
+import { exportCustomPresetsJson, importCustomPresetsJson } from "../core/custom_presets.js";
 
 let pane;
 
@@ -75,6 +77,22 @@ export function render() {
       <button class="tool-btn" data-bulk-inherit="design">Design を全解除</button>
     </div>
     <button class="tool-btn tool-btn-danger" id="btnInheritAll">全行・全スロットを継承に戻す</button>
+
+    <h2 style="margin-top:36px">カスタムプリセット</h2>
+    <div style="font-size:12px;color:var(--gray-3,#999);margin-bottom:8px">
+      保存したプリセットは <b>この PC のブラウザ</b> に入っています（現在 ${getCustomZabutonPresets().length} 個）。<br>
+      他の作業者に渡すとき・バックアップを取るときはファイルに書き出してください。
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="tool-btn" id="btnExportPresets">プリセットを書き出し (.json)</button>
+      <button class="tool-btn" id="btnImportPresets">読み込み（追加・同名は上書き）</button>
+      <button class="tool-btn tool-btn-danger" id="btnImportPresetsReplace">読み込み（全部入れ替え）</button>
+      <input type="file" id="filePresetImport" accept=".json,application/json" style="display:none">
+    </div>
+    ${getCustomZabutonPresets().length ? `
+      <div style="font-size:12px;color:var(--gray-3,#999)">
+        ${getCustomZabutonPresets().map(p => escapeHtml(p.label)).join(" ／ ")}
+      </div>` : ``}
   `;
 
   pane.querySelector("#setName").addEventListener("change", e => setProject(ops.setName(getProject(), e.target.value)));
@@ -117,6 +135,36 @@ export function render() {
       p = ops.inheritTemplateAll(p, slot);
     }
     setProject(p);
+    render();
+  });
+
+  // カスタムプリセットの書き出し / 読み込み
+  pane.querySelector("#btnExportPresets").addEventListener("click", () => {
+    if (!getCustomZabutonPresets().length) { alert("書き出すカスタムプリセットがありません。"); return; }
+    const blob = new Blob([exportCustomPresetsJson()], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "utamita05_presets.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  const fileEl = pane.querySelector("#filePresetImport");
+  let importMode = "merge";
+  pane.querySelector("#btnImportPresets").addEventListener("click", () => {
+    importMode = "merge"; fileEl.value = ""; fileEl.click();
+  });
+  pane.querySelector("#btnImportPresetsReplace").addEventListener("click", () => {
+    if (!confirm("今この PC にあるカスタムプリセットを全部破棄して、ファイルの内容に入れ替えます。よろしいですか？")) return;
+    importMode = "replace"; fileEl.value = ""; fileEl.click();
+  });
+  fileEl.addEventListener("change", async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const text = await f.text();
+    const r = importCustomPresetsJson(text, importMode);
+    if (!r.ok) { alert(r.error); return; }
+    alert(`${r.count} 個読み込みました（合計 ${r.total} 個）`);
     render();
   });
 }

@@ -229,10 +229,16 @@ export function getZabutonPresetsByCategory(category) {
   return ZABUTON_PRESETS.filter(p => p.category === category);
 }
 
-// 全カテゴリの座布団プリセットを Map<category, preset[]> で返す
+// ---- カスタムプリセット（作業者が保存したもの）のレジストリ ----
+// 実体の保存は core/custom_presets.js（localStorage）。ここは参照用の置き場。
+let CUSTOM_ZABUTON = [];
+export function setCustomZabutonPresets(list) { CUSTOM_ZABUTON = Array.isArray(list) ? list : []; }
+export function getCustomZabutonPresets() { return CUSTOM_ZABUTON; }
+
+// 全カテゴリの座布団プリセットを Map<category, preset[]> で返す（カスタムは末尾）
 export function getAllZabutonPresetsByCategory() {
   const map = new Map();
-  for (const p of ZABUTON_PRESETS) {
+  for (const p of ZABUTON_PRESETS.concat(CUSTOM_ZABUTON)) {
     if (!map.has(p.category)) map.set(p.category, []);
     map.get(p.category).push(p);
   }
@@ -244,7 +250,9 @@ export function getFontPresetById(id) {
 }
 
 export function getZabutonPresetById(id) {
-  return ZABUTON_PRESETS.find(p => p.id === id) || null;
+  return ZABUTON_PRESETS.find(p => p.id === id)
+      || CUSTOM_ZABUTON.find(p => p.id === id)
+      || null;
 }
 
 // 互換：旧 API を新プリセットから見つける

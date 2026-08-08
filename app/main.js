@@ -3,6 +3,7 @@
 
 import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js";
 import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js";
+import { initCustomPresets } from "./core/custom_presets.js";
 import * as lyrics from "./ui/lyrics_tab.js";
 import * as bgTab from "./ui/background_tab.js";
 import * as titlesTab from "./ui/titles_tab.js";
@@ -20,6 +21,9 @@ async function init() {
   dirtyStatusEl = document.getElementById("dirtyStatus");
   undoBtn = document.getElementById("btnUndo");
   redoBtn = document.getElementById("btnRedo");
+
+  // この PC に保存されたカスタムプリセットを読み込む（プリセット一覧に出す前に）
+  initCustomPresets();
 
   // テンプレレジストリを最初に読込し、初期プロジェクトに反映
   await loadTemplatesRegistry();

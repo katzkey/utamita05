@@ -7,6 +7,7 @@ import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "
 import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js";
 import { parseJitterBlocks, jitterOffsetFor } from "../core/utils.js";
 import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js";
 import { SMALL_KANA, classifyChar } from "../core/char_type.js";
 
 let detailPaneEl;
@@ -199,8 +200,15 @@ function renderDetail(project, ui) {
           })()}
         </select>
       </div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button class="tool-btn" id="btnSaveCustomPreset" style="font-size:11px">現在の設定を保存…</button>
+        ${isCustomPresetId(line.zabutonPresetId)
+          ? `<button class="tool-btn tool-btn-danger" id="btnDeleteCustomPreset" style="font-size:11px">このカスタムを削除</button>`
+          : ``}
+      </div>
       <div style="font-size:10px;color:var(--gray-3);margin-top:4px">
-        フォント／座布団は独立して選択できます（適用後も個別編集可）
+        フォント／座布団は独立して選択できます（適用後も個別編集可）。<br>
+        保存すると座布団・光彩・文字色・縁取り・下線がカスタムプリセットになります（この PC に保存）
       </div>
     </div>
 
@@ -481,6 +489,30 @@ function renderDetail(project, ui) {
     const v = e.target.value;
     if (!v) return;
     setProject(ops.applyZabutonPresetToLine(getProject(), id, v));
+  });
+
+  // カスタムプリセットの保存 / 削除
+  document.getElementById("btnSaveCustomPreset").addEventListener("click", () => {
+    const p = getProject();
+    const line2 = p.lines.find(l => l.id === id);
+    if (!line2) return;
+    const name = prompt("カスタムプリセット名（同じ名前で保存すると上書きします）", "");
+    if (name === null) return;
+    const r = saveLineAsCustomPreset(line2, name);
+    if (!r.ok) { alert(r.error); return; }
+    // 保存したプリセットを選択状態にして再描画
+    setProject(ops.applyZabutonPresetToLine(getProject(), id, r.preset.id));
+  });
+  const delBtn = document.getElementById("btnDeleteCustomPreset");
+  if (delBtn) delBtn.addEventListener("click", () => {
+    const p = getProject();
+    const line2 = p.lines.find(l => l.id === id);
+    const pid = line2?.zabutonPresetId;
+    if (!pid || !isCustomPresetId(pid)) return;
+    if (!confirm("このカスタムプリセットを削除します。よろしいですか？\n（すでに適用済みの行の見た目はそのまま残ります）")) return;
+    deleteCustomPreset(pid);
+    // 参照だけ外す（見た目は保持）
+    setProject(ops.setLineZabutonPresetId(getProject(), id, null));
   });
 
   const onTextChange = () => {

@@ -274,6 +274,12 @@ export function applyZabutonPresetToLine(project, id, presetId) {
   });
 }
 
+// 座布団プリセットの参照だけ差し替える（見た目は変えない）
+// カスタムプリセットを削除したときに、行が消えた id を指したままにならないよう使う
+export function setLineZabutonPresetId(project, id, presetId) {
+  return updateLine(project, id, (line) => ({ ...line, zabutonPresetId: presetId ?? null }));
+}
+
 // 下線装飾設定
 export function setLineUnderline(project, id, partial) {
   return updateLine(project, id, (line) => {
