@@ -11,6 +11,7 @@ import * as tmplTab from "./ui/templates_tab.js";
 import * as settings from "./ui/settings_tab.js";
 import * as playbar from "./ui/playbar.js";
 import * as fileio from "./ui/file_io.js";
+import * as autoTiming from "./ui/auto_timing.js";
 
 let projectNameEl;
 let dirtyStatusEl;
@@ -37,6 +38,7 @@ async function init() {
   settings.init();
   playbar.init();
   fileio.init();
+  autoTiming.init();
 
   // タブ切替
   document.querySelectorAll(".tab").forEach(tab => {

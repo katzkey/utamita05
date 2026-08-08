@@ -1,0 +1,273 @@
+// タイミング自動検出パネル
+//
+// 重い処理（ボーカル分離・書き起こし）はローカルヘルパーに任せる。
+// アプリ本体は GitHub Pages のままなので、push すれば全員最新という利点は保たれる。
+// https のページから http://localhost を叩けることは検証済み
+// （ヘルパー側が CORS と Access-Control-Allow-Private-Network を返す）。
+//
+// ヘルパーが無くても、tools/auto_timing.py が出した timing.json を
+// 直接読み込む経路を用意してあるので、そちらだけでも実用できる。
+
+import { getProject, setProject, getUi } from "./state.js";
+import * as ops from "../core/operations.js";
+
+const HELPER_BASE = "http://127.0.0.1:8777";
+const POLL_MS = 1500;
+
+let overlayEl = null;
+let pollTimer = null;
+let currentJob = null;
+
+export function init() {
+  const btn = document.getElementById("btnAutoTiming");
+  if (btn) btn.addEventListener("click", open);
+}
+
+// ────────────────────────────────── パネル
+
+function open() {
+  if (overlayEl) return;
+  overlayEl = document.createElement("div");
+  overlayEl.className = "at-overlay";
+  overlayEl.innerHTML = `
+    <div class="at-panel">
+      <div class="at-head">
+        <div class="at-title">タイミング自動検出</div>
+        <button class="at-close" id="atClose">×</button>
+      </div>
+      <div class="at-body" id="atBody"></div>
+    </div>`;
+  document.body.appendChild(overlayEl);
+  overlayEl.querySelector("#atClose").addEventListener("click", close);
+  overlayEl.addEventListener("click", (e) => { if (e.target === overlayEl) close(); });
+  renderIdle();
+  checkHelper();
+}
+
+function close() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  overlayEl?.remove();
+  overlayEl = null;
+}
+
+function body() { return overlayEl?.querySelector("#atBody"); }
+
+function lyricLines() {
+  return getProject().lines.map(l => (l.text || "").replace(/\\n/g, " ").trim()).filter(Boolean);
+}
+
+// ────────────────────────────────── 待機画面
+
+function renderIdle(helperState = "checking") {
+  const el = body(); if (!el) return;
+  const n = lyricLines().length;
+  const audio = getUi().audioFile;
+
+  const helperHtml = {
+    checking: `<span class="at-dot at-dot-wait"></span> ヘルパーを確認しています…`,
+    ok:       `<span class="at-dot at-dot-ok"></span> ヘルパーに接続できました`,
+    ng:       `<span class="at-dot at-dot-ng"></span> ヘルパーが見つかりません`,
+  }[helperState];
+
+  el.innerHTML = `
+    <div class="at-status">${helperHtml}</div>
+
+    <div class="at-section">
+      <div class="at-row"><span>歌詞</span><b>${n} 行</b></div>
+      <div class="at-row"><span>楽曲</span><b>${audio ? escapeHtml(audio.name || "読込済み") : "未読込"}</b></div>
+    </div>
+
+    ${helperState === "ng" ? `
+      <div class="at-note">
+        ヘルパーを起動していない場合は <code>tools/start_helper.bat</code> を実行してください。<br>
+        起動せずに使う場合は、<code>auto_timing.py</code> が出力した
+        <code>timing.json</code> を下のボタンから読み込めます。
+      </div>` : ``}
+
+    <div class="at-actions">
+      <button class="tool-btn at-primary" id="atRun"
+        ${helperState === "ok" && audio && n ? "" : "disabled"}>自動検出を実行</button>
+      <button class="tool-btn" id="atLoad">結果ファイルを読み込む</button>
+      <input type="file" id="atFile" accept=".json,application/json" style="display:none">
+    </div>
+
+    ${!audio ? `<div class="at-warn">先にヘッダの「楽曲読込」で曲を読み込んでください。</div>` : ``}
+    ${!n ? `<div class="at-warn">歌詞が 1 行もありません。</div>` : ``}
+  `;
+
+  el.querySelector("#atRun")?.addEventListener("click", run);
+  el.querySelector("#atLoad")?.addEventListener("click", () => el.querySelector("#atFile").click());
+  el.querySelector("#atFile")?.addEventListener("change", async (e) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    try {
+      renderReview(JSON.parse(await f.text()));
+    } catch (err) {
+      alert("JSON として読めませんでした: " + err.message);
+    }
+  });
+}
+
+async function checkHelper() {
+  try {
+    const r = await fetch(`${HELPER_BASE}/ping`, { signal: AbortSignal.timeout(3000) });
+    renderIdle(r.ok ? "ok" : "ng");
+  } catch {
+    renderIdle("ng");
+  }
+}
+
+// ────────────────────────────────── 実行と進捗
+
+async function run() {
+  const audio = getUi().audioFile;
+  const lines = lyricLines();
+  if (!audio || !lines.length) return;
+
+  const fd = new FormData();
+  fd.append("song", audio, audio.name || "song.bin");
+  fd.append("lines", JSON.stringify(lines));
+  fd.append("model", "medium");
+
+  renderProgress([], 0, "送信しています…");
+  try {
+    const r = await fetch(`${HELPER_BASE}/jobs`, { method: "POST", body: fd });
+    const d = await r.json();
+    if (!r.ok || !d.jobId) throw new Error(d.error || "ジョブを開始できませんでした");
+    currentJob = d.jobId;
+    pollTimer = setInterval(poll, POLL_MS);
+    poll();
+  } catch (e) {
+    renderError(String(e.message || e));
+  }
+}
+
+async function poll() {
+  if (!currentJob) return;
+  try {
+    const r = await fetch(`${HELPER_BASE}/jobs/${currentJob}`);
+    const d = await r.json();
+    if (d.status === "running") {
+      renderProgress(d.steps, d.elapsed);
+    } else if (d.status === "done") {
+      clearInterval(pollTimer); pollTimer = null;
+      const rr = await fetch(`${HELPER_BASE}/jobs/${currentJob}/result`);
+      renderReview(await rr.json());
+    } else if (d.status === "error") {
+      clearInterval(pollTimer); pollTimer = null;
+      renderError(d.error || "処理に失敗しました");
+    }
+  } catch (e) {
+    clearInterval(pollTimer); pollTimer = null;
+    renderError("ヘルパーとの通信が切れました: " + (e.message || e));
+  }
+}
+
+function renderProgress(steps, elapsed, note) {
+  const el = body(); if (!el) return;
+  const rows = (steps || []).map(s => {
+    const done = s.percent >= 100;
+    const active = !done && s.percent > 0;
+    return `
+      <div class="at-step ${done ? "is-done" : active ? "is-active" : ""}">
+        <span class="at-step-mark">${done ? "●" : active ? "◐" : "○"}</span>
+        <span class="at-step-label">${escapeHtml(s.label)}</span>
+        <span class="at-bar"><i style="width:${s.percent}%"></i></span>
+        <span class="at-pct">${s.percent.toFixed(0)}%</span>
+      </div>`;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="at-steps">${rows || `<div class="at-note">${escapeHtml(note || "")}</div>`}</div>
+    <div class="at-elapsed">経過 ${fmtSec(elapsed || 0)}　処理中は他のタブを操作できます</div>
+    <div class="at-actions"><button class="tool-btn tool-btn-danger" id="atCancel">中止</button></div>
+  `;
+  el.querySelector("#atCancel")?.addEventListener("click", async () => {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    try { await fetch(`${HELPER_BASE}/jobs/${currentJob}/cancel`, { method: "POST" }); } catch {}
+    currentJob = null;
+    renderIdle("ok");
+  });
+}
+
+function renderError(msg) {
+  const el = body(); if (!el) return;
+  el.innerHTML = `
+    <div class="at-warn">${escapeHtml(msg)}</div>
+    <div class="at-actions"><button class="tool-btn" id="atBack">戻る</button></div>`;
+  el.querySelector("#atBack").addEventListener("click", () => { currentJob = null; renderIdle(); checkHelper(); });
+}
+
+// ────────────────────────────────── 結果の確認と適用
+
+function renderReview(result) {
+  const el = body(); if (!el) return;
+  const lines = result?.lines || [];
+  const cov = result?.kanaCoverage;
+  const project = getProject();
+
+  // 既に TC が入っている行は差分を見せる（黙って上書きしない）
+  const rows = lines.map((r, i) => {
+    const cur = project.lines[i];
+    const before = cur?.tIn;
+    const diff = (before != null && r.tIn != null) ? (r.tIn - before) : null;
+    return `<tr>
+      <td>${i}</td>
+      <td class="at-t">${before != null ? before.toFixed(2) : "—"}</td>
+      <td class="at-t"><b>${r.tIn != null ? r.tIn.toFixed(2) : "—"}</b></td>
+      <td class="at-t ${diff != null && Math.abs(diff) > 1 ? "at-big" : ""}">${diff != null ? (diff >= 0 ? "+" : "") + diff.toFixed(2) : ""}</td>
+      <td class="at-lyr">${escapeHtml(r.text || "")}</td>
+    </tr>`;
+  }).join("");
+
+  const covWarn = (cov != null && cov < 0.7)
+    ? `<div class="at-warn">歌詞と音声の一致率が <b>${(cov*100).toFixed(0)}%</b> と低いため、
+       結果が大きくずれている可能性があります。適用前に確認してください。</div>`
+    : (cov != null ? `<div class="at-note">歌詞と音声の一致率 <b>${(cov*100).toFixed(0)}%</b></div>` : ``);
+
+  el.innerHTML = `
+    ${covWarn}
+    <div class="at-note">検出 ${lines.length} 行 ／ 処理時間 ${fmtSec(result?.elapsed || 0)}</div>
+    <div class="at-table-wrap">
+      <table class="at-table">
+        <thead><tr><th>#</th><th>現在</th><th>検出</th><th>差</th><th>歌詞</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="at-actions">
+      <button class="tool-btn at-primary" id="atApply">${lines.length} 行に適用</button>
+      <button class="tool-btn" id="atApplyEmpty">TC が空の行だけ適用</button>
+      <button class="tool-btn" id="atBack2">戻る</button>
+    </div>`;
+
+  el.querySelector("#atApply").addEventListener("click", () => apply(lines, false));
+  el.querySelector("#atApplyEmpty").addEventListener("click", () => apply(lines, true));
+  el.querySelector("#atBack2").addEventListener("click", () => { currentJob = null; renderIdle(); checkHelper(); });
+}
+
+// 1 回の setProject にまとめる（Undo 1 手で全部戻せるように）
+function apply(lines, onlyEmpty) {
+  const p = getProject();
+  const byIndex = new Map(lines.map(r => [r.index, r]));
+  const next = p.lines.map((l, i) => {
+    const r = byIndex.get(i);
+    if (!r || r.tIn == null) return l;
+    if (onlyEmpty && l.tIn != null) return l;
+    return { ...l, tIn: r.tIn, tOut: r.tOut ?? l.tOut };
+  });
+  setProject({ ...p, lines: next, updatedAt: Date.now() });
+  close();
+}
+
+// ────────────────────────────────── 小物
+
+function fmtSec(s) {
+  s = Math.round(s);
+  return s < 60 ? `${s} 秒` : `${Math.floor(s/60)} 分 ${String(s%60).padStart(2,"0")} 秒`;
+}
+
+function escapeHtml(s) {
+  if (s == null) return "";
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}

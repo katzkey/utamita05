@@ -262,7 +262,7 @@ body { display: flex; flex-direction: column; }
 .detail-tab:hover { color: var(--dark); }
 .detail-tab.is-active {
   color: var(--dark);
-  border-bottom-color: var(--accent, #f28c28);
+  border-bottom-color: var(--coral);
 }
 /* data-pane 付きのセクションは選択中のタブのものだけ表示。
    data-pane を持たないセクション（全体へ反映）は常に出す。 */
@@ -588,3 +588,71 @@ body { display: flex; flex-direction: column; }
 ::-webkit-scrollbar-track { background: var(--gray-1); }
 ::-webkit-scrollbar-thumb { background: var(--gray-2); border-radius: 5px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gray-3); }
+
+/* ── タイミング自動検出パネル ── */
+.at-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+}
+.at-panel {
+  width: min(860px, 92vw); max-height: 86vh;
+  background: var(--white); border-radius: 8px;
+  box-shadow: 0 12px 48px rgba(0,0,0,.4);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.at-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--gray-2);
+}
+.at-title { font-size: 15px; font-weight: 700; color: var(--dark); }
+.at-close {
+  background: none; border: none; font-size: 22px; line-height: 1;
+  cursor: pointer; color: var(--gray-4); padding: 0 4px;
+}
+.at-body { padding: 16px; overflow: auto; }
+
+.at-status { font-size: 13px; margin-bottom: 12px; }
+.at-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.at-dot-ok { background: #2e9e4f; }
+.at-dot-ng { background: #c0392b; }
+.at-dot-wait { background: #999; }
+
+.at-section { border: 1px solid var(--gray-2); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; }
+.at-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+.at-row span { color: var(--gray-4); }
+
+.at-note { font-size: 12px; color: var(--gray-3); margin: 8px 0; line-height: 1.7; }
+.at-warn {
+  font-size: 12px; color: #8a4b00; background: #fff6e5;
+  border: 1px solid #f0d9a8; border-radius: 5px; padding: 8px 10px; margin: 8px 0; line-height: 1.7;
+}
+.at-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.at-primary { background: var(--coral); color: #fff; border-color: transparent; }
+.at-primary:disabled { opacity: .45; }
+
+/* 工程リスト：全工程を箇条書きで出し、それぞれに % を出す */
+.at-steps { display: flex; flex-direction: column; gap: 8px; }
+.at-step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--gray-4); }
+.at-step.is-active { color: var(--dark); font-weight: 600; }
+.at-step.is-done { color: var(--gray-3); }
+.at-step-mark { width: 14px; text-align: center; }
+.at-step.is-done .at-step-mark { color: #2e9e4f; }
+.at-step.is-active .at-step-mark { color: var(--coral); }
+.at-step-label { width: 140px; flex-shrink: 0; }
+.at-bar { flex: 1; height: 6px; background: var(--gray-1); border-radius: 3px; overflow: hidden; }
+.at-bar i { display: block; height: 100%; background: var(--coral); transition: width .3s; }
+.at-pct { width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+.at-elapsed { font-size: 12px; color: var(--gray-3); margin-top: 12px; }
+
+.at-table-wrap { max-height: 46vh; overflow: auto; border: 1px solid var(--gray-2); border-radius: 6px; }
+.at-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.at-table th {
+  position: sticky; top: 0; background: var(--gray-1);
+  text-align: left; padding: 6px 8px; font-weight: 600; color: var(--gray-4);
+  border-bottom: 1px solid var(--gray-2);
+}
+.at-table td { padding: 4px 8px; border-bottom: 1px solid var(--gray-1); }
+.at-t { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.at-big { color: #c0392b; font-weight: 700; }
+.at-lyr { color: var(--gray-4); }
