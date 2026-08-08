@@ -3,6 +3,35 @@
 import { createEmptyProject } from "../core/project.js";
 import { saveFileToStore, loadFileFromStore } from "../core/file_store.js";
 
+// ---- 表示設定の永続化 ----
+// プロジェクトの中身ではなく「どう表示していたか」を次回起動まで覚えておく。
+// ここに挙げたキーだけが localStorage に残る。
+const UI_PREFS_KEY = "utamita05.uiPrefs.v1";
+const PERSISTED_UI_KEYS = ["previewLarge"];
+
+function loadUiPrefs() {
+  try {
+    const raw = localStorage.getItem(UI_PREFS_KEY);
+    if (!raw) return {};
+    const obj = JSON.parse(raw);
+    const out = {};
+    for (const k of PERSISTED_UI_KEYS) if (k in obj) out[k] = obj[k];
+    return out;
+  } catch (e) {
+    return {};   // 読めなくても既定値で動けばよい
+  }
+}
+
+function saveUiPrefs() {
+  try {
+    const obj = {};
+    for (const k of PERSISTED_UI_KEYS) obj[k] = state.ui[k];
+    localStorage.setItem(UI_PREFS_KEY, JSON.stringify(obj));
+  } catch (e) {
+    // 保存できなくても表示状態の話なので、編集を止めない
+  }
+}
+
 const state = {
   project: createEmptyProject({ name: "新規プロジェクト" }),
   ui: {
@@ -15,6 +44,8 @@ const state = {
     audioFile: null,         // ローカルでロードした楽曲（File or URL）
     audioUrl: null,
     dirty: false,            // 保存前の変更あり
+    previewLarge: false,     // プレビュー拡大（前回の状態を復元）
+    ...loadUiPrefs(),        // 保存済みがあれば既定値を上書き
   },
   // 素材ファイルの Blob URL レジストリ（filename → { file, url }）。
   // Web 版はサーバー経由でファイル配信できないので、ブラウザで選択した File を
@@ -69,6 +100,7 @@ export function replaceProject(newProject) {
 // UI 状態だけ変更
 export function setUi(partial) {
   Object.assign(state.ui, partial);
+  if (PERSISTED_UI_KEYS.some(k => k in partial)) saveUiPrefs();
   emit("ui");
 }
 
