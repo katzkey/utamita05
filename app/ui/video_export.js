@@ -202,6 +202,7 @@ async function run() {
   const fd = new FormData();
   fd.append("spec", JSON.stringify(spec));
   layers.forEach((L, i) => fd.append(`layer_${i}`, L.blob, `line_${i}.png`));
+  // 番号は spec.backgrounds の並びと必ず一致させる（単色はファイル無しで飛ばす）
   bgItems.slice().reverse().forEach(({ file }, i) => {
     if (file) fd.append(`bg_${i}`, file, file.name || `bg_${i}.bin`);
   });

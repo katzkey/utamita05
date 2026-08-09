@@ -426,11 +426,14 @@ class H(BaseHTTPRequestHandler):
                 f.write(fields[key]["value"])
             ln["file"] = rel
 
-        # 背景素材（画像/動画）を bg_0, bg_1, ... で受ける
+        # 背景素材を bg_0, bg_1, ... で受ける。
+        # 単色レイヤーはファイルを持たない（ffmpeg 側で色から生成する）ので飛ばす。
         for i, b in enumerate(spec.get("backgrounds", [])):
+            if b.get("kind") == "solid":
+                continue
             key = f"bg_{i}"
             if key not in fields:
-                return self._json({"error": f"{key} が足りません"}, 400)
+                return self._json({"error": f"背景 {i} のファイルが届いていません"}, 400)
             ext = os.path.splitext(fields[key]["filename"] or "")[1] or ".bin"
             rel = f"bg_{i}{ext}"
             with open(os.path.join(workdir, rel), "wb") as f:
