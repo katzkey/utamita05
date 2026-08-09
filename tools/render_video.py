@@ -44,7 +44,7 @@ def prescale_still_backgrounds(spec, workdir, W, H):
     背景ありが 108 秒、背景なしが 22 秒）。先に 1 枚だけ作れば済む。
     """
     for i, b in enumerate(spec.get("backgrounds") or []):
-        if b.get("kind") == "video" or not b.get("file"):
+        if b.get("kind") in ("video", "solid") or not b.get("file"):
             continue
         src = os.path.join(workdir, b["file"])
         if not os.path.exists(src):
@@ -96,11 +96,17 @@ def build_command(spec, out_path, workdir):
     for b in backgrounds:
         span = max(0.05, float(b["tOut"]) - float(b["tIn"]))
         fo = float(b.get("fadeOut", 0))
-        path = b["file"]
-        if b.get("kind") == "video":
-            cmd += ["-stream_loop", "-1", "-t", f"{span + fo:.3f}", "-i", path]
+        kind = b.get("kind")
+        if kind == "solid":
+            # 単色も時間範囲とフェードを持つ 1 枚の層として扱う。
+            # 「黒を敷いて、それをフェードアウトさせて下の画像を出す」等ができる。
+            col = (b.get("color") or "#000000").lstrip("#")
+            cmd += ["-f", "lavfi", "-t", f"{span + fo:.3f}",
+                    "-i", f"color=c=0x{col}:s={W}x{H}:r={fps}"]
+        elif kind == "video":
+            cmd += ["-stream_loop", "-1", "-t", f"{span + fo:.3f}", "-i", b["file"]]
         else:
-            cmd += ["-loop", "1", "-t", f"{span + fo:.3f}", "-i", path]
+            cmd += ["-loop", "1", "-t", f"{span + fo:.3f}", "-i", b["file"]]
         bg_input_idx.append(len(inputs)); inputs.append("bg")
 
     # ---- 行レイヤー（静止画をループ入力し、後で時間軸をずらす）----
@@ -129,7 +135,8 @@ def build_command(spec, out_path, workdir):
         fo = min(float(b.get("fadeOut", 0)), span / 2)
         op = float(b.get("opacity", 1.0))
         # 事前変換済みなら既に出力解像度なので、毎フレームのスケールは不要
-        pre = "" if b.get("_prescaled") else fit_scale_filter(b.get("fit", "cover"), W, H) + ","
+        skip_scale = b.get("_prescaled") or b.get("kind") == "solid"
+        pre = "" if skip_scale else fit_scale_filter(b.get("fit", "cover"), W, H) + ","
         chain = [f"[{idx}:v]{pre}fps={fps},format=rgba,setsar=1"]
         if op < 1.0:
             chain.append(f"colorchannelmixer=aa={op:.3f}")

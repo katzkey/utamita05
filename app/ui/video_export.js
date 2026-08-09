@@ -60,23 +60,23 @@ const VIDEO_EXT = /\.(mp4|m4v|mov|webm)$/i;
 // ファイル本体が手元に無い背景（別 PC で作った .json を開いた等）は除外する。
 function exportableBackgrounds() {
   const p = getProject();
-  const files = [], solids = [];
+  const items = [];      // { bg, file }  file は単色なら null
   const missing = [];
   for (const bg of p.backgrounds || []) {
-    if (bg.solidColor) { solids.push(bg); continue; }
+    if (bg.solidColor) { items.push({ bg, file: null }); continue; }
     if (!bg.file) continue;
     const f = getFileBlob(bg.file);
     if (!f) { missing.push(bg.file); continue; }
-    files.push({ bg, file: f });
+    items.push({ bg, file: f });
   }
-  return { files, solids, missing };
+  return { items, files: items.filter(x => x.file), missing };
 }
 
 // 背景の状況を 1 行で。フェードが設定されているかも出す。
 function bgSummary(bgs) {
-  if (!bgs.files.length) return "なし（下の色のみ）";
-  const withFade = bgs.files.filter(x => x.bg.fadeIn > 0 || x.bg.fadeOut > 0).length;
-  return `${bgs.files.length} 素材`
+  if (!bgs.items.length) return "なし（下の色のみ）";
+  const withFade = bgs.items.filter(x => x.bg.fadeIn > 0 || x.bg.fadeOut > 0).length;
+  return `${bgs.items.length} 層（うち素材 ${bgs.files.length}）`
        + (withFade ? `（うち ${withFade} 個にフェードあり）` : "（フェードなし）");
 }
 
@@ -97,7 +97,7 @@ function renderIdle(helper = "checking") {
       <div class="at-row"><span>音声</span><b>${audio ? escapeHtml(audio.name || "読込済み") : "なし（無音になります）"}</b></div>
       <div class="at-row"><span>背景</span><b>${bgSummary(bgs)}</b></div>
     </div>
-    ${bgs.files.length && bgs.files.every(x => !(x.bg.fadeIn > 0) && !(x.bg.fadeOut > 0)) ? `
+    ${bgs.items.length && bgs.items.every(x => !(x.bg.fadeIn > 0) && !(x.bg.fadeOut > 0)) ? `
       <div class="at-note">
         背景にフェードは掛かりません。掛けたい場合は<b>背景タブ</b>の
         fadeIn / fadeOut に秒数を入れてください（上の「歌詞のフェード」は歌詞だけに効きます）。
@@ -173,16 +173,18 @@ async function run() {
     { key: "encode", label: "映像を書き出す", percent: 0 },
   ]);
 
-  const { files: bgFiles } = exportableBackgrounds();
+  const { items: bgItems } = exportableBackgrounds();
   const lastLineOut = Math.max(...lines.map(l => l.tOut));
-  const lastBgOut = bgFiles.length ? Math.max(...bgFiles.map(x => x.bg.tOut || 0)) : 0;
+  const lastBgOut = bgItems.length ? Math.max(...bgItems.map(x => x.bg.tOut || 0)) : 0;
   const duration = Math.max(lastLineOut + fadeOut, lastBgOut) + 0.5;
 
   const spec = {
     width: W, height: H, fps: p.fps, duration,
     baseColor: bgColor,
-    backgrounds: bgFiles.map(({ bg }) => ({
-      kind: VIDEO_EXT.test(bg.file) ? "video" : "image",
+    // リストの上が手前なので、下から重ねるために逆順で渡す
+    backgrounds: bgItems.slice().reverse().map(({ bg, file }) => ({
+      kind: !file ? "solid" : (VIDEO_EXT.test(bg.file) ? "video" : "image"),
+      color: bg.solidColor || null,
       tIn: bg.tIn ?? 0,
       tOut: (bg.tOut && bg.tOut > (bg.tIn ?? 0)) ? bg.tOut : duration,
       fadeIn: bg.fadeIn ?? 0,
@@ -200,7 +202,9 @@ async function run() {
   const fd = new FormData();
   fd.append("spec", JSON.stringify(spec));
   layers.forEach((L, i) => fd.append(`layer_${i}`, L.blob, `line_${i}.png`));
-  bgFiles.forEach(({ file }, i) => fd.append(`bg_${i}`, file, file.name || `bg_${i}.bin`));
+  bgItems.slice().reverse().forEach(({ file }, i) => {
+    if (file) fd.append(`bg_${i}`, file, file.name || `bg_${i}.bin`);
+  });
   const audio = getUi().audioFile;
   if (audio) fd.append("audio", audio, audio.name || "audio.bin");
 

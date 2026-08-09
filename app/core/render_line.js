@@ -211,7 +211,9 @@ export function renderPreviewBackgrounds(line, project) {
   const blendMap = { normal: "normal", multiply: "multiply", screen: "screen", overlay: "overlay", add: "plus-lighter", lighten: "lighten", darken: "darken" };
   const videoExts = /\.(mp4|m4v|mov|webm)$/i;
 
-  return active.map(bg => {
+  // リストの上にあるものを手前にする（After Effects と同じ並び）。
+  // DOM は後に書いたものが手前に来るので、逆順にして描く。
+  return active.slice().reverse().map(bg => {
     const opacity = bg.opacity ?? 1.0;
     const blend = blendMap[bg.blend] || "normal";
     const common = `position:absolute;inset:0;opacity:${opacity};mix-blend-mode:${blend}`;
