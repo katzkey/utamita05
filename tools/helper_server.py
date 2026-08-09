@@ -61,6 +61,38 @@ class KeepAwake:
         return False
 
 
+def parse_multipart(body, boundary):
+    """multipart/form-data の最小パーサ。
+    Python 3.13 で cgi モジュールが削除されたため自前で持つ（依存を増やさないため）。
+    戻り値: {name: {"filename": str|None, "value": bytes}}
+    """
+    sep = b"--" + boundary
+    out = {}
+    for part in body.split(sep):
+        if not part or part in (b"--\r\n", b"--"):
+            continue
+        part = part.lstrip(b"\r\n")
+        if part.startswith(b"--"):
+            continue
+        head, _, data = part.partition(b"\r\n\r\n")
+        if not _:
+            continue
+        data = data[:-2] if data.endswith(b"\r\n") else data
+        name = filename = None
+        for line in head.split(b"\r\n"):
+            if line.lower().startswith(b"content-disposition:"):
+                text = line.decode("utf-8", "replace")
+                m = re.search(r'name="([^"]*)"', text)
+                if m:
+                    name = m.group(1)
+                m = re.search(r'filename="([^"]*)"', text)
+                if m:
+                    filename = m.group(1)
+        if name:
+            out[name] = {"filename": filename, "value": data}
+    return out
+
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 AUTO_TIMING = os.path.join(HERE, "auto_timing.py")
 RENDER_VIDEO = os.path.join(HERE, "render_video.py")
