@@ -12,6 +12,7 @@ import * as settings from "./ui/settings_tab.js";
 import * as playbar from "./ui/playbar.js";
 import * as fileio from "./ui/file_io.js";
 import * as autoTiming from "./ui/auto_timing.js";
+import * as videoExport from "./ui/video_export.js";
 
 let projectNameEl;
 let dirtyStatusEl;
@@ -39,6 +40,7 @@ async function init() {
   playbar.init();
   fileio.init();
   autoTiming.init();
+  videoExport.init();
 
   // タブ切替
   document.querySelectorAll(".tab").forEach(tab => {

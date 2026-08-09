@@ -818,7 +818,8 @@ function attachArrowStep(inputId, commit) {
 // - Y: layoutToY 相当（top=15% / center=50% / bottom=85%）+ dy
 // - X: 中央 + dx（AE 側と同じ）
 // - フォントサイズ等は cqw 単位（ステージ幅基準）で解像度比スケール
-function renderLinePreviewHtml(line, project) {
+// 動画書き出しでも同じ絵を使うため公開している（app/ui/video_export.js が利用）
+export function renderLinePreviewHtml(line, project) {
   const resW = project.resolution?.w || 1920;
   const resH = project.resolution?.h || 1080;
   const familyValue = line.fontOverride?.family || project.font.family || "";

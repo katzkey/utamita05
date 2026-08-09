@@ -58,6 +58,7 @@ def parse_multipart(body, boundary):
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 AUTO_TIMING = os.path.join(HERE, "auto_timing.py")
+RENDER_VIDEO = os.path.join(HERE, "render_video.py")
 PORT = int(os.environ.get("UTAMITA_HELPER_PORT", "8777"))
 
 # 許可するオリジン。ローカルで開いた場合にも使えるよう複数許可。
@@ -75,18 +76,70 @@ STEPS = [
     ("snap",       "歌い出しに合わせる"),
 ]
 
+# 動画書き出しの工程
+STEPS_RENDER = [
+    ("upload", "素材を受け取る"),
+    ("encode", "映像を書き出す"),
+]
+
 JOBS = {}
 LOCK = threading.Lock()
 
 
-def new_job():
+def new_job(steps=None):
+    steps = steps or STEPS
     return {
+        "kind": "timing" if steps is STEPS else "render",
+        "stepdefs": steps,
         "status": "running",           # running | done | error | canceled
-        "steps": {k: 0.0 for k, _ in STEPS},
+        "steps": {k: 0.0 for k, _ in steps},
         "result": None, "error": None,
         "startedAt": time.time(), "elapsed": 0.0,
-        "proc": None, "workdir": None,
+        "proc": None, "workdir": None, "outfile": None,
     }
+
+
+def run_render_job(job_id, workdir, spec_path, out_path):
+    """歌詞レイヤーPNGと背景/音声を ffmpeg で合成して MP4 を書き出す。"""
+    job = JOBS[job_id]
+    job["workdir"] = workdir
+    job["steps"]["upload"] = 100.0
+    cmd = [sys.executable, RENDER_VIDEO, "--progress", "json",
+           "--spec", spec_path, "--out", out_path]
+    env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUNBUFFERED="1")
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                             env=env, text=True, encoding="utf-8", errors="replace")
+        job["proc"] = p
+        for line in p.stdout:
+            line = line.strip()
+            if not line.startswith("{"):
+                continue
+            try:
+                d = json.loads(line)
+            except Exception:
+                continue
+            if d.get("type") == "progress":
+                with LOCK:
+                    job["steps"][d["step"]] = d["percent"]
+                    job["elapsed"] = time.time() - job["startedAt"]
+            elif d.get("type") == "error":
+                job["error"] = d.get("message")
+            elif d.get("type") == "done":
+                job["result"] = {"bytes": d.get("bytes"), "elapsed": d.get("elapsed")}
+        p.wait()
+        if job["status"] == "canceled":
+            return
+        if p.returncode != 0 or not os.path.exists(out_path):
+            job["status"] = "error"
+            job["error"] = job["error"] or "書き出しに失敗しました"
+            return
+        job["outfile"] = out_path
+        job["status"] = "done"
+        job["elapsed"] = time.time() - job["startedAt"]
+    except Exception as e:
+        job["status"] = "error"
+        job["error"] = str(e)
 
 
 def run_job(job_id, song_path, lines, model):
@@ -174,8 +227,25 @@ class H(BaseHTTPRequestHandler):
                     "status": job["status"],
                     "elapsed": round(job["elapsed"], 1),
                     "error": job["error"],
-                    "steps": [{"key": k, "label": l, "percent": job["steps"][k]} for k, l in STEPS],
+                    "kind": job.get("kind", "timing"),
+                    "steps": [{"key": k, "label": l, "percent": job["steps"][k]}
+                              for k, l in job.get("stepdefs", STEPS)],
                 })
+        m = re.match(r"^/jobs/([\w-]+)/download$", self.path)
+        if m:
+            job = JOBS.get(m.group(1))
+            if not job or not job.get("outfile") or not os.path.exists(job["outfile"]):
+                return self._json({"error": "書き出し結果がありません"}, 404)
+            data = open(job["outfile"], "rb").read()
+            self.send_response(200)
+            self._cors()
+            self.send_header("Content-Type", "video/mp4")
+            self.send_header("Content-Disposition", 'attachment; filename="utamita.mp4"')
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
+
         m = re.match(r"^/jobs/([\w-]+)/result$", self.path)
         if m:
             job = JOBS.get(m.group(1))
@@ -195,7 +265,7 @@ class H(BaseHTTPRequestHandler):
                 except Exception: pass
             return self._json({"ok": True})
 
-        if self.path != "/jobs":
+        if self.path not in ("/jobs", "/render"):
             return self._json({"error": "not found"}, 404)
 
         ctype = self.headers.get("Content-Type", "")
@@ -207,6 +277,9 @@ class H(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(length)
         fields = parse_multipart(body, boundary)
+
+        if self.path == "/render":
+            return self._handle_render(fields)
 
         if "song" not in fields or "lines" not in fields:
             return self._json({"error": "song と lines が必要です"}, 400)
@@ -230,6 +303,51 @@ class H(BaseHTTPRequestHandler):
         JOBS[job_id] = new_job()
         threading.Thread(target=run_job, args=(job_id, song_path, lines, model), daemon=True).start()
         return self._json({"jobId": job_id, "lines": len(lines)})
+
+    def _handle_render(self, fields):
+        """歌詞レイヤーPNG + 背景/音声を受け取り、ffmpeg で MP4 を書き出す。"""
+        if "spec" not in fields:
+            return self._json({"error": "spec が必要です"}, 400)
+        try:
+            spec = json.loads(fields["spec"]["value"].decode("utf-8"))
+        except Exception as e:
+            return self._json({"error": "spec の JSON が読めません: " + str(e)}, 400)
+
+        workdir = tempfile.mkdtemp(prefix="utamita_render_")
+        os.makedirs(os.path.join(workdir, "layers"), exist_ok=True)
+
+        # layer_0, layer_1, ... を layers/line_000.png として保存し spec に反映
+        for i, ln in enumerate(spec.get("lines", [])):
+            key = f"layer_{i}"
+            if key not in fields:
+                return self._json({"error": f"{key} が足りません"}, 400)
+            rel = f"layers/line_{i:03d}.png"
+            with open(os.path.join(workdir, rel), "wb") as f:
+                f.write(fields[key]["value"])
+            ln["file"] = rel
+
+        # 音声・背景素材（任意）
+        for key, name in (("audio", "audio_src"), ("bgfile", "bg_src")):
+            if key in fields and fields[key]["value"]:
+                ext = os.path.splitext(fields[key]["filename"] or "")[1] or ".bin"
+                rel = name + ext
+                with open(os.path.join(workdir, rel), "wb") as f:
+                    f.write(fields[key]["value"])
+                if key == "audio":
+                    spec["audio"] = rel
+                else:
+                    spec.setdefault("background", {})["file"] = rel
+
+        spec_path = os.path.join(workdir, "spec.json")
+        with io.open(spec_path, "w", encoding="utf-8") as f:
+            json.dump(spec, f, ensure_ascii=False, indent=1)
+        out_path = os.path.join(workdir, "out.mp4")
+
+        job_id = uuid.uuid4().hex[:12]
+        JOBS[job_id] = new_job(STEPS_RENDER)
+        threading.Thread(target=run_render_job,
+                         args=(job_id, workdir, spec_path, out_path), daemon=True).start()
+        return self._json({"jobId": job_id, "lines": len(spec.get("lines", []))})
 
     def log_message(self, fmt, *args):
         sys.stderr.write("[helper] " + (fmt % args) + "\n")
