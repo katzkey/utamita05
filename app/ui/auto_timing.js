@@ -79,8 +79,11 @@ function renderIdle(helperState = "checking") {
 
     ${helperState === "ng" ? `
       <div class="at-note">
-        ヘルパーを起動していない場合は <code>tools/start_helper.bat</code> を実行してください。<br>
-        起動せずに使う場合は、<code>auto_timing.py</code> が出力した
+        ヘルパーが起動していません。<code>tools</code> フォルダの
+        <code>start_helper.bat</code> をダブルクリックしてから、もう一度開いてください。<br>
+        毎回起動するのが面倒な場合は <code>install_autostart.bat</code> を一度実行すると、
+        PC 起動時に自動で立ち上がります（ウィンドウは出ません）。<br>
+        ヘルパー無しでも、<code>auto_timing.py</code> が出力した
         <code>timing.json</code> を下のボタンから読み込めます。
       </div>` : ``}
 

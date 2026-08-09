@@ -106,7 +106,10 @@ function renderIdle(helper = "checking") {
       </div>
     </div>
     ${helper === "ng" ? `<div class="at-note">
-      <code>tools/start_helper.bat</code> を実行してから、もう一度開いてください。</div>` : ``}
+      書き出しにはヘルパーが必要です。<code>tools</code> フォルダの
+      <code>start_helper.bat</code> をダブルクリックしてから、もう一度開いてください。<br>
+      毎回起動するのが面倒な場合は <code>install_autostart.bat</code> を一度実行すると、
+      PC 起動時に自動で立ち上がります（ウィンドウは出ません）。</div>` : ``}
     ${!lines.length ? `<div class="at-warn">TC が入っている行がありません。先にタイミングを入れてください。</div>` : ``}
     <div class="at-actions">
       <button class="tool-btn at-primary" id="veRun" ${helper === "ok" && lines.length ? "" : "disabled"}>書き出す</button>

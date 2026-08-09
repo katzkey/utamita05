@@ -1,3 +1,6 @@
 # バッチファイルは CRLF でないと cmd が解析できない（LF だと %~dp0 等が壊れる）
 *.bat text eol=crlf
 *.cmd text eol=crlf
+# PowerShell 5.1 は BOM 無し UTF-8 を ANSI として読むため、日本語を含む .ps1 は BOM 必須
+*.ps1 text eol=crlf working-tree-encoding=UTF-8
+*.vbs text eol=crlf
