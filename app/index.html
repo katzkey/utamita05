@@ -30,7 +30,7 @@
   <button class="tab tab-active" data-tab="lyrics">歌詞</button>
   <button class="tab" data-tab="backgrounds">背景</button>
   <button class="tab" data-tab="titles">タイトル</button>
-  <button class="tab" data-tab="templates">テンプレ</button>
+  <button class="tab" data-tab="templates" data-ae="1">テンプレ</button>
   <button class="tab" data-tab="settings">全体設定</button>
 </div>
 
@@ -119,7 +119,7 @@
     </div>
   </section>
 
-  <section class="tab-panel hidden" data-panel="templates">
+  <section class="tab-panel hidden" data-panel="templates" data-ae="1">
     <div class="tmpl-pane" id="tmplPane"></div>
   </section>
 
@@ -142,7 +142,7 @@
     <div class="progress-fill" id="progressFill"></div>
     <div class="progress-marker" id="progressMarker"></div>
   </div>
-  <span class="status-pill" id="aeStatus"><span class="dot"></span> AE: 未接続</span>
+  <span class="status-pill" id="aeStatus" data-ae="1"><span class="dot"></span> AE: 未接続</span>
 </footer>
 
 <audio id="player" preload="auto"></audio>

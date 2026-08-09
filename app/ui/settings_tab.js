@@ -47,36 +47,36 @@ export function render() {
       <label>楽曲長さ (秒)</label>
       <input class="setting-input" id="setMusicDur" type="number" step="0.01" min="0" value="${project.music.duration}">
 
-      <label>デフォルト Entry</label>
-      <select class="setting-input" id="setDefEntry">${tmplOpts(project, "entry", project.defaults.template.entry)}</select>
+      <label data-ae="1">デフォルト Entry</label>
+      <select class="setting-input" id="setDefEntry" data-ae="1">${tmplOpts(project, "entry", project.defaults.template.entry)}</select>
 
-      <label>デフォルト Hold</label>
-      <select class="setting-input" id="setDefHold">${tmplOpts(project, "hold", project.defaults.template.hold)}</select>
+      <label data-ae="1">デフォルト Hold</label>
+      <select class="setting-input" id="setDefHold" data-ae="1">${tmplOpts(project, "hold", project.defaults.template.hold)}</select>
 
-      <label>デフォルト Exit</label>
-      <select class="setting-input" id="setDefExit">${tmplOpts(project, "exit", project.defaults.template.exit)}</select>
+      <label data-ae="1">デフォルト Exit</label>
+      <select class="setting-input" id="setDefExit" data-ae="1">${tmplOpts(project, "exit", project.defaults.template.exit)}</select>
 
-      <label>デフォルト Design</label>
-      <select class="setting-input" id="setDefDesign">${tmplOpts(project, "design", project.defaults.template.design)}</select>
+      <label data-ae="1">デフォルト Design</label>
+      <select class="setting-input" id="setDefDesign" data-ae="1">${tmplOpts(project, "design", project.defaults.template.design)}</select>
 
       <label>デフォルト Layout</label>
       <input class="setting-input" id="setDefLayout" value="${project.defaults.layout}">
 
-      <label>デフォルト LayerMode</label>
-      <select class="setting-input" id="setDefLayerMode">
+      <label data-ae="1">デフォルト LayerMode</label>
+      <select class="setting-input" id="setDefLayerMode" data-ae="1">
         <option value="char" ${(project.defaults.layerMode||"char")==="char"?"selected":""}>char（1文字=1レイヤ、文字ごと演出可）</option>
         <option value="line" ${project.defaults.layerMode==="line"?"selected":""}>line（1行=1レイヤ、軽量＆改行自然）</option>
       </select>
     </div>
 
-    <h2 style="margin-top:36px">テンプレの固定/継承を一括</h2>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+    <h2 style="margin-top:36px" data-ae="1">テンプレの固定/継承を一括</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px" data-ae="1">
       <button class="tool-btn" data-bulk-inherit="entry">Entry を全解除（継承に）</button>
       <button class="tool-btn" data-bulk-inherit="hold">Hold を全解除</button>
       <button class="tool-btn" data-bulk-inherit="exit">Exit を全解除</button>
       <button class="tool-btn" data-bulk-inherit="design">Design を全解除</button>
     </div>
-    <button class="tool-btn tool-btn-danger" id="btnInheritAll">全行・全スロットを継承に戻す</button>
+    <button class="tool-btn tool-btn-danger" id="btnInheritAll" data-ae="1">全行・全スロットを継承に戻す</button>
 
     <h2 style="margin-top:36px">カスタムプリセット</h2>
     <div style="font-size:12px;color:var(--gray-3,#999);margin-bottom:8px">

@@ -4,6 +4,7 @@
 import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js";
 import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js";
 import { initCustomPresets } from "./core/custom_presets.js";
+import { applyFeatureFlags } from "./core/features.js";
 import * as lyrics from "./ui/lyrics_tab.js";
 import * as bgTab from "./ui/background_tab.js";
 import * as titlesTab from "./ui/titles_tab.js";
@@ -73,6 +74,8 @@ async function init() {
   });
 
   // 状態変更でレンダ
+  applyFeatureFlags();
+
   subscribe(renderAll);
   renderAll();
 }
@@ -103,6 +106,7 @@ function renderAll() {
   // 歌詞タブは詳細パネルを別タブからでも更新したいので常に
   if (ui.activeTab !== "lyrics") lyrics.render();
   playbar.render();
+  applyFeatureFlags();
 }
 
 function onKey(e) {

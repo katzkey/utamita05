@@ -9,6 +9,7 @@ import { parseJitterBlocks, jitterOffsetFor } from "../core/utils.js";
 import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js";
 import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js";
 import { SMALL_KANA, classifyChar, autoKerningEm } from "../core/char_type.js";
+import { AE_ENABLED } from "../core/features.js";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -139,7 +140,8 @@ function renderDetail(project, ui) {
   const tIn = line.tIn != null ? secondsToTC(line.tIn, project.fps) : "";
   const tOut = line.tOut != null ? secondsToTC(line.tOut, project.fps) : "";
   const ttext = (line.text || "").replace(/\\n/g, "\n");
-  const detailTab = ["content", "look", "motion"].includes(ui.detailTab) ? ui.detailTab : "look";
+  let detailTab = ["content", "look", "motion"].includes(ui.detailTab) ? ui.detailTab : "look";
+  if (detailTab === "motion" && !AE_ENABLED) detailTab = "look";   // AE 非表示時は空になるため
 
   const resolved = resolveLineTemplate(line, project);
 
@@ -187,7 +189,7 @@ function renderDetail(project, ui) {
 
     <div class="detail-tabs">
       ${[["content","内容"],["look","見た目"],["motion","動き"]].map(([k, label]) =>
-        `<button class="detail-tab ${detailTab === k ? "is-active" : ""}" data-tab="${k}">${label}</button>`
+        `<button class="detail-tab ${detailTab === k ? "is-active" : ""}" data-tab="${k}"${k === "motion" ? ' data-ae="1"' : ""}>${label}</button>`
       ).join("")}
     </div>
 
@@ -264,14 +266,14 @@ function renderDetail(project, ui) {
       </div>
     </div>
 
-    <div class="section" data-pane="motion">
+    <div class="section" data-pane="motion" data-ae="1">
       <div class="section-title">モーション</div>
       ${tmplSlotHtml("entry", "Entry")}
       ${tmplSlotHtml("hold", "Hold")}
       ${tmplSlotHtml("exit", "Exit")}
     </div>
 
-    <div class="section" data-pane="motion">
+    <div class="section" data-pane="motion" data-ae="1">
       <div class="section-title">デザイン</div>
       ${tmplSlotHtml("design", "Design")}
     </div>
@@ -336,7 +338,7 @@ function renderDetail(project, ui) {
         <input class="field-input" id="fldDx" value="${line.pos.dx}" style="width:50px">
         <input class="field-input" id="fldDy" value="${line.pos.dy}" style="width:50px">
       </div>
-      <div class="field">
+      <div class="field" data-ae="1">
         <span class="field-label">layerMode</span>
         <select class="field-select" id="fldLayerMode">
           <option value="" ${line.layerMode == null ? "selected" : ""}>継承（${resolveLineLayerMode(line, project)}）</option>
