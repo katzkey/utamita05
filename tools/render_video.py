@@ -59,7 +59,7 @@ def build_command(spec, out_path, workdir):
     for b in backgrounds:
         span = max(0.05, float(b["tOut"]) - float(b["tIn"]))
         fo = float(b.get("fadeOut", 0))
-        path = os.path.join(workdir, b["file"])
+        path = b["file"]
         if b.get("kind") == "video":
             cmd += ["-stream_loop", "-1", "-t", f"{span + fo:.3f}", "-i", path]
         else:
@@ -71,13 +71,13 @@ def build_command(spec, out_path, workdir):
     for ln in lines:
         span = max(0.05, float(ln["tOut"]) - float(ln["tIn"]))
         fo = float(ln.get("fadeOut", spec.get("fadeOut", 0.3)))
-        cmd += ["-loop", "1", "-t", f"{span + fo:.3f}", "-i", os.path.join(workdir, ln["file"])]
+        cmd += ["-loop", "1", "-t", f"{span + fo:.3f}", "-i", ln["file"]]
         layer_idx.append(len(inputs)); inputs.append("layer")
 
     # ---- 音声 ----
     audio_idx = None
     if spec.get("audio"):
-        cmd += ["-i", os.path.join(workdir, spec["audio"])]
+        cmd += ["-i", spec["audio"]]
         audio_idx = len(inputs); inputs.append("audio")
 
     # ---- フィルタグラフ ----
@@ -141,7 +141,15 @@ def build_command(spec, out_path, workdir):
         cur = nxt
 
     fg.append(f"[{cur}]format=yuv420p[vout]")
-    cmd += ["-filter_complex", ";".join(fg), "-map", "[vout]"]
+
+    # フィルタはファイル経由で渡す。
+    # Windows のコマンドライン長は 32767 文字が上限で、行数が増えると
+    # -filter_complex に直接書く方式では超えて起動できなくなる
+    # （200 行で約 62,000 文字になることを確認済み）。
+    script = os.path.join(workdir, "filter_complex.txt")
+    with open(script, "w", encoding="utf-8") as f:
+        f.write(";\n".join(fg))
+    cmd += ["-filter_complex_script", script, "-map", "[vout]"]
 
     if audio_idx is not None:
         cmd += ["-map", f"{audio_idx}:a:0", "-c:a", "aac", "-b:a", "192k"]
@@ -151,7 +159,7 @@ def build_command(spec, out_path, workdir):
     cmd += [
         "-c:v", "libx264", "-preset", "medium", "-crf", "18",
         "-pix_fmt", "yuv420p", "-r", str(fps), "-t", f"{dur:.3f}",
-        "-movflags", "+faststart", out_path,
+        "-movflags", "+faststart", os.path.abspath(out_path),
     ]
     return cmd
 
@@ -174,7 +182,8 @@ def main():
         return 0
 
     t0 = time.time()
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    # 入力は workdir 基準の相対パスで渡している（コマンドライン長を抑えるため）
+    p = subprocess.Popen(cmd, cwd=workdir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                          text=True, encoding="utf-8", errors="replace")
     tail = []
     for line in p.stdout:
