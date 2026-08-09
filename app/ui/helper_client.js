@@ -27,8 +27,13 @@ export async function startJob(path, formData) {
   return d.jobId;
 }
 
-export async function fetchJob(jobId) {
-  const r = await fetch(`${HELPER_BASE}/jobs/${jobId}`);
+export async function fetchJob(jobId, timeoutMs = 10000) {
+  const r = await fetch(`${HELPER_BASE}/jobs/${jobId}`, { signal: AbortSignal.timeout(timeoutMs) });
+  if (r.status === 404) {
+    const e = new Error("ジョブが見つかりません（ヘルパーが再起動された可能性があります）");
+    e.gone = true;
+    throw e;
+  }
   return await r.json();
 }
 
@@ -50,24 +55,52 @@ export async function cancelJob(jobId) {
  * onProgress(steps, elapsed) / onDone(job) / onError(message)
  * 戻り値: 監視を止める関数
  */
-export function pollJob(jobId, { intervalMs = 1000, onProgress, onDone, onError } = {}) {
+export function pollJob(jobId, { intervalMs = 1000, onProgress, onDone, onError, maxFails = 15 } = {}) {
   let timer = null;
-  const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+  let stopped = false;
+  let fails = 0;
+
+  const stop = () => { stopped = true; if (timer) { clearTimeout(timer); timer = null; } };
+
+  // 書き出し中は ffmpeg が CPU とメモリを占有するため、問い合わせへの応答が
+  // 一時的に遅れたり失敗したりする。1 回の失敗で諦めると誤って
+  // 「通信が切れました」を出してしまうので、続けて失敗したときだけ諦める。
+  //
+  // setInterval だと応答が間隔より遅いときにリクエストが重なるので、
+  // 1 回終えてから次を予約する形にしている。
+  const schedule = () => {
+    if (stopped) return;
+    timer = setTimeout(step, intervalMs);
+  };
+
   const step = async () => {
+    if (stopped) return;
     try {
       const d = await fetchJob(jobId);
+      fails = 0;
       if (d.status === "running") {
         onProgress?.(d.steps || [], d.elapsed || 0);
+        schedule();
       } else if (d.status === "done") {
         stop(); onDone?.(d);
       } else if (d.status === "error") {
         stop(); onError?.(d.error || "処理に失敗しました");
+      } else {
+        schedule();   // 想定外の応答は次回に賭ける
       }
     } catch (e) {
-      stop(); onError?.("ヘルパーとの通信が切れました");
+      if (e.gone) { stop(); onError?.(e.message); return; }
+      fails++;
+      if (fails >= maxFails) {
+        stop();
+        onError?.(`ヘルパーからの応答が ${fails} 回続けてありませんでした。`
+                + `処理は裏で続いている可能性があります。`);
+        return;
+      }
+      schedule();
     }
   };
-  timer = setInterval(step, intervalMs);
+
   step();
   return stop;
 }

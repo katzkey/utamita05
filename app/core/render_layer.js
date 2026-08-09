@@ -63,6 +63,51 @@ export async function renderLineLayer(stageEl, w, h) {
 
   const c = document.createElement("canvas");
   c.width = w; c.height = h;
-  c.getContext("2d").drawImage(img, 0, 0);
-  return await new Promise(r => c.toBlob(r, "image/png"));
+  const g = c.getContext("2d");
+  g.drawImage(img, 0, 0);
+
+  // 絵があるのは画面のごく一部なので、その範囲だけ切り出す。
+  // 全画面のまま渡すと ffmpeg が 1 行ごとに全面を合成することになり、
+  // 行数が増えるほど書き出しが極端に遅くなる。
+  const box = alphaBounds(g, w, h);
+  if (!box) {
+    // 完全に透明（歌詞が空など）。1px だけ返して合成対象から外れるようにする
+    const e = document.createElement("canvas");
+    e.width = e.height = 1;
+    return { blob: await toBlob(e), x: 0, y: 0, w: 1, h: 1, empty: true };
+  }
+
+  const cut = document.createElement("canvas");
+  cut.width = box.w; cut.height = box.h;
+  cut.getContext("2d").drawImage(c, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h);
+  return { blob: await toBlob(cut), x: box.x, y: box.y, w: box.w, h: box.h, empty: false };
+}
+
+function toBlob(canvas) {
+  return new Promise(r => canvas.toBlob(r, "image/png"));
+}
+
+/** 不透明な画素が存在する範囲を返す。全部透明なら null。 */
+function alphaBounds(ctx, w, h, margin = 2) {
+  const d = ctx.getImageData(0, 0, w, h).data;
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  for (let y = 0; y < h; y++) {
+    const row = y * w * 4;
+    for (let x = 0; x < w; x++) {
+      if (d[row + x * 4 + 3] !== 0) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) return null;
+  minX = Math.max(0, minX - margin); minY = Math.max(0, minY - margin);
+  maxX = Math.min(w - 1, maxX + margin); maxY = Math.min(h - 1, maxY + margin);
+  // 幅は偶数にしておく（動画コーデックの都合で奇数を嫌う場面があるため）
+  let bw = maxX - minX + 1, bh = maxY - minY + 1;
+  if (bw % 2) { bw = Math.min(bw + 1, w - minX); }
+  if (bh % 2) { bh = Math.min(bh + 1, h - minY); }
+  return { x: minX, y: minY, w: bw, h: bh };
 }

@@ -178,12 +178,15 @@ async function run() {
       opacity: bg.opacity ?? 1.0,
     })),
     fadeIn, fadeOut,
-    lines: lines.map(l => ({ tIn: l.tIn, tOut: l.tOut })),
+    lines: lines.map((l, i) => ({
+      tIn: l.tIn, tOut: l.tOut,
+      x: layers[i].x, y: layers[i].y, w: layers[i].w, h: layers[i].h,
+    })),
   };
 
   const fd = new FormData();
   fd.append("spec", JSON.stringify(spec));
-  layers.forEach((b, i) => fd.append(`layer_${i}`, b, `line_${i}.png`));
+  layers.forEach((L, i) => fd.append(`layer_${i}`, L.blob, `line_${i}.png`));
   bgFiles.forEach(({ file }, i) => fd.append(`bg_${i}`, file, file.name || `bg_${i}.bin`));
   const audio = getUi().audioFile;
   if (audio) fd.append("audio", audio, audio.name || "audio.bin");

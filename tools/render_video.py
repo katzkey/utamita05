@@ -36,6 +36,43 @@ def q(path):
     return path.replace("\\", "/").replace(":", "\\:").replace("'", "\\'")
 
 
+def prescale_still_backgrounds(spec, workdir, W, H):
+    """静止画の背景を出力解像度に合わせて 1 回だけ変換しておく。
+
+    ffmpeg は -loop 1 で読んだ静止画でも毎フレーム scale を通すため、
+    大きな画像だと拡大処理だけで時間を食う（実測：60 秒の書き出しで
+    背景ありが 108 秒、背景なしが 22 秒）。先に 1 枚だけ作れば済む。
+    """
+    for i, b in enumerate(spec.get("backgrounds") or []):
+        if b.get("kind") == "video" or not b.get("file"):
+            continue
+        src = os.path.join(workdir, b["file"])
+        if not os.path.exists(src):
+            continue
+        dst_rel = f"bg_scaled_{i}.png"
+        dst = os.path.join(workdir, dst_rel)
+        vf = fit_scale_filter(b.get("fit", "cover"), W, H)
+        r = subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", src, "-vf", vf,
+                            "-frames:v", "1", dst],
+                           capture_output=True, text=True)
+        if r.returncode == 0 and os.path.exists(dst):
+            b["file"] = dst_rel
+            b["_prescaled"] = True
+
+
+def fit_scale_filter(fit, W, H):
+    if fit == "contain":
+        return (f"scale={W}:{H}:force_original_aspect_ratio=decrease,"
+                f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2:color=0x00000000")
+    if fit == "stretch":
+        return f"scale={W}:{H}"
+    if fit == "original":
+        return (f"crop=min(iw\\,{W}):min(ih\\,{H}),"
+                f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2:color=0x00000000")
+    return (f"scale={W}:{H}:force_original_aspect_ratio=increase,"
+            f"crop={W}:{H}")   # cover
+
+
 def build_command(spec, out_path, workdir):
     W = int(spec.get("width", 1920))
     H = int(spec.get("height", 1080))
@@ -85,26 +122,15 @@ def build_command(spec, out_path, workdir):
     fg.append(f"[{bg_idx}:v]fps={fps},format=rgba,setsar=1[bg]")
     cur = "bg"
 
-    # fit の指定を ffmpeg のスケール指定へ
-    def fit_filter(fit):
-        if fit == "contain":
-            return (f"scale={W}:{H}:force_original_aspect_ratio=decrease,"
-                    f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2:color=0x00000000")
-        if fit == "stretch":
-            return f"scale={W}:{H}"
-        if fit == "original":
-            return (f"scale=iw:ih,crop=min(iw\\,{W}):min(ih\\,{H}),"
-                    f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2:color=0x00000000")
-        return (f"scale={W}:{H}:force_original_aspect_ratio=increase,"
-                f"crop={W}:{H}")   # cover
-
     for k, (b, idx) in enumerate(zip(backgrounds, bg_input_idx)):
         t_in = float(b["tIn"])
         span = max(0.05, float(b["tOut"]) - t_in)
         fi = min(float(b.get("fadeIn", 0)), span / 2)
         fo = min(float(b.get("fadeOut", 0)), span / 2)
         op = float(b.get("opacity", 1.0))
-        chain = [f"[{idx}:v]{fit_filter(b.get('fit', 'cover'))},fps={fps},format=rgba,setsar=1"]
+        # 事前変換済みなら既に出力解像度なので、毎フレームのスケールは不要
+        pre = "" if b.get("_prescaled") else fit_scale_filter(b.get("fit", "cover"), W, H) + ","
+        chain = [f"[{idx}:v]{pre}fps={fps},format=rgba,setsar=1"]
         if op < 1.0:
             chain.append(f"colorchannelmixer=aa={op:.3f}")
         if fi > 0:
@@ -125,17 +151,19 @@ def build_command(spec, out_path, workdir):
         fo = float(ln.get("fadeOut", spec.get("fadeOut", 0.3)))
         fi = min(fi, span / 2); fo = min(fo, span / 2)
 
-        # 静止画の時間軸は 0 始まり。そこでフェードを掛けてから絶対時刻へずらす
+        # レイヤーは絵のある範囲だけを切り出したもの。元の位置へ置くだけで
+        # 拡大も余白埋めも要らない。全画面のまま重ねると行数分だけ
+        # 全面合成が走り、書き出しが極端に遅くなる。
+        x = int(ln.get("x", 0)); y = int(ln.get("y", 0))
         fg.append(
-            f"[{idx}:v]scale={W}:{H}:force_original_aspect_ratio=decrease,"
-            f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2:color=0x00000000,format=rgba,"
+            f"[{idx}:v]format=rgba,"
             f"fade=t=in:st=0:d={fi:.3f}:alpha=1,"
             f"fade=t=out:st={max(0.0, span - fo):.3f}:d={fo:.3f}:alpha=1,"
             f"setpts=PTS-STARTPTS+{t_in:.3f}/TB[l{k}]"
         )
         nxt = f"v{k}"
         fg.append(
-            f"[{cur}][l{k}]overlay=x=0:y=0:eof_action=pass:"
+            f"[{cur}][l{k}]overlay=x={x}:y={y}:eof_action=pass:"
             f"enable='between(t,{t_in:.3f},{t_in + span + fo:.3f})'[{nxt}]"
         )
         cur = nxt
@@ -175,6 +203,8 @@ def main():
     workdir = os.path.dirname(os.path.abspath(a.spec))
     spec = json.load(open(a.spec, encoding="utf-8"))
     dur = float(spec.get("duration", 0)) or 1.0
+    prescale_still_backgrounds(spec, workdir,
+                               int(spec.get("width", 1920)), int(spec.get("height", 1080)))
     cmd = build_command(spec, a.out, workdir)
 
     if a.print_cmd:
