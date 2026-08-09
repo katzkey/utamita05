@@ -155,17 +155,17 @@ def align_kana(words, lines, rep):
             continue
         d = (w["e"] - w["s"]) / len(k)
         for i, c in enumerate(k):
-            rec.append((c, w["s"] + d * i))
+            rec.append((c, w["s"] + d * i, w["s"] + d * (i + 1)))
 
     kl = [to_kana(x, kks) for x in lines]
     truth = "".join(kl)
-    starts, p = [], 0
+    starts, ends, p = [], [], 0
     for x in kl:
-        starts.append(p); p += len(x)
+        starts.append(p); p += len(x); ends.append(p - 1)
 
     R, T = len(rec), len(truth)
     if R == 0 or T == 0:
-        return [None] * len(lines), 0.0
+        return [None] * len(lines), [None] * len(lines), 0.0
 
     INF = float("inf")
     dp = [[INF] * (T + 1) for _ in range(R + 1)]
@@ -188,35 +188,40 @@ def align_kana(words, lines, rep):
             if j < T and cur + 1 < row[j + 1]:
                 row[j + 1] = cur + 1; bk[i][j + 1] = ("i", i, j)
 
-    tm = [None] * T
+    t_start = [None] * T
+    t_end = [None] * T
     i, j = R, T
     matched = 0
     while bk[i][j]:
         op, pi, pj = bk[i][j]
         if op == "m":
-            tm[pj] = rec[pi][1]; matched += 1
+            t_start[pj] = rec[pi][1]; t_end[pj] = rec[pi][2]; matched += 1
         i, j = pi, pj
 
-    known = [k for k, v in enumerate(tm) if v is not None]
-    for k in range(T):
-        if tm[k] is None and known:
-            lo = [x for x in known if x < k]; hi = [x for x in known if x > k]
-            if lo and hi:
-                a, b = lo[-1], hi[0]
-                tm[k] = tm[a] + (tm[b] - tm[a]) * (k - a) / (b - a)
-            elif lo:
-                tm[k] = tm[lo[-1]]
-            else:
-                tm[k] = tm[hi[0]]
+    for arr in (t_start, t_end):
+        known = [k for k, v in enumerate(arr) if v is not None]
+        for k in range(T):
+            if arr[k] is None and known:
+                lo = [x for x in known if x < k]; hi = [x for x in known if x > k]
+                if lo and hi:
+                    a, b = lo[-1], hi[0]
+                    arr[k] = arr[a] + (arr[b] - arr[a]) * (k - a) / (b - a)
+                elif lo:
+                    arr[k] = arr[lo[-1]]
+                else:
+                    arr[k] = arr[hi[0]]
 
     rep.step("align", 100)
     coverage = matched / max(T, 1)
-    return [tm[s] if s < T else None for s in starts], coverage
+    ins = [t_start[s] if s < T else None for s in starts]
+    outs = [t_end[e] if e < T else None for e in ends]
+    return ins, outs, coverage
 
 
 # ---------------------------------------------------------------- 5. 吸着
 
-def vad_onsets(wav_path, thr_offset=8.0, min_gap_frames=35, smooth=9):
+def voiced_mask(wav_path, thr_offset=8.0, smooth=9):
+    """10ms 刻みで「歌声が鳴っているか」の真偽値を返す。"""
     with wave.open(wav_path, "rb") as w:
         sr = w.getframerate()
         a = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float32) / 32768.0
@@ -224,8 +229,25 @@ def vad_onsets(wav_path, thr_offset=8.0, min_gap_frames=35, smooth=9):
     rms = np.sqrt(np.array([np.mean(a[i*hop:(i+1)*hop] ** 2) for i in range(n)]) + 1e-12)
     db = 20 * np.log10(rms + 1e-9)
     db = np.convolve(db, np.ones(smooth) / smooth, mode="same")
-    thr = np.percentile(db, 35) + thr_offset
-    v = db > thr
+    return db > (np.percentile(db, 35) + thr_offset)
+
+
+def clamp_out_to_voiced(t_in, t_out, voiced):
+    """OUT が無音まで伸びていたら、最後に歌っていた所まで戻す。
+    間奏をまたぐ行で、末尾の文字が引き伸ばされるのを防ぐ
+    （検証ではこれが無いと最大 11.3 秒ずれた。入れると 0.9 秒に収まる）。"""
+    i0 = int(t_in / 0.01)
+    i1 = min(int(t_out / 0.01), len(voiced) - 1)
+    if i1 <= i0 or voiced[i1]:
+        return t_out
+    k = i1
+    while k > i0 and not voiced[k]:
+        k -= 1
+    return max(t_in + 0.3, (k + 1) * 0.01)
+
+
+def vad_onsets(wav_path, thr_offset=8.0, min_gap_frames=35, smooth=9):
+    v = voiced_mask(wav_path, thr_offset, smooth)
     out = []; i = 0; last_end = -10 ** 9
     while i < len(v):
         if v[i]:
@@ -282,18 +304,29 @@ def main():
         wav44, wav16, dur = extract_audio(a.song, workdir, rep)
         voc16 = separate_vocals(wav44, workdir, rep, a.device)
         words = transcribe(voc16, dur, rep, a.model)
-        times, coverage = align_kana(words, lines, rep)
+        times, out_times, coverage = align_kana(words, lines, rep)
         times = snap(times, voc16, rep)
+        voiced = voiced_mask(voc16)
 
-        # OUT は次の行の IN 直前まで。最後の行だけ曲末まで。
+        # OUT は「その行を歌い終わった時刻」。
+        # 次の行の IN 直前まで伸ばすと、間奏をまたぐ行が極端に長くなる
+        # （検証では最大 15.3 秒ずれた。歌い終わりを使うと最大 1.8 秒）。
         result_lines = []
         for i, (text, t) in enumerate(zip(lines, times)):
-            nxt = next((x for x in times[i+1:] if x is not None), None)
-            tout = (nxt - 0.05) if nxt is not None else dur
+            tout = out_times[i] if i < len(out_times) else None
+            if t is not None:
+                if tout is None or tout <= t:
+                    tout = t + 0.5
+                tout = clamp_out_to_voiced(t, tout, voiced)
+                # 次の行に食い込まないよう詰める
+                nxt = next((x for x in times[i+1:] if x is not None), None)
+                if nxt is not None:
+                    tout = min(tout, nxt - 0.03)
+                tout = max(tout, t + 0.3)
             result_lines.append({
                 "index": i, "text": text,
                 "tIn": round(t, 3) if t is not None else None,
-                "tOut": round(max(tout, (t or 0) + 0.3), 3) if t is not None else None,
+                "tOut": round(tout, 3) if t is not None else None,
             })
 
         out = {
