@@ -44,20 +44,27 @@ def build_command(spec, out_path, workdir):
     lines = spec.get("lines", [])
     bg = spec.get("background") or {"type": "solid", "color": "#000000"}
 
+    backgrounds = spec.get("backgrounds") or []
+
     cmd = ["ffmpeg", "-y", "-v", "error", "-stats"]
     inputs = []          # (種別, フィルタで参照する index)
 
-    # ---- 背景 ----
-    if bg.get("type") == "video" and bg.get("file"):
-        cmd += ["-stream_loop", "-1", "-i", os.path.join(workdir, bg["file"])]
-        bg_idx = len(inputs); inputs.append("bgvideo")
-    elif bg.get("type") == "image" and bg.get("file"):
-        cmd += ["-loop", "1", "-i", os.path.join(workdir, bg["file"])]
-        bg_idx = len(inputs); inputs.append("bgimage")
-    else:
-        color = (bg.get("color") or "#000000").lstrip("#")
-        cmd += ["-f", "lavfi", "-i", f"color=c=0x{color}:s={W}x{H}:r={fps}"]
-        bg_idx = len(inputs); inputs.append("bgcolor")
+    # ---- 一番下に敷く単色 ----
+    base_color = (spec.get("baseColor") or bg.get("color") or "#000000").lstrip("#")
+    cmd += ["-f", "lavfi", "-i", f"color=c=0x{base_color}:s={W}x{H}:r={fps}"]
+    bg_idx = len(inputs); inputs.append("bgcolor")
+
+    # ---- 背景素材（画像 / 動画）。時間範囲つきで複数敷ける ----
+    bg_input_idx = []
+    for b in backgrounds:
+        span = max(0.05, float(b["tOut"]) - float(b["tIn"]))
+        fo = float(b.get("fadeOut", 0))
+        path = os.path.join(workdir, b["file"])
+        if b.get("kind") == "video":
+            cmd += ["-stream_loop", "-1", "-t", f"{span + fo:.3f}", "-i", path]
+        else:
+            cmd += ["-loop", "1", "-t", f"{span + fo:.3f}", "-i", path]
+        bg_input_idx.append(len(inputs)); inputs.append("bg")
 
     # ---- 行レイヤー（静止画をループ入力し、後で時間軸をずらす）----
     layer_idx = []
@@ -75,9 +82,41 @@ def build_command(spec, out_path, workdir):
 
     # ---- フィルタグラフ ----
     fg = []
-    fg.append(f"[{bg_idx}:v]scale={W}:{H}:force_original_aspect_ratio=increase,"
-              f"crop={W}:{H},fps={fps},format=rgba,setsar=1[bg]")
+    fg.append(f"[{bg_idx}:v]fps={fps},format=rgba,setsar=1[bg]")
     cur = "bg"
+
+    # fit の指定を ffmpeg のスケール指定へ
+    def fit_filter(fit):
+        if fit == "contain":
+            return (f"scale={W}:{H}:force_original_aspect_ratio=decrease,"
+                    f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2:color=0x00000000")
+        if fit == "stretch":
+            return f"scale={W}:{H}"
+        if fit == "original":
+            return (f"scale=iw:ih,crop=min(iw\\,{W}):min(ih\\,{H}),"
+                    f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2:color=0x00000000")
+        return (f"scale={W}:{H}:force_original_aspect_ratio=increase,"
+                f"crop={W}:{H}")   # cover
+
+    for k, (b, idx) in enumerate(zip(backgrounds, bg_input_idx)):
+        t_in = float(b["tIn"])
+        span = max(0.05, float(b["tOut"]) - t_in)
+        fi = min(float(b.get("fadeIn", 0)), span / 2)
+        fo = min(float(b.get("fadeOut", 0)), span / 2)
+        op = float(b.get("opacity", 1.0))
+        chain = [f"[{idx}:v]{fit_filter(b.get('fit', 'cover'))},fps={fps},format=rgba,setsar=1"]
+        if op < 1.0:
+            chain.append(f"colorchannelmixer=aa={op:.3f}")
+        if fi > 0:
+            chain.append(f"fade=t=in:st=0:d={fi:.3f}:alpha=1")
+        if fo > 0:
+            chain.append(f"fade=t=out:st={max(0.0, span - fo):.3f}:d={fo:.3f}:alpha=1")
+        chain.append(f"setpts=PTS-STARTPTS+{t_in:.3f}/TB")
+        fg.append(",".join(chain) + f"[b{k}]")
+        nxt = f"bgv{k}"
+        fg.append(f"[{cur}][b{k}]overlay=x=0:y=0:eof_action=pass:"
+                  f"enable='between(t,{t_in:.3f},{t_in + span + fo:.3f})'[{nxt}]")
+        cur = nxt
 
     for k, (ln, idx) in enumerate(zip(lines, layer_idx)):
         t_in = float(ln["tIn"])

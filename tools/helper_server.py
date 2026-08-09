@@ -326,17 +326,24 @@ class H(BaseHTTPRequestHandler):
                 f.write(fields[key]["value"])
             ln["file"] = rel
 
-        # 音声・背景素材（任意）
-        for key, name in (("audio", "audio_src"), ("bgfile", "bg_src")):
-            if key in fields and fields[key]["value"]:
-                ext = os.path.splitext(fields[key]["filename"] or "")[1] or ".bin"
-                rel = name + ext
-                with open(os.path.join(workdir, rel), "wb") as f:
-                    f.write(fields[key]["value"])
-                if key == "audio":
-                    spec["audio"] = rel
-                else:
-                    spec.setdefault("background", {})["file"] = rel
+        # 背景素材（画像/動画）を bg_0, bg_1, ... で受ける
+        for i, b in enumerate(spec.get("backgrounds", [])):
+            key = f"bg_{i}"
+            if key not in fields:
+                return self._json({"error": f"{key} が足りません"}, 400)
+            ext = os.path.splitext(fields[key]["filename"] or "")[1] or ".bin"
+            rel = f"bg_{i}{ext}"
+            with open(os.path.join(workdir, rel), "wb") as f:
+                f.write(fields[key]["value"])
+            b["file"] = rel
+
+        # 音声（任意）
+        if "audio" in fields and fields["audio"]["value"]:
+            ext = os.path.splitext(fields["audio"]["filename"] or "")[1] or ".bin"
+            rel = "audio_src" + ext
+            with open(os.path.join(workdir, rel), "wb") as f:
+                f.write(fields["audio"]["value"])
+            spec["audio"] = rel
 
         spec_path = os.path.join(workdir, "spec.json")
         with io.open(spec_path, "w", encoding="utf-8") as f:

@@ -187,6 +187,13 @@ export function getFileBlobUrl(name) {
   return entry ? entry.url : null;
 }
 
+// 登録済みの File 本体を返す（動画書き出しでヘルパーへ送るのに使う）
+export function getFileBlob(name) {
+  if (!name) return null;
+  const entry = state.fileBlobs.get(name);
+  return entry ? entry.file : null;
+}
+
 export function hasFileBlob(name) {
   return !!(name && state.fileBlobs.has(name));
 }

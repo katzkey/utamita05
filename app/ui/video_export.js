@@ -5,7 +5,7 @@
 //   重ね合わせ・フェード・エンコード・音声の多重化は ffmpeg（ローカルヘルパー）に任せる。
 //   ブラウザで全部やるより速く、音声と背景動画がそのまま扱えるため。
 
-import { getProject, getUi } from "./state.js";
+import { getProject, getUi, getFileBlob } from "./state.js";
 import { renderLinePreviewHtml } from "./lyrics_tab.js";
 import { renderLineLayer } from "../core/render_layer.js";
 
@@ -51,6 +51,25 @@ function timedLines() {
   return getProject().lines.filter(l => l.tIn != null && l.tOut != null && l.tOut > l.tIn);
 }
 
+const VIDEO_EXT = /\.(mp4|m4v|mov|webm)$/i;
+
+// 書き出しに使える背景を集める。
+// 単色は一番下に敷く色として扱い、素材は時間範囲つきのレイヤーとして送る。
+// ファイル本体が手元に無い背景（別 PC で作った .json を開いた等）は除外する。
+function exportableBackgrounds() {
+  const p = getProject();
+  const files = [], solids = [];
+  const missing = [];
+  for (const bg of p.backgrounds || []) {
+    if (bg.solidColor) { solids.push(bg); continue; }
+    if (!bg.file) continue;
+    const f = getFileBlob(bg.file);
+    if (!f) { missing.push(bg.file); continue; }
+    files.push({ bg, file: f });
+  }
+  return { files, solids, missing };
+}
+
 // ────────────────────────────── 待機画面
 
 function renderIdle(helper = "checking") {
@@ -58,6 +77,7 @@ function renderIdle(helper = "checking") {
   const p = getProject();
   const lines = timedLines();
   const audio = getUi().audioFile;
+  const bgs = exportableBackgrounds();
   const dot = { checking: "at-dot-wait", ok: "at-dot-ok", ng: "at-dot-ng" }[helper];
   const msg = { checking: "ヘルパーを確認しています…", ok: "ヘルパーに接続できました",
                 ng: "ヘルパーが見つかりません" }[helper];
@@ -69,7 +89,11 @@ function renderIdle(helper = "checking") {
       <div class="at-row"><span>FPS</span><b>${p.fps}</b></div>
       <div class="at-row"><span>書き出す行</span><b>${lines.length} 行 / 全 ${p.lines.length} 行</b></div>
       <div class="at-row"><span>音声</span><b>${audio ? escapeHtml(audio.name || "読込済み") : "なし（無音になります）"}</b></div>
+      <div class="at-row"><span>背景</span><b>${bgs.files.length ? bgs.files.length + " 素材" : "なし（下の色のみ）"}</b></div>
     </div>
+    ${bgs.missing.length ? `<div class="at-warn">
+      次の背景ファイルがこの PC に見つからないため、書き出しから外します：<br>
+      ${bgs.missing.map(escapeHtml).join("、")}</div>` : ``}
     <div class="at-section">
       <div class="at-row">
         <span>フェード</span>
@@ -77,7 +101,7 @@ function renderIdle(helper = "checking") {
               アウト <input class="field-input" id="veFadeOut" type="number" step="0.1" min="0" value="0.4" style="width:60px"> 秒</span>
       </div>
       <div class="at-row">
-        <span>背景色</span>
+        <span>下地の色</span>
         <input type="color" id="veBgColor" value="#101014" style="width:44px;height:24px;padding:0;border:none">
       </div>
     </div>
@@ -142,10 +166,23 @@ async function run() {
     { key: "encode", label: "映像を書き出す", percent: 0 },
   ]);
 
-  const duration = Math.max(...lines.map(l => l.tOut)) + fadeOut + 0.5;
+  const { files: bgFiles } = exportableBackgrounds();
+  const lastLineOut = Math.max(...lines.map(l => l.tOut));
+  const lastBgOut = bgFiles.length ? Math.max(...bgFiles.map(x => x.bg.tOut || 0)) : 0;
+  const duration = Math.max(lastLineOut + fadeOut, lastBgOut) + 0.5;
+
   const spec = {
     width: W, height: H, fps: p.fps, duration,
-    background: { type: "solid", color: bgColor },
+    baseColor: bgColor,
+    backgrounds: bgFiles.map(({ bg }) => ({
+      kind: VIDEO_EXT.test(bg.file) ? "video" : "image",
+      tIn: bg.tIn ?? 0,
+      tOut: (bg.tOut && bg.tOut > (bg.tIn ?? 0)) ? bg.tOut : duration,
+      fadeIn: bg.fadeIn ?? 0,
+      fadeOut: bg.fadeOut ?? 0,
+      fit: bg.fit || "cover",
+      opacity: bg.opacity ?? 1.0,
+    })),
     fadeIn, fadeOut,
     lines: lines.map(l => ({ tIn: l.tIn, tOut: l.tOut })),
   };
@@ -153,6 +190,7 @@ async function run() {
   const fd = new FormData();
   fd.append("spec", JSON.stringify(spec));
   layers.forEach((b, i) => fd.append(`layer_${i}`, b, `line_${i}.png`));
+  bgFiles.forEach(({ file }, i) => fd.append(`bg_${i}`, file, file.name || `bg_${i}.bin`));
   const audio = getUi().audioFile;
   if (audio) fd.append("audio", audio, audio.name || "audio.bin");
 
