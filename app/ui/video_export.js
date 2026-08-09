@@ -72,6 +72,14 @@ function exportableBackgrounds() {
   return { files, solids, missing };
 }
 
+// 背景の状況を 1 行で。フェードが設定されているかも出す。
+function bgSummary(bgs) {
+  if (!bgs.files.length) return "なし（下の色のみ）";
+  const withFade = bgs.files.filter(x => x.bg.fadeIn > 0 || x.bg.fadeOut > 0).length;
+  return `${bgs.files.length} 素材`
+       + (withFade ? `（うち ${withFade} 個にフェードあり）` : "（フェードなし）");
+}
+
 // ────────────────────────────── 待機画面
 
 function renderIdle(helper = "checking") {
@@ -87,14 +95,19 @@ function renderIdle(helper = "checking") {
       <div class="at-row"><span>FPS</span><b>${p.fps}</b></div>
       <div class="at-row"><span>書き出す行</span><b>${lines.length} 行 / 全 ${p.lines.length} 行</b></div>
       <div class="at-row"><span>音声</span><b>${audio ? escapeHtml(audio.name || "読込済み") : "なし（無音になります）"}</b></div>
-      <div class="at-row"><span>背景</span><b>${bgs.files.length ? bgs.files.length + " 素材" : "なし（下の色のみ）"}</b></div>
+      <div class="at-row"><span>背景</span><b>${bgSummary(bgs)}</b></div>
     </div>
+    ${bgs.files.length && bgs.files.every(x => !(x.bg.fadeIn > 0) && !(x.bg.fadeOut > 0)) ? `
+      <div class="at-note">
+        背景にフェードは掛かりません。掛けたい場合は<b>背景タブ</b>の
+        fadeIn / fadeOut に秒数を入れてください（上の「歌詞のフェード」は歌詞だけに効きます）。
+      </div>` : ``}
     ${bgs.missing.length ? `<div class="at-warn">
       次の背景ファイルがこの PC に見つからないため、書き出しから外します：<br>
       ${bgs.missing.map(escapeHtml).join("、")}</div>` : ``}
     <div class="at-section">
       <div class="at-row">
-        <span>フェード</span>
+        <span>歌詞のフェード</span>
         <span>イン <input class="field-input" id="veFadeIn" type="number" step="0.1" min="0" value="0.4" style="width:60px">
               アウト <input class="field-input" id="veFadeOut" type="number" step="0.1" min="0" value="0.4" style="width:60px"> 秒</span>
       </div>
