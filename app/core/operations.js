@@ -168,51 +168,93 @@ export function setLineTracking(project, id, tracking) {
   return updateLine(project, id, (line) => ({ ...line, tracking: val }));
 }
 
+const clone = (v) => (v == null ? null : JSON.parse(JSON.stringify(v)));
+
+// ある行から「見た目に関わる設定」だけを取り出す。
+// 歌詞テキスト・TC・強調・メモ・skip は行ごとの中身なのでコピーしない。
+function extractLook(line) {
+  return {
+    fontOverride: clone(line.fontOverride),   // family / size / italic
+    layout: line.layout,
+    layerMode: line.layerMode ?? null,
+    pos: { ...(line.pos || { dx: 0, dy: 0, scale: 1.0, rot: 0 }) },
+    tracking: line.tracking ?? 0,
+    interTypeGap: line.interTypeGap ?? 0,
+    autoKerning: !!line.autoKerning,
+    stagger: line.stagger ?? 0,
+    textColor: line.textColor ?? null,
+    textStroke: clone(line.textStroke),
+    zabuton: clone(line.zabuton),
+    underline: clone(line.underline),
+    glow: clone(line.glow),
+    jitter: clone(line.jitter),
+    template: { ...line.template },
+    fontPresetId: line.fontPresetId ?? null,
+    zabutonPresetId: line.zabutonPresetId ?? null,
+  };
+}
+
+// look を 1 行に載せる（毎回コピーし直して行どうしで実体を共有しないようにする）
+function applyLook(line, look) {
+  return {
+    ...line,
+    fontOverride: clone(look.fontOverride) || undefined,
+    layout: look.layout || line.layout,
+    layerMode: look.layerMode,
+    pos: { ...look.pos },
+    tracking: look.tracking,
+    interTypeGap: look.interTypeGap,
+    autoKerning: look.autoKerning,
+    stagger: look.stagger,
+    textColor: look.textColor,
+    textStroke: clone(look.textStroke),
+    zabuton: clone(look.zabuton),
+    underline: clone(look.underline),
+    glow: clone(look.glow),
+    jitter: clone(look.jitter),
+    template: { ...look.template },
+    fontPresetId: look.fontPresetId,
+    zabutonPresetId: look.zabutonPresetId,
+  };
+}
+
+// この行の見た目を「指定した行たち」へコピー（1 履歴 = 1 Undo）
+export function applyLineSettingsToLines(project, srcId, targetIds) {
+  const idx = indexOfId(project.lines, srcId);
+  if (idx < 0) return project;
+  const look = extractLook(project.lines[idx]);
+  const targets = new Set(targetIds || []);
+  if (!targets.size) return project;
+  const lines = project.lines.map(l => (targets.has(l.id) ? applyLook(l, look) : l));
+  return touch(project, { lines });
+}
+
 // この行の設定を全体に反映（1 履歴 = 1 Undo）
-// - フォント（override があれば）→ project.font
-// - layout / layerMode / 固定テンプレ → project.defaults
-// - tracking / stagger / zabuton → 全行にコピー
-// 反映後、この行の fontOverride はクリア（デフォルト継承と同値になるため）
+// - 見た目一式（フォント・配置・座布団・光彩・下線・縁取り・色・カーニング等）→ 全行へ
+// - フォントと layout / layerMode / 固定テンプレ → project.defaults にも入れて、
+//   これから追加する行にも効くようにする
 export function applyLineSettingsToProject(project, id) {
   const idx = indexOfId(project.lines, id);
   if (idx < 0) return project;
   const line = project.lines[idx];
+  const look = extractLook(line);
 
-  // 1) project.font
+  // 新規行の既定値にも反映（fontOverride は各行に載せるのでここは family/size のみ）
   const font = { ...project.font };
-  if (line.fontOverride?.family) font.family = line.fontOverride.family;
-  if (typeof line.fontOverride?.size === "number") font.size = line.fontOverride.size;
+  if (look.fontOverride?.family) font.family = look.fontOverride.family;
+  if (typeof look.fontOverride?.size === "number") font.size = look.fontOverride.size;
 
-  // 2) defaults
   const defaults = {
     ...project.defaults,
-    layout: line.layout || project.defaults.layout,
-    layerMode: line.layerMode ?? project.defaults.layerMode,
+    layout: look.layout || project.defaults.layout,
+    layerMode: look.layerMode ?? project.defaults.layerMode,
     template: { ...project.defaults.template },
   };
   for (const slot of ["entry", "hold", "exit", "design"]) {
-    if (line.template[slot] != null) defaults.template[slot] = line.template[slot];
+    if (look.template[slot] != null) defaults.template[slot] = look.template[slot];
   }
 
-  // 3) 全行へコピー（tracking / stagger / zabuton / jitter / pos(dx,dy,scale,rot) / layout）
-  const zabutonCopy = line.zabuton ? JSON.parse(JSON.stringify(line.zabuton)) : null;
-  const jitterCopy = line.jitter ? JSON.parse(JSON.stringify(line.jitter)) : null;
-  const posCopy = { ...(line.pos || { dx: 0, dy: 0, scale: 1.0, rot: 0 }) };
-  const lines = project.lines.map(l => {
-    const next = {
-      ...l,
-      tracking: line.tracking ?? 0,
-      stagger: line.stagger ?? 0,
-      zabuton: zabutonCopy ? JSON.parse(JSON.stringify(zabutonCopy)) : null,
-      jitter: jitterCopy ? JSON.parse(JSON.stringify(jitterCopy)) : null,
-      pos: { ...posCopy },
-      layout: line.layout || l.layout,
-    };
-    // すべての行の fontOverride をクリア（project.font に統一）
-    const { fontOverride, ...rest } = next;
-    return rest;
-  });
-
+  const lines = project.lines.map(l => applyLook(l, look));
   return touch(project, { font, defaults, lines });
 }
 

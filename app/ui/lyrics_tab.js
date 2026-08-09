@@ -88,17 +88,39 @@ function renderDetail(project, ui) {
     return;
   }
   if (selected.length > 1) {
+    // 選択の「一番上の行」を見本にする（行リストの並び順で判定）
+    const order = project.lines.map(l => l.id);
+    const ordered = [...selected].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    const srcId = ordered[0];
+    const srcLine = project.lines.find(l => l.id === srcId);
+    const srcIdx = order.indexOf(srcId);
+
     detailPaneEl.innerHTML = `
       <div class="detail-header">
         <div class="detail-row-label">複数行選択中</div>
         <div class="detail-row-text">${selected.length} 行</div>
       </div>
       <div class="section">
+        <div class="section-title">見た目をそろえる</div>
+        <div style="font-size:11px;color:var(--gray-4);margin-bottom:8px">
+          見本：<b>#${srcIdx}</b> ${escapeHtml((srcLine?.text || "").slice(0, 18))}
+        </div>
+        <button class="tool-btn" id="btnBulkApplyLook">この見た目を残り ${selected.length - 1} 行へ反映</button>
+        <div style="font-size:10px;color:var(--gray-3);margin-top:6px">
+          フォント・配置・座布団・光彩・下線・縁取り・色・カーニング・ジッター・テンプレをコピーします。<br>
+          歌詞・TC・強調・メモは変わりません。
+        </div>
+      </div>
+      <div class="section">
         <div class="section-title">一括操作</div>
-        <button class="tool-btn" id="btnBulkDel">選択行を全て削除</button>
+        <button class="tool-btn tool-btn-danger" id="btnBulkDel">選択行を全て削除</button>
       </div>
     `;
+    document.getElementById("btnBulkApplyLook").addEventListener("click", () => {
+      setProject(ops.applyLineSettingsToLines(getProject(), srcId, ordered.slice(1)));
+    });
     document.getElementById("btnBulkDel").addEventListener("click", () => {
+      if (!confirm(`${selected.length} 行を削除します。よろしいですか？`)) return;
       let p = project;
       for (const id of selected) p = ops.removeLine(p, id);
       setProject(p);
@@ -487,10 +509,15 @@ function renderDetail(project, ui) {
 
     <div class="section">
       <div class="section-title">全体へ反映</div>
-      <button class="tool-btn" id="btnApplyToProject">この行の設定を全体に反映</button>
+      <button class="tool-btn" id="btnApplyToProject">この行の見た目を全行へ反映</button>
       <div style="font-size:10px;color:var(--gray-3);margin-top:4px">
-        フォント・レイアウト・固定テンプレ → デフォルトへ<br>
-        字間・ずらし・座布団・ジッター・配置(dx/dy/scale/rot) → 全行へコピー
+        フォント（斜体含む）・配置・座布団・光彩・下線・縁取り・文字色・<br>
+        カーニング・ずらし・ジッター・テンプレ を全行へコピーします。<br>
+        歌詞・TC・強調・メモは変わりません。<br>
+        フォントと配置は新規行の既定値にも入ります。
+      </div>
+      <div style="font-size:10px;color:var(--gray-3);margin-top:6px">
+        一部の行だけに反映したいときは、行リストで Ctrl / Shift を押しながら複数選択してください。
       </div>
     </div>
   `;
