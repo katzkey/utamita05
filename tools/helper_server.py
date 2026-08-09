@@ -21,7 +21,7 @@ https のページから http://localhost を叩けることは検証済み。
 CORS と Private Network Access のヘッダを返す必要がある（下の _cors）。
 """
 
-import io, json, os, re, subprocess, sys, tempfile, threading, time, uuid
+import io, json, os, re, shutil, subprocess, sys, tempfile, threading, time, uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
@@ -90,6 +90,58 @@ STEPS_RENDER = [
 JOBS = {}
 LOCK = threading.Lock()
 
+# 終わったジョブを何秒保持するか。
+# 書き出し結果の mp4 はこの間ダウンロードできる。過ぎたら一時フォルダごと消す。
+RETAIN_SEC = 60 * 60
+SWEEP_SEC = 300
+
+
+def _rm(path):
+    if path and os.path.isdir(path):
+        shutil.rmtree(path, ignore_errors=True)
+
+
+def sweep_jobs():
+    """終わってから時間が経ったジョブを片付ける。
+    ヘルパーは常駐するので、これが無いと一時フォルダとメモリが増え続ける。"""
+    now = time.time()
+    with LOCK:
+        stale = [k for k, j in JOBS.items()
+                 if j["status"] in ("done", "error", "canceled")
+                 and now - (j.get("finishedAt") or j["startedAt"]) > RETAIN_SEC]
+        for k in stale:
+            job = JOBS.pop(k)
+        # ロックの外で消したいので集めておく
+            for d in job.get("dirs", []):
+                _rm(d)
+
+
+def sweep_orphans():
+    """前回の起動で残った一時フォルダを片付ける（1 日以上前のもの）。"""
+    base = tempfile.gettempdir()
+    cutoff = time.time() - 24 * 3600
+    try:
+        for name in os.listdir(base):
+            if not name.startswith(("utamita_job_", "utamita_up_", "utamita_render_")):
+                continue
+            path = os.path.join(base, name)
+            try:
+                if os.path.isdir(path) and os.path.getmtime(path) < cutoff:
+                    _rm(path)
+            except OSError:
+                pass
+    except OSError:
+        pass
+
+
+def sweeper():
+    while True:
+        time.sleep(SWEEP_SEC)
+        try:
+            sweep_jobs()
+        except Exception:
+            pass
+
 
 def new_job(steps=None):
     steps = steps or STEPS
@@ -101,6 +153,8 @@ def new_job(steps=None):
         "result": None, "error": None,
         "startedAt": time.time(), "elapsed": 0.0,
         "proc": None, "workdir": None, "outfile": None,
+        "dirs": [],          # 終了後に消す一時フォルダ
+        "finishedAt": None,
     }
 
 
@@ -108,6 +162,7 @@ def run_render_job(job_id, workdir, spec_path, out_path):
     """歌詞レイヤーPNGと背景/音声を ffmpeg で合成して MP4 を書き出す。"""
     job = JOBS[job_id]
     job["workdir"] = workdir
+    job["dirs"].append(workdir)
     job["steps"]["upload"] = 100.0
     cmd = [sys.executable, RENDER_VIDEO, "--progress", "json",
            "--spec", spec_path, "--out", out_path]
@@ -146,12 +201,16 @@ def run_render_job(job_id, workdir, spec_path, out_path):
     except Exception as e:
         job["status"] = "error"
         job["error"] = str(e)
+    finally:
+        job["finishedAt"] = time.time()
 
 
 def run_job(job_id, song_path, lines, model):
     job = JOBS[job_id]
     workdir = tempfile.mkdtemp(prefix="utamita_job_")
     job["workdir"] = workdir
+    job["dirs"].append(workdir)
+    job["dirs"].append(os.path.dirname(song_path))   # アップロードされた曲の置き場
     lyr_path = os.path.join(workdir, "lyrics.txt")
     out_path = os.path.join(workdir, "timing.json")
     with io.open(lyr_path, "w", encoding="utf-8") as f:
@@ -194,6 +253,8 @@ def run_job(job_id, song_path, lines, model):
     except Exception as e:
         job["status"] = "error"
         job["error"] = str(e)
+    finally:
+        job["finishedAt"] = time.time()
 
 
 class H(BaseHTTPRequestHandler):
@@ -368,6 +429,9 @@ class H(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    sweep_orphans()
+    threading.Thread(target=sweeper, daemon=True).start()
+
     print("=" * 58)
     print("  うたみた05 ローカルヘルパー")
     print(f"  http://127.0.0.1:{PORT}  で待ち受け中")
