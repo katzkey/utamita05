@@ -997,7 +997,8 @@ export function renderLinePreviewHtml(line, project) {
 }
 
 // 行の tIn 時点でアクティブな背景をステージに描画（画像/動画/単色、fit/opacity/blend 反映）
-function renderPreviewBackgrounds(line, project) {
+// 再生プレビューでも使うため公開（app/ui/play_preview.js）
+export function renderPreviewBackgrounds(line, project) {
   const bgs = project.backgrounds || [];
   if (!bgs.length) return "";
   const t = line.tIn;
