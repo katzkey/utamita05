@@ -25,36 +25,41 @@ import io, json, os, re, subprocess, sys, tempfile, threading, time, uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
-def parse_multipart(body, boundary):
-    """multipart/form-data の最小パーサ。
-    Python 3.13 で cgi モジュールが削除されたため自前で持つ（依存を増やさないため）。
-    戻り値: {name: {"filename": str|None, "value": bytes}}
-    """
-    sep = b"--" + boundary
-    out = {}
-    for part in body.split(sep):
-        if not part or part in (b"--\r\n", b"--"):
-            continue
-        part = part.lstrip(b"\r\n")
-        if part.startswith(b"--"):
-            continue
-        head, _, data = part.partition(b"\r\n\r\n")
-        if not _:
-            continue
-        data = data[:-2] if data.endswith(b"\r\n") else data
-        name = filename = None
-        for line in head.split(b"\r\n"):
-            if line.lower().startswith(b"content-disposition:"):
-                text = line.decode("utf-8", "replace")
-                m = re.search(r'name="([^"]*)"', text)
-                if m:
-                    name = m.group(1)
-                m = re.search(r'filename="([^"]*)"', text)
-                if m:
-                    filename = m.group(1)
-        if name:
-            out[name] = {"filename": filename, "value": data}
-    return out
+# ---- 処理中だけスリープを抑止する ----
+# 書き出しや解析は数分かかるが、Windows の待機判定は CPU 負荷ではなく操作の有無で
+# 決まるため、席を外すと処理中でもスリープに入ってしまう。
+#
+# SetThreadExecutionState は「呼んだスレッド」に対して効き、そのスレッドが
+# 終われば自動で解除される。なのでジョブのスレッド内で完結させる。
+# （グローバルに数えると、解除が別スレッドで呼ばれて噛み合わない）
+ES_CONTINUOUS      = 0x80000000
+ES_SYSTEM_REQUIRED = 0x00000001
+
+
+def _set_awake(on):
+    """戻り値: 成功したか。Windows 以外や失敗時は False。"""
+    if os.name != "nt":
+        return False
+    try:
+        import ctypes
+        flags = (ES_CONTINUOUS | ES_SYSTEM_REQUIRED) if on else ES_CONTINUOUS
+        prev = ctypes.windll.kernel32.SetThreadExecutionState(ctypes.c_uint(flags))
+        return prev != 0
+    except Exception:
+        return False   # 抑止できなくても処理自体は続けたい
+
+
+class KeepAwake:
+    """with で囲んだ間だけ、このスレッドがスリープを抑止する。"""
+    def __enter__(self):
+        self.ok = _set_awake(True)
+        return self
+
+    def __exit__(self, *a):
+        if self.ok:
+            _set_awake(False)
+        return False
+
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 AUTO_TIMING = os.path.join(HERE, "auto_timing.py")
@@ -108,35 +113,36 @@ def run_render_job(job_id, workdir, spec_path, out_path):
            "--spec", spec_path, "--out", out_path]
     env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUNBUFFERED="1")
     try:
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                             env=env, text=True, encoding="utf-8", errors="replace")
-        job["proc"] = p
-        for line in p.stdout:
-            line = line.strip()
-            if not line.startswith("{"):
-                continue
-            try:
-                d = json.loads(line)
-            except Exception:
-                continue
-            if d.get("type") == "progress":
-                with LOCK:
-                    job["steps"][d["step"]] = d["percent"]
-                    job["elapsed"] = time.time() - job["startedAt"]
-            elif d.get("type") == "error":
-                job["error"] = d.get("message")
-            elif d.get("type") == "done":
-                job["result"] = {"bytes": d.get("bytes"), "elapsed": d.get("elapsed")}
-        p.wait()
-        if job["status"] == "canceled":
-            return
-        if p.returncode != 0 or not os.path.exists(out_path):
-            job["status"] = "error"
-            job["error"] = job["error"] or "書き出しに失敗しました"
-            return
-        job["outfile"] = out_path
-        job["status"] = "done"
-        job["elapsed"] = time.time() - job["startedAt"]
+        with KeepAwake():
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                 env=env, text=True, encoding="utf-8", errors="replace")
+            job["proc"] = p
+            for line in p.stdout:
+                line = line.strip()
+                if not line.startswith("{"):
+                    continue
+                try:
+                    d = json.loads(line)
+                except Exception:
+                    continue
+                if d.get("type") == "progress":
+                    with LOCK:
+                        job["steps"][d["step"]] = d["percent"]
+                        job["elapsed"] = time.time() - job["startedAt"]
+                elif d.get("type") == "error":
+                    job["error"] = d.get("message")
+                elif d.get("type") == "done":
+                    job["result"] = {"bytes": d.get("bytes"), "elapsed": d.get("elapsed")}
+            p.wait()
+            if job["status"] == "canceled":
+                return
+            if p.returncode != 0 or not os.path.exists(out_path):
+                job["status"] = "error"
+                job["error"] = job["error"] or "書き出しに失敗しました"
+                return
+            job["outfile"] = out_path
+            job["status"] = "done"
+            job["elapsed"] = time.time() - job["startedAt"]
     except Exception as e:
         job["status"] = "error"
         job["error"] = str(e)
@@ -156,34 +162,35 @@ def run_job(job_id, song_path, lines, model):
            "--model", model]
     env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUNBUFFERED="1")
     try:
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                             env=env, text=True, encoding="utf-8", errors="replace")
-        job["proc"] = p
-        for line in p.stdout:
-            line = line.strip()
-            if not line or not line.startswith("{"):
-                continue
-            try:
-                d = json.loads(line)
-            except Exception:
-                continue
-            if d.get("type") == "progress":
-                with LOCK:
-                    job["steps"][d["step"]] = d["percent"]
-                    job["elapsed"] = time.time() - job["startedAt"]
-            elif d.get("type") == "error":
-                job["error"] = d.get("message")
-        p.wait()
-        if job["status"] == "canceled":
-            return
-        if p.returncode != 0:
-            job["status"] = "error"
-            job["error"] = job["error"] or f"処理が異常終了しました (code {p.returncode})"
-            return
-        with io.open(out_path, encoding="utf-8") as f:
-            job["result"] = json.load(f)
-        job["status"] = "done"
-        job["elapsed"] = time.time() - job["startedAt"]
+        with KeepAwake():
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                 env=env, text=True, encoding="utf-8", errors="replace")
+            job["proc"] = p
+            for line in p.stdout:
+                line = line.strip()
+                if not line or not line.startswith("{"):
+                    continue
+                try:
+                    d = json.loads(line)
+                except Exception:
+                    continue
+                if d.get("type") == "progress":
+                    with LOCK:
+                        job["steps"][d["step"]] = d["percent"]
+                        job["elapsed"] = time.time() - job["startedAt"]
+                elif d.get("type") == "error":
+                    job["error"] = d.get("message")
+            p.wait()
+            if job["status"] == "canceled":
+                return
+            if p.returncode != 0:
+                job["status"] = "error"
+                job["error"] = job["error"] or f"処理が異常終了しました (code {p.returncode})"
+                return
+            with io.open(out_path, encoding="utf-8") as f:
+                job["result"] = json.load(f)
+            job["status"] = "done"
+            job["elapsed"] = time.time() - job["startedAt"]
     except Exception as e:
         job["status"] = "error"
         job["error"] = str(e)
