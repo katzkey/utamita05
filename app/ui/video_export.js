@@ -6,14 +6,16 @@
 //   ブラウザで全部やるより速く、音声と背景動画がそのまま扱えるため。
 
 import { getProject, getUi, getFileBlob } from "./state.js";
-import { renderLinePreviewHtml } from "./lyrics_tab.js";
+import { renderLinePreviewHtml } from "../core/render_line.js";
 import { renderLineLayer } from "../core/render_layer.js";
+import { escapeHtml } from "../core/html.js";
+import { pingHelper, startJob, pollJob, downloadUrl,
+         helperStatusHtml, helperMissingHtml, stepsHtml, fmtSec } from "./helper_client.js";
 
-const HELPER_BASE = "http://127.0.0.1:8777";
 const POLL_MS = 1000;
 
 let overlayEl = null;
-let pollTimer = null;
+let stopPoll = null;
 let currentJob = null;
 
 export function init() {
@@ -40,7 +42,7 @@ function open() {
 }
 
 function close() {
-  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  stopPoll?.(); stopPoll = null;
   overlayEl?.remove();
   overlayEl = null;
 }
@@ -78,12 +80,8 @@ function renderIdle(helper = "checking") {
   const lines = timedLines();
   const audio = getUi().audioFile;
   const bgs = exportableBackgrounds();
-  const dot = { checking: "at-dot-wait", ok: "at-dot-ok", ng: "at-dot-ng" }[helper];
-  const msg = { checking: "ヘルパーを確認しています…", ok: "ヘルパーに接続できました",
-                ng: "ヘルパーが見つかりません" }[helper];
-
   el.innerHTML = `
-    <div class="at-status"><span class="at-dot ${dot}"></span> ${msg}</div>
+    ${helperStatusHtml(helper)}
     <div class="at-section">
       <div class="at-row"><span>解像度</span><b>${p.resolution.w} × ${p.resolution.h}</b></div>
       <div class="at-row"><span>FPS</span><b>${p.fps}</b></div>
@@ -105,11 +103,7 @@ function renderIdle(helper = "checking") {
         <input type="color" id="veBgColor" value="#101014" style="width:44px;height:24px;padding:0;border:none">
       </div>
     </div>
-    ${helper === "ng" ? `<div class="at-note">
-      書き出しにはヘルパーが必要です。<code>tools</code> フォルダの
-      <code>start_helper.bat</code> をダブルクリックしてから、もう一度開いてください。<br>
-      毎回起動するのが面倒な場合は <code>install_autostart.bat</code> を一度実行すると、
-      PC 起動時に自動で立ち上がります（ウィンドウは出ません）。</div>` : ``}
+    ${helper === "ng" ? helperMissingHtml() : ``}
     ${!lines.length ? `<div class="at-warn">TC が入っている行がありません。先にタイミングを入れてください。</div>` : ``}
     <div class="at-actions">
       <button class="tool-btn at-primary" id="veRun" ${helper === "ok" && lines.length ? "" : "disabled"}>書き出す</button>
@@ -118,10 +112,7 @@ function renderIdle(helper = "checking") {
 }
 
 async function checkHelper() {
-  try {
-    const r = await fetch(`${HELPER_BASE}/ping`, { signal: AbortSignal.timeout(3000) });
-    renderIdle(r.ok ? "ok" : "ng");
-  } catch { renderIdle("ng"); }
+  renderIdle(await pingHelper());
 }
 
 // ────────────────────────────── 実行
@@ -198,51 +189,27 @@ async function run() {
   if (audio) fd.append("audio", audio, audio.name || "audio.bin");
 
   try {
-    const r = await fetch(`${HELPER_BASE}/render`, { method: "POST", body: fd });
-    const d = await r.json();
-    if (!r.ok || !d.jobId) throw new Error(d.error || "書き出しを開始できませんでした");
-    currentJob = d.jobId;
-    pollTimer = setInterval(poll, POLL_MS);
-    poll();
+    currentJob = await startJob("/render", fd);
+    stopPoll = pollJob(currentJob, {
+      intervalMs: POLL_MS,
+      onProgress: (steps, elapsed) => renderProgress(withDrawStep(steps), elapsed),
+      onDone: (d) => renderDone(d),
+      onError: (msg) => renderError(msg),
+    });
   } catch (e) {
     renderError(String(e.message || e));
   }
 }
 
-async function poll() {
-  if (!currentJob) return;
-  try {
-    const r = await fetch(`${HELPER_BASE}/jobs/${currentJob}`);
-    const d = await r.json();
-    const steps = [{ key: "draw", label: "歌詞レイヤーを描く", percent: 100 },
-                   ...d.steps.map(s => ({ ...s, label: s.key === "upload" ? "ヘルパーへ送る" : s.label }))];
-    if (d.status === "running") {
-      renderSteps(steps, d.elapsed);
-    } else if (d.status === "done") {
-      clearInterval(pollTimer); pollTimer = null;
-      renderDone(d);
-    } else if (d.status === "error") {
-      clearInterval(pollTimer); pollTimer = null;
-      renderError(d.error || "書き出しに失敗しました");
-    }
-  } catch (e) {
-    clearInterval(pollTimer); pollTimer = null;
-    renderError("ヘルパーとの通信が切れました");
-  }
+// ヘルパー側の工程の前に、ブラウザ側の「描く」を足して並べる
+function withDrawStep(steps) {
+  return [{ key: "draw", label: "歌詞レイヤーを描く", percent: 100 },
+          ...steps.map(s => ({ ...s, label: s.key === "upload" ? "ヘルパーへ送る" : s.label }))];
 }
 
 function renderSteps(steps, elapsed) {
   const el = body(); if (!el) return;
-  el.innerHTML = `
-    <div class="at-steps">${steps.map(s => {
-      const done = s.percent >= 100, active = !done && s.percent > 0;
-      return `<div class="at-step ${done ? "is-done" : active ? "is-active" : ""}">
-        <span class="at-step-mark">${done ? "●" : active ? "◐" : "○"}</span>
-        <span class="at-step-label">${escapeHtml(s.label)}</span>
-        <span class="at-bar"><i style="width:${s.percent}%"></i></span>
-        <span class="at-pct">${s.percent.toFixed(0)}%</span></div>`;
-    }).join("")}</div>
-    <div class="at-elapsed">${elapsed ? "経過 " + fmtSec(elapsed) : ""}</div>`;
+  el.innerHTML = stepsHtml(steps, elapsed);
 }
 
 function renderDone(d) {
@@ -256,7 +223,7 @@ function renderDone(d) {
     </div>`;
   el.querySelector("#veDl").addEventListener("click", () => {
     const a = document.createElement("a");
-    a.href = `${HELPER_BASE}/jobs/${currentJob}/download`;
+    a.href = downloadUrl(currentJob);
     a.download = (getProject().name || "utamita") + ".mp4";
     a.click();
   });
@@ -270,11 +237,3 @@ function renderError(msg) {
   el.querySelector("#veBack2").addEventListener("click", () => { currentJob = null; renderIdle(); checkHelper(); });
 }
 
-function fmtSec(s) {
-  s = Math.round(s);
-  return s < 60 ? `${s} 秒` : `${Math.floor(s/60)} 分 ${String(s%60).padStart(2,"0")} 秒`;
-}
-function escapeHtml(s) {
-  if (s == null) return "";
-  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-}

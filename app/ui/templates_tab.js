@@ -2,6 +2,7 @@
 
 import { getProject } from "./state.js";
 import { getTemplatesMeta } from "../core/templates_loader.js";
+import { escapeHtml } from "../core/html.js";
 
 let pane;
 
@@ -52,9 +53,3 @@ export function render() {
   }).join("");
 }
 
-function escapeHtml(s) {
-  if (s == null) return "";
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
-}

@@ -3,6 +3,7 @@
 import { getProject, setProject, registerFileBlob } from "./state.js";
 import * as ops from "../core/operations.js";
 import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js";
+import { escapeHtml } from "../core/html.js";
 
 let rowsEl, countEl;
 let pickingFile = false;
@@ -157,9 +158,3 @@ function onAdd() {
   setProject(ops.addTitle(project, { tIn, tOut }));
 }
 
-function escapeHtml(s) {
-  if (s == null) return "";
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
-}

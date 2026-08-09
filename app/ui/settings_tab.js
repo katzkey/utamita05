@@ -5,6 +5,7 @@ import * as ops from "../core/operations.js";
 import { loadFonts, getFontEntries } from "../core/fonts_loader.js";
 import { getCustomZabutonPresets } from "../core/presets.js";
 import { exportCustomPresetsJson, importCustomPresetsJson } from "../core/custom_presets.js";
+import { escapeHtml } from "../core/html.js";
 
 let pane;
 
@@ -192,9 +193,3 @@ function fontFamilyOptions(current) {
   }).join("");
 }
 
-function escapeHtml(s) {
-  if (s == null) return "";
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
-}

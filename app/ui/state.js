@@ -2,6 +2,7 @@
 
 import { createEmptyProject } from "../core/project.js";
 import { saveFileToStore, loadFileFromStore } from "../core/file_store.js";
+import { putBlob, getBlobUrl, getBlobFile, hasBlob, clearBlobs } from "../core/blob_registry.js";
 
 // ---- 表示設定の永続化 ----
 // プロジェクトの中身ではなく「どう表示していたか」を次回起動まで覚えておく。
@@ -48,11 +49,6 @@ const state = {
     detailTab: "look",       // 詳細ペインのサブタブ "content" | "look" | "motion"
     ...loadUiPrefs(),        // 保存済みがあれば既定値を上書き
   },
-  // 素材ファイルの Blob URL レジストリ（filename → { file, url }）。
-  // Web 版はサーバー経由でファイル配信できないので、ブラウザで選択した File を
-  // ここに登録して、プレビュー用の Blob URL を発行する。
-  // project.json には filename だけ保存、Blob URL は都度再生成（永続化しない）。
-  fileBlobs: new Map(),
 };
 
 const history = {
@@ -133,34 +129,26 @@ export function markSaved() {
 // 同時に IndexedDB にも保存して次回セッションで復元可能にする。
 // 同名で再登録した場合は古い URL を revoke してから差し替え。
 export function registerFileBlob(file) {
-  if (!file || !file.name) return null;
-  const existing = state.fileBlobs.get(file.name);
-  if (existing) {
-    try { URL.revokeObjectURL(existing.url); } catch (e) {}
-  }
-  const url = URL.createObjectURL(file);
-  state.fileBlobs.set(file.name, { file, url });
-  // 非同期で IndexedDB に保存（プレビューはブロックしない）
-  saveFileToStore(file.name, file);
+  const url = putBlob(file);
+  if (!url) return null;
+  saveFileToStore(file.name, file);   // 次回セッションで復元できるように
   emit("fileBlobs");
   return url;
 }
 
-// IndexedDB からファイルを復元して Blob URL を発行。
-// メモリに既にあればそれを返す。無ければ null。
+// IndexedDB から復元して Blob URL を発行。メモリに既にあればそれを返す。
 export async function restoreFileBlob(name) {
   if (!name) return null;
-  if (state.fileBlobs.has(name)) return state.fileBlobs.get(name).url;
+  const existing = getBlobUrl(name);
+  if (existing) return existing;
   const file = await loadFileFromStore(name);
   if (!file) return null;
-  const url = URL.createObjectURL(file);
-  state.fileBlobs.set(name, { file, url });
+  const url = putBlob(file);
   emit("fileBlobs");
   return url;
 }
 
 // project 内で参照される全ファイルを IndexedDB から復元する。
-// music.file, backgrounds[].file, titles[].file を対象。
 // 戻り値：{ restored: [names], missing: [names] }
 export async function restoreProjectFiles(project) {
   const names = new Set();
@@ -171,37 +159,18 @@ export async function restoreProjectFiles(project) {
   for (const t of project.titles || []) {
     if (t.file) names.add(t.file);
   }
-  const restored = [];
-  const missing = [];
+  const restored = [], missing = [];
   for (const name of names) {
-    const url = await restoreFileBlob(name);
-    if (url) restored.push(name);
-    else missing.push(name);
+    (await restoreFileBlob(name)) ? restored.push(name) : missing.push(name);
   }
   return { restored, missing };
 }
 
-export function getFileBlobUrl(name) {
-  if (!name) return null;
-  const entry = state.fileBlobs.get(name);
-  return entry ? entry.url : null;
-}
-
-// 登録済みの File 本体を返す（動画書き出しでヘルパーへ送るのに使う）
-export function getFileBlob(name) {
-  if (!name) return null;
-  const entry = state.fileBlobs.get(name);
-  return entry ? entry.file : null;
-}
-
-export function hasFileBlob(name) {
-  return !!(name && state.fileBlobs.has(name));
-}
+export const getFileBlobUrl = getBlobUrl;
+export const getFileBlob = getBlobFile;
+export const hasFileBlob = hasBlob;
 
 export function clearFileBlobs() {
-  for (const { url } of state.fileBlobs.values()) {
-    try { URL.revokeObjectURL(url); } catch (e) {}
-  }
-  state.fileBlobs.clear();
+  clearBlobs();
   emit("fileBlobs");
 }

@@ -1,0 +1,117 @@
+// ローカルヘルパーとのやりとり
+//
+// タイミング自動検出と動画書き出しの両方から使う。
+// 以前はポート番号・接続確認・進捗ポーリング・工程表示が
+// 2 ファイルに重複していて、片方だけ直すと不整合になる状態だった。
+
+import { escapeHtml } from "../core/html.js";
+
+// ポート番号はここだけ。ヘルパー側の UTAMITA_HELPER_PORT と合わせる。
+export const HELPER_BASE = "http://127.0.0.1:8777";
+
+/** ヘルパーが起動しているか。戻り値 "ok" | "ng" */
+export async function pingHelper(timeoutMs = 3000) {
+  try {
+    const r = await fetch(`${HELPER_BASE}/ping`, { signal: AbortSignal.timeout(timeoutMs) });
+    return r.ok ? "ok" : "ng";
+  } catch {
+    return "ng";
+  }
+}
+
+/** multipart を投げてジョブを開始し、jobId を返す */
+export async function startJob(path, formData) {
+  const r = await fetch(`${HELPER_BASE}${path}`, { method: "POST", body: formData });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !d.jobId) throw new Error(d.error || "ジョブを開始できませんでした");
+  return d.jobId;
+}
+
+export async function fetchJob(jobId) {
+  const r = await fetch(`${HELPER_BASE}/jobs/${jobId}`);
+  return await r.json();
+}
+
+export async function fetchResult(jobId) {
+  const r = await fetch(`${HELPER_BASE}/jobs/${jobId}/result`);
+  return await r.json();
+}
+
+export function downloadUrl(jobId) {
+  return `${HELPER_BASE}/jobs/${jobId}/download`;
+}
+
+export async function cancelJob(jobId) {
+  try { await fetch(`${HELPER_BASE}/jobs/${jobId}/cancel`, { method: "POST" }); } catch {}
+}
+
+/**
+ * 完了・失敗まで一定間隔で見にいく。
+ * onProgress(steps, elapsed) / onDone(job) / onError(message)
+ * 戻り値: 監視を止める関数
+ */
+export function pollJob(jobId, { intervalMs = 1000, onProgress, onDone, onError } = {}) {
+  let timer = null;
+  const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+  const step = async () => {
+    try {
+      const d = await fetchJob(jobId);
+      if (d.status === "running") {
+        onProgress?.(d.steps || [], d.elapsed || 0);
+      } else if (d.status === "done") {
+        stop(); onDone?.(d);
+      } else if (d.status === "error") {
+        stop(); onError?.(d.error || "処理に失敗しました");
+      }
+    } catch (e) {
+      stop(); onError?.("ヘルパーとの通信が切れました");
+    }
+  };
+  timer = setInterval(step, intervalMs);
+  step();
+  return stop;
+}
+
+// ---- 表示部品 ----
+
+/** 接続状態の 1 行。state: "checking" | "ok" | "ng" */
+export function helperStatusHtml(state) {
+  const dot = { checking: "at-dot-wait", ok: "at-dot-ok", ng: "at-dot-ng" }[state] || "at-dot-wait";
+  const msg = {
+    checking: "ヘルパーを確認しています…",
+    ok: "ヘルパーに接続できました",
+    ng: "ヘルパーが見つかりません",
+  }[state] || "";
+  return `<div class="at-status"><span class="at-dot ${dot}"></span> ${msg}</div>`;
+}
+
+/** ヘルパーが無いときの案内 */
+export function helperMissingHtml(extra = "") {
+  return `<div class="at-note">
+    <code>tools</code> フォルダの <code>start_helper.bat</code> をダブルクリックしてから、
+    もう一度開いてください。<br>
+    毎回起動するのが面倒な場合は <code>install_autostart.bat</code> を一度実行すると、
+    PC 起動時に自動で立ち上がります（ウィンドウは出ません）。${extra}
+  </div>`;
+}
+
+/** 工程を箇条書きにして、それぞれに % を出す */
+export function stepsHtml(steps, elapsed, note) {
+  const rows = (steps || []).map(s => {
+    const done = s.percent >= 100;
+    const active = !done && s.percent > 0;
+    return `<div class="at-step ${done ? "is-done" : active ? "is-active" : ""}">
+      <span class="at-step-mark">${done ? "●" : active ? "◐" : "○"}</span>
+      <span class="at-step-label">${escapeHtml(s.label)}</span>
+      <span class="at-bar"><i style="width:${s.percent}%"></i></span>
+      <span class="at-pct">${s.percent.toFixed(0)}%</span>
+    </div>`;
+  }).join("");
+  return `<div class="at-steps">${rows || `<div class="at-note">${escapeHtml(note || "")}</div>`}</div>
+    <div class="at-elapsed">${elapsed ? "経過 " + fmtSec(elapsed) : ""}</div>`;
+}
+
+export function fmtSec(s) {
+  s = Math.round(s || 0);
+  return s < 60 ? `${s} 秒` : `${Math.floor(s / 60)} 分 ${String(s % 60).padStart(2, "0")} 秒`;
+}

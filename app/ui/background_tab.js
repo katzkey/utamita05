@@ -3,6 +3,7 @@
 import { getProject, setProject, registerFileBlob } from "./state.js";
 import * as ops from "../core/operations.js";
 import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js";
+import { escapeHtml } from "../core/html.js";
 
 let bgRowsEl, bgCountEl;
 let pickingFile = false;  // モジュール全体で1個。多重ダイアログ防止。
@@ -165,9 +166,3 @@ function onAddBgSolid() {
   setProject(ops.addBackground(project, { solidColor: "#000000", tIn, tOut, fit: "cover", opacity: 1 }));
 }
 
-function escapeHtml(s) {
-  if (s == null) return "";
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
-}

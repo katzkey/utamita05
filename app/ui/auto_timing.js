@@ -10,12 +10,14 @@
 
 import { getProject, setProject, getUi } from "./state.js";
 import * as ops from "../core/operations.js";
+import { escapeHtml } from "../core/html.js";
+import { pingHelper, startJob, pollJob, fetchResult, cancelJob,
+         helperStatusHtml, helperMissingHtml, stepsHtml, fmtSec } from "./helper_client.js";
 
-const HELPER_BASE = "http://127.0.0.1:8777";
 const POLL_MS = 1500;
 
 let overlayEl = null;
-let pollTimer = null;
+let stopPoll = null;
 let currentJob = null;
 
 export function init() {
@@ -45,7 +47,7 @@ function open() {
 }
 
 function close() {
-  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  stopPoll?.(); stopPoll = null;
   overlayEl?.remove();
   overlayEl = null;
 }
@@ -63,29 +65,17 @@ function renderIdle(helperState = "checking") {
   const n = lyricLines().length;
   const audio = getUi().audioFile;
 
-  const helperHtml = {
-    checking: `<span class="at-dot at-dot-wait"></span> ヘルパーを確認しています…`,
-    ok:       `<span class="at-dot at-dot-ok"></span> ヘルパーに接続できました`,
-    ng:       `<span class="at-dot at-dot-ng"></span> ヘルパーが見つかりません`,
-  }[helperState];
-
   el.innerHTML = `
-    <div class="at-status">${helperHtml}</div>
+    ${helperStatusHtml(helperState)}
 
     <div class="at-section">
       <div class="at-row"><span>歌詞</span><b>${n} 行</b></div>
       <div class="at-row"><span>楽曲</span><b>${audio ? escapeHtml(audio.name || "読込済み") : "未読込"}</b></div>
     </div>
 
-    ${helperState === "ng" ? `
-      <div class="at-note">
-        ヘルパーが起動していません。<code>tools</code> フォルダの
-        <code>start_helper.bat</code> をダブルクリックしてから、もう一度開いてください。<br>
-        毎回起動するのが面倒な場合は <code>install_autostart.bat</code> を一度実行すると、
-        PC 起動時に自動で立ち上がります（ウィンドウは出ません）。<br>
-        ヘルパー無しでも、<code>auto_timing.py</code> が出力した
-        <code>timing.json</code> を下のボタンから読み込めます。
-      </div>` : ``}
+    ${helperState === "ng" ? helperMissingHtml(
+        "<br>ヘルパー無しでも、<code>auto_timing.py</code> が出力した " +
+        "<code>timing.json</code> を下のボタンから読み込めます。") : ``}
 
     <div class="at-actions">
       <button class="tool-btn at-primary" id="atRun"
@@ -111,12 +101,7 @@ function renderIdle(helperState = "checking") {
 }
 
 async function checkHelper() {
-  try {
-    const r = await fetch(`${HELPER_BASE}/ping`, { signal: AbortSignal.timeout(3000) });
-    renderIdle(r.ok ? "ok" : "ng");
-  } catch {
-    renderIdle("ng");
-  }
+  renderIdle(await pingHelper());
 }
 
 // ────────────────────────────────── 実行と進捗
@@ -133,63 +118,31 @@ async function run() {
 
   renderProgress([], 0, "送信しています…");
   try {
-    const r = await fetch(`${HELPER_BASE}/jobs`, { method: "POST", body: fd });
-    const d = await r.json();
-    if (!r.ok || !d.jobId) throw new Error(d.error || "ジョブを開始できませんでした");
-    currentJob = d.jobId;
-    pollTimer = setInterval(poll, POLL_MS);
-    poll();
+    currentJob = await startJob("/jobs", fd);
+    stopPoll = pollJob(currentJob, {
+      intervalMs: POLL_MS,
+      onProgress: (steps, elapsed) => renderProgress(steps, elapsed),
+      onDone: async () => renderReview(await fetchResult(currentJob)),
+      onError: (msg) => renderError(msg),
+    });
   } catch (e) {
     renderError(String(e.message || e));
   }
 }
 
-async function poll() {
-  if (!currentJob) return;
-  try {
-    const r = await fetch(`${HELPER_BASE}/jobs/${currentJob}`);
-    const d = await r.json();
-    if (d.status === "running") {
-      renderProgress(d.steps, d.elapsed);
-    } else if (d.status === "done") {
-      clearInterval(pollTimer); pollTimer = null;
-      const rr = await fetch(`${HELPER_BASE}/jobs/${currentJob}/result`);
-      renderReview(await rr.json());
-    } else if (d.status === "error") {
-      clearInterval(pollTimer); pollTimer = null;
-      renderError(d.error || "処理に失敗しました");
-    }
-  } catch (e) {
-    clearInterval(pollTimer); pollTimer = null;
-    renderError("ヘルパーとの通信が切れました: " + (e.message || e));
-  }
-}
-
 function renderProgress(steps, elapsed, note) {
   const el = body(); if (!el) return;
-  const rows = (steps || []).map(s => {
-    const done = s.percent >= 100;
-    const active = !done && s.percent > 0;
-    return `
-      <div class="at-step ${done ? "is-done" : active ? "is-active" : ""}">
-        <span class="at-step-mark">${done ? "●" : active ? "◐" : "○"}</span>
-        <span class="at-step-label">${escapeHtml(s.label)}</span>
-        <span class="at-bar"><i style="width:${s.percent}%"></i></span>
-        <span class="at-pct">${s.percent.toFixed(0)}%</span>
-      </div>`;
-  }).join("");
+  el.innerHTML = stepsHtml(steps, elapsed, note)
+    + `<div class="at-elapsed">処理中は他のタブを操作できます</div>
+       <div class="at-actions"><button class="tool-btn tool-btn-danger" id="atCancel">中止</button></div>`;
+  el.querySelector("#atCancel")?.addEventListener("click", onCancel);
+}
 
-  el.innerHTML = `
-    <div class="at-steps">${rows || `<div class="at-note">${escapeHtml(note || "")}</div>`}</div>
-    <div class="at-elapsed">経過 ${fmtSec(elapsed || 0)}　処理中は他のタブを操作できます</div>
-    <div class="at-actions"><button class="tool-btn tool-btn-danger" id="atCancel">中止</button></div>
-  `;
-  el.querySelector("#atCancel")?.addEventListener("click", async () => {
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-    try { await fetch(`${HELPER_BASE}/jobs/${currentJob}/cancel`, { method: "POST" }); } catch {}
-    currentJob = null;
-    renderIdle("ok");
-  });
+async function onCancel() {
+  stopPoll?.(); stopPoll = null;
+  await cancelJob(currentJob);
+  currentJob = null;
+  renderIdle("ok");
 }
 
 function renderError(msg) {
@@ -263,14 +216,4 @@ function apply(lines, onlyEmpty) {
 
 // ────────────────────────────────── 小物
 
-function fmtSec(s) {
-  s = Math.round(s);
-  return s < 60 ? `${s} 秒` : `${Math.floor(s/60)} 分 ${String(s%60).padStart(2,"0")} 秒`;
-}
 
-function escapeHtml(s) {
-  if (s == null) return "";
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
-}

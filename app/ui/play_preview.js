@@ -9,7 +9,7 @@
 //   音は既存の #player をそのまま使うので、再生バーと状態が食い違わない。
 
 import { getProject, getUi } from "./state.js";
-import { renderLinePreviewHtml, renderPreviewBackgrounds } from "./lyrics_tab.js";
+import { renderLinePreviewHtml, renderPreviewBackgrounds } from "../core/render_line.js";
 import { secondsToTC } from "./tc.js";
 
 let overlayEl = null;
