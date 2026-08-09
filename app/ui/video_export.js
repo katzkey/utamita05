@@ -124,8 +124,10 @@ async function run() {
       const stage = holder.firstElementChild;
       stage.style.width = W + "px";
       stage.style.height = H + "px";
-      // 画像化を 1 フレーム待ってレイアウトを確定させる
-      await new Promise(r => requestAnimationFrame(r));
+      // レイアウトを同期的に確定させる。requestAnimationFrame は
+      // タブが非表示だと発火しないので使わない（書き出し中に裏へ回っても止まらないように）
+      void stage.offsetHeight;
+      await new Promise(r => setTimeout(r, 0));
       layers.push(await renderLineLayer(stage, W, H));
     }
   } catch (e) {
