@@ -1,0 +1,3 @@
+# バッチファイルは CRLF でないと cmd が解析できない（LF だと %~dp0 等が壊れる）
+*.bat text eol=crlf
+*.cmd text eol=crlf
