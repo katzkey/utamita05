@@ -8,10 +8,10 @@
 //   再生中は opacity を書き換えるだけにする（毎フレーム作り直さない）。
 //   音は既存の #player をそのまま使うので、再生バーと状態が食い違わない。
 
-import { getProject, getUi } from "./state.js?v=ab744b0";
-import { renderLinePreviewHtml, renderPreviewBackgrounds } from "../core/render_line.js?v=ab744b0";
-import { secondsToTC } from "./tc.js?v=ab744b0";
-import { transformAt, defaultMotion } from "../core/motion.js?v=ab744b0";
+import { getProject, getUi } from "./state.js?v=16953a6";
+import { renderLinePreviewHtml, renderPreviewBackgrounds } from "../core/render_line.js?v=16953a6";
+import { secondsToTC } from "./tc.js?v=16953a6";
+import { transformAt, defaultMotion, motionTransformCss } from "../core/motion.js?v=16953a6";
 
 let overlayEl = null;
 let rafId = null;
@@ -120,10 +120,7 @@ function tick() {
   const sx = (overlayEl.querySelector("#ppStage")?.clientWidth || p.resolution.w) / p.resolution.w;
   for (const { line, el } of layers) {
     const r = transformAt(t, line.tIn, line.tOut, line.motion || defaultMotion());
-    const mv = `translate(${(r.dx * sx).toFixed(2)}px, ${(r.dy * sx).toFixed(2)}px) scale(${r.scale.toFixed(4)})`;
-    const css = el._orig.includes("translate(-50%")
-      ? el._orig.replace(/translate\(-50%,\s*-50%\)/, `translate(-50%, -50%) ${mv}`)
-      : `${mv} ${el._orig}`;
+    const css = motionTransformCss(el._orig, r, sx);
     if (el._a !== r.opacity) { el.style.opacity = String(r.opacity); el._a = r.opacity; }
     if (el._tr !== css) { el.style.transform = css; el._tr = css; }
   }

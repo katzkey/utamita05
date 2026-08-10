@@ -691,3 +691,5 @@ body { display: flex; flex-direction: column; }
 .pp-seek i { display: block; height: 100%; background: var(--coral); }
 .pp-fade { font-size: 11px; color: var(--gray-4); flex-shrink: 0; }
 .pp-panel .at-note { padding: 0 16px 12px; margin: 0; }
+/* プレビュー右上のボタンが 2 つ並ぶときの位置 */
+.preview-toggle-2 { right: 34px; }

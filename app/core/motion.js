@@ -123,6 +123,35 @@ export function transformAt(t, tIn, tOut, motion, delay = 0) {
   return out;
 }
 
+/**
+ * 動きを CSS の transform 文字列にする。
+ * 元の transform の「中心合わせ（translate(-50%,-50%)）の直後」に差し込む。
+ * 後ろに足すと rotate や scale より先に効いて位置がずれるため。
+ * @param origTransform 行に元々付いている transform
+ * @param r transformAt の戻り値
+ * @param sx ステージの表示倍率（1920px 基準の値を画面サイズに合わせる）
+ */
+export function motionTransformCss(origTransform, r, sx = 1) {
+  const mv = `translate(${(r.dx * sx).toFixed(2)}px, ${(r.dy * sx).toFixed(2)}px) scale(${r.scale.toFixed(4)})`;
+  const orig = origTransform || "";
+  return orig.includes("translate(-50%")
+    ? orig.replace(/translate\(-50%,\s*-50%\)/, `translate(-50%, -50%) ${mv}`)
+    : `${mv} ${orig}`;
+}
+
+/**
+ * 動きを繰り返し見せるための時刻を作る。
+ * 出る → 少し留まる → 消える → 少し空ける、を 1 周とする。
+ * 戻り値は「行の tIn を 0 とした秒数」。
+ */
+export function loopTime(elapsed, motion, holdSec = 0.9, gapSec = 0.5) {
+  const m = normalizeMotion(motion);
+  const di = Math.max(0, m.in.dur), doo = Math.max(0, m.out.dur);
+  const cycle = di + holdSec + doo + gapSec;
+  const t = elapsed % Math.max(0.1, cycle);
+  return { t, span: di + holdSec };   // span を tOut 相当として使う
+}
+
 /** 文字ごとのとき、i 文字目の遅れ（秒） */
 export function charDelay(motion, i) {
   if (!motion || motion.unit !== "char") return 0;

@@ -1,14 +1,14 @@
 // 状態管理 + History (Undo/Redo)
 
-import { createEmptyProject } from "../core/project.js?v=ab744b0";
-import { saveFileToStore, loadFileFromStore } from "../core/file_store.js?v=ab744b0";
-import { putBlob, getBlobUrl, getBlobFile, hasBlob, clearBlobs } from "../core/blob_registry.js?v=ab744b0";
+import { createEmptyProject } from "../core/project.js?v=16953a6";
+import { saveFileToStore, loadFileFromStore } from "../core/file_store.js?v=16953a6";
+import { putBlob, getBlobUrl, getBlobFile, hasBlob, clearBlobs } from "../core/blob_registry.js?v=16953a6";
 
 // ---- 表示設定の永続化 ----
 // プロジェクトの中身ではなく「どう表示していたか」を次回起動まで覚えておく。
 // ここに挙げたキーだけが localStorage に残る。
 const UI_PREFS_KEY = "utamita05.uiPrefs.v1";
-const PERSISTED_UI_KEYS = ["previewLarge", "detailTab"];
+const PERSISTED_UI_KEYS = ["previewLarge", "detailTab", "previewMotion"];
 
 function loadUiPrefs() {
   try {
@@ -47,6 +47,7 @@ const state = {
     dirty: false,            // 保存前の変更あり
     previewLarge: false,     // プレビュー拡大（前回の状態を復元）
     detailTab: "look",       // 詳細ペインのサブタブ "content" | "look" | "motion"
+    previewMotion: true,     // 詳細ペインのプレビューで動きを繰り返す
     ...loadUiPrefs(),        // 保存済みがあれば既定値を上書き
   },
 };

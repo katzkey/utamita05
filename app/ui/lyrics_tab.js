@@ -1,20 +1,53 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=ab744b0";
-import * as ops from "../core/operations.js?v=ab744b0";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=ab744b0";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=ab744b0";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=ab744b0";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=ab744b0";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=ab744b0";
-import { AE_ENABLED } from "../core/features.js?v=ab744b0";
-import { EASINGS, SLIDE_DIRS, defaultMotion } from "../core/motion.js?v=ab744b0";
-import { escapeHtml } from "../core/html.js?v=ab744b0";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=ab744b0";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=16953a6";
+import * as ops from "../core/operations.js?v=16953a6";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=16953a6";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=16953a6";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=16953a6";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=16953a6";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=16953a6";
+import { AE_ENABLED } from "../core/features.js?v=16953a6";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=16953a6";
+import { escapeHtml } from "../core/html.js?v=16953a6";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=16953a6";
 
 let detailPaneEl;
 let lyricRowsEl;
 let lineCountEl;
+
+// 詳細ペインのプレビューで動きを繰り返し見せるためのタイマー。
+// 詳細ペインは毎回作り直されるので、描き直すたびに止めて張り直す。
+let previewMotionTimer = null;
+let previewMotionStart = 0;
+
+function stopPreviewMotion() {
+  if (previewMotionTimer) { clearInterval(previewMotionTimer); previewMotionTimer = null; }
+}
+
+// 選択行の動きを、出る→留まる→消える→少し空ける、で繰り返す
+function startPreviewMotion(line) {
+  stopPreviewMotion();
+  if (!getUi().previewMotion) return;
+  const stage = detailPaneEl.querySelector("#linePreview > div");
+  const el = stage?.lastElementChild;
+  if (!el || isStatic(line.motion)) return;
+
+  const orig = el.style.transform || "";
+  const sx = (stage.clientWidth || 1920) / (getProject().resolution.w || 1920);
+  previewMotionStart = performance.now();
+
+  const tick = () => {
+    if (!document.body.contains(el)) { stopPreviewMotion(); return; }
+    const elapsed = (performance.now() - previewMotionStart) / 1000;
+    const { t, span } = loopTime(elapsed, line.motion);
+    const r = transformAt(t, 0, span, line.motion);
+    el.style.opacity = String(r.opacity);
+    el.style.transform = motionTransformCss(orig, r, sx);
+  };
+  tick();
+  previewMotionTimer = setInterval(tick, 1000 / 60);
+}
 
 export function init() {
   detailPaneEl = document.getElementById("detailPane");
@@ -84,6 +117,7 @@ function renderRows(project, ui) {
 }
 
 function renderDetail(project, ui) {
+  stopPreviewMotion();
   const selected = [...ui.selectedLineIds];
   if (selected.length === 0) {
     detailPaneEl.innerHTML = `<div class="empty-state">行を選択してください</div>`;
@@ -184,6 +218,7 @@ function renderDetail(project, ui) {
 
     <div class="preview-box ${ui.previewLarge ? "preview-large" : ""}" id="linePreview" style="margin:8px 0 4px">
       <button class="preview-toggle" id="btnPreviewSize" title="プレビューを${ui.previewLarge ? "縮小" : "拡大"}">${ui.previewLarge ? "🗕" : "⤢"}</button>
+      <button class="preview-toggle preview-toggle-2" id="btnPreviewMotion" title="${ui.previewMotion ? "動きの確認を止める" : "動きを繰り返し再生"}">${ui.previewMotion ? "⏸" : "▶"}</button>
       ${renderLinePreviewHtml(line, project)}
     </div>
 
@@ -560,6 +595,9 @@ function renderDetail(project, ui) {
     onM(`fldM_${side}_scaleFrom`, v => ({ [side]: { scale: { from: Math.max(0, Number(v) || 0) } } }));
   }
 
+  // プレビューで動きを繰り返し見せる
+  startPreviewMotion(line);
+
   // サブタブ：セクションの DOM 並び順は変えず、data-active-tab で CSS 出し分け
   detailPaneEl.dataset.activeTab = detailTab;
   detailPaneEl.querySelectorAll(".detail-tab").forEach(btn => {
@@ -835,6 +873,9 @@ function renderDetail(project, ui) {
   });
   document.getElementById("fldNote")?.addEventListener("change", (e) => {
     setProject(ops.setLineNote(getProject(), id, e.target.value));
+  });
+  document.getElementById("btnPreviewMotion")?.addEventListener("click", () => {
+    setUi({ previewMotion: !getUi().previewMotion });
   });
   document.getElementById("btnPreviewSize")?.addEventListener("click", () => {
     setUi({ previewLarge: !getUi().previewLarge });
