@@ -8,10 +8,10 @@
 //   再生中は opacity を書き換えるだけにする（毎フレーム作り直さない）。
 //   音は既存の #player をそのまま使うので、再生バーと状態が食い違わない。
 
-import { getProject, getUi } from "./state.js?v=b06879e";
-import { renderLinePreviewHtml, renderPreviewBackgrounds } from "../core/render_line.js?v=b06879e";
-import { secondsToTC } from "./tc.js?v=b06879e";
-import { transformAt, defaultMotion } from "../core/motion.js?v=b06879e";
+import { getProject, getUi } from "./state.js?v=3bcc14c";
+import { renderLinePreviewHtml, renderPreviewBackgrounds } from "../core/render_line.js?v=3bcc14c";
+import { secondsToTC } from "./tc.js?v=3bcc14c";
+import { transformAt, defaultMotion } from "../core/motion.js?v=3bcc14c";
 
 let overlayEl = null;
 let rafId = null;
@@ -67,7 +67,7 @@ function open() {
 }
 
 function close() {
-  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  if (rafId) { clearInterval(rafId); rafId = null; }
   player?.pause();
   overlayEl?.remove();
   overlayEl = null;
@@ -94,8 +94,9 @@ function build() {
     const inner = tmp.firstElementChild?.lastElementChild;
     if (!inner) continue;
     const el = inner.cloneNode(true);
-    // 元の配置用 transform（translate(-50%,-50%) 等）を控え、動きの分を後ろに足す
-    el._base = (el.style.transform || "").replace(/translate\(-50%,\s*-50%\)\s*/, "");
+    // 元の transform をそのまま控える。動きは「中心合わせの直後」に差し込む。
+    // 後ろに足すと rotate や scale より先に効いてしまい、位置がずれる。
+    el._orig = el.style.transform || "";
     el.style.opacity = "0";
     el.style.willChange = "opacity";
     stage.appendChild(el);
@@ -119,9 +120,12 @@ function tick() {
   const sx = (overlayEl.querySelector("#ppStage")?.clientWidth || p.resolution.w) / p.resolution.w;
   for (const { line, el } of layers) {
     const r = transformAt(t, line.tIn, line.tOut, line.motion || defaultMotion());
-    const css = `translate(-50%,-50%) translate(${(r.dx * sx).toFixed(2)}px, ${(r.dy * sx).toFixed(2)}px) scale(${r.scale.toFixed(4)})`;
+    const mv = `translate(${(r.dx * sx).toFixed(2)}px, ${(r.dy * sx).toFixed(2)}px) scale(${r.scale.toFixed(4)})`;
+    const css = el._orig.includes("translate(-50%")
+      ? el._orig.replace(/translate\(-50%,\s*-50%\)/, `translate(-50%, -50%) ${mv}`)
+      : `${mv} ${el._orig}`;
     if (el._a !== r.opacity) { el.style.opacity = String(r.opacity); el._a = r.opacity; }
-    if (el._tr !== css) { el.style.transform = el._base ? `${el._base} ${css}` : css; el._tr = css; }
+    if (el._tr !== css) { el.style.transform = css; el._tr = css; }
   }
 
   // 背景は「今どれが出ているか」が変わったときだけ作り直す
@@ -138,9 +142,12 @@ function tick() {
   overlayEl.querySelector("#ppPlay").textContent = player.paused ? "▶" : "⏸";
 }
 
+// requestAnimationFrame はタブが非表示だと発火せず、プレビューが固まる。
+// 書き出しのときと同じ理由でタイマーで回す（tick は値が変わったときだけ
+// スタイルを書くので、回し続けても負荷はほぼ無い）。
 function loop() {
   tick();
-  rafId = requestAnimationFrame(loop);
+  rafId = setInterval(tick, 1000 / 60);
 }
 
 function togglePlay() {
