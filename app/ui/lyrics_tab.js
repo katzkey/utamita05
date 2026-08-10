@@ -21,10 +21,10 @@ export function init() {
   lyricRowsEl = document.getElementById("lyricRows");
   lineCountEl = document.getElementById("lineCount");
 
-  document.getElementById("btnAddLine").addEventListener("click", onAddLine);
-  document.getElementById("btnSplitLine").addEventListener("click", onSplitLine);
-  document.getElementById("btnMergeNext").addEventListener("click", onMergeNext);
-  document.getElementById("btnRemoveLine").addEventListener("click", onRemoveLine);
+  document.getElementById("btnAddLine")?.addEventListener("click", onAddLine);
+  document.getElementById("btnSplitLine")?.addEventListener("click", onSplitLine);
+  document.getElementById("btnMergeNext")?.addEventListener("click", onMergeNext);
+  document.getElementById("btnRemoveLine")?.addEventListener("click", onRemoveLine);
 
   // フォント一覧が揃ったら詳細を再描画
   loadFonts().then(() => {
@@ -118,10 +118,10 @@ function renderDetail(project, ui) {
         <button class="tool-btn tool-btn-danger" id="btnBulkDel">選択行を全て削除</button>
       </div>
     `;
-    document.getElementById("btnBulkApplyLook").addEventListener("click", () => {
+    document.getElementById("btnBulkApplyLook")?.addEventListener("click", () => {
       setProject(ops.applyLineSettingsToLines(getProject(), srcId, ordered.slice(1)));
     });
-    document.getElementById("btnBulkDel").addEventListener("click", () => {
+    document.getElementById("btnBulkDel")?.addEventListener("click", () => {
       if (!confirm(`${selected.length} 行を削除します。よろしいですか？`)) return;
       let p = project;
       for (const id of selected) p = ops.removeLine(p, id);
@@ -567,19 +567,19 @@ function renderDetail(project, ui) {
   });
 
   // ハンドラ
-  document.getElementById("fldFontPreset").addEventListener("change", (e) => {
+  document.getElementById("fldFontPreset")?.addEventListener("change", (e) => {
     const v = e.target.value;
     if (!v) return;
     setProject(ops.applyFontPresetToLine(getProject(), id, v));
   });
-  document.getElementById("fldZabutonPreset").addEventListener("change", (e) => {
+  document.getElementById("fldZabutonPreset")?.addEventListener("change", (e) => {
     const v = e.target.value;
     if (!v) return;
     setProject(ops.applyZabutonPresetToLine(getProject(), id, v));
   });
 
   // カスタムプリセットの保存 / 削除
-  document.getElementById("btnSaveCustomPreset").addEventListener("click", () => {
+  document.getElementById("btnSaveCustomPreset")?.addEventListener("click", () => {
     const p = getProject();
     const line2 = p.lines.find(l => l.id === id);
     if (!line2) return;
@@ -606,7 +606,7 @@ function renderDetail(project, ui) {
     const text = document.getElementById("fldText").value.replace(/\n/g, "\\n");
     setProject(ops.setLineText(getProject(), id, text));
   };
-  document.getElementById("fldText").addEventListener("change", onTextChange);
+  document.getElementById("fldText")?.addEventListener("change", onTextChange);
 
   const tInEl = document.getElementById("fldTIn");
   const tOutEl = document.getElementById("fldTOut");
@@ -628,14 +628,16 @@ function renderDetail(project, ui) {
     const sec = tcToSeconds(e.target.value, project.fps);
     setProject(ops.setLineOut(getProject(), id, sec));
   });
-  document.getElementById("fldStagger").addEventListener("change", (e) => {
+  document.getElementById("fldStagger")?.addEventListener("change", (e) => {
     setProject(ops.setLineStagger(getProject(), id, e.target.value));
   });
 
   // テンプレ：dropdown 変更 = 固定値を設定（固定ONにする）
+  // AE を隠しているときはこの欄自体が無いので、存在するときだけ繋ぐ。
   ["Entry", "Hold", "Exit", "Design"].forEach(slot => {
     const slotLower = slot.toLowerCase();
     const sel = document.getElementById("fld" + slot);
+    if (!sel) return;
     sel.addEventListener("change", (e) => {
       setProject(ops.setLineTemplate(getProject(), id, slotLower, e.target.value));
     });
@@ -658,11 +660,11 @@ function renderDetail(project, ui) {
     });
   });
 
-  document.getElementById("fldFontFamily").addEventListener("change", (e) => {
+  document.getElementById("fldFontFamily")?.addEventListener("change", (e) => {
     const family = e.target.value.trim();
     setProject(ops.setLineFont(getProject(), id, { family: family || null }));
   });
-  document.getElementById("fldFontSize").addEventListener("change", (e) => {
+  document.getElementById("fldFontSize")?.addEventListener("change", (e) => {
     const raw = e.target.value.trim();
     if (raw === "") {
       setProject(ops.setLineFont(getProject(), id, { size: null }));
@@ -673,24 +675,24 @@ function renderDetail(project, ui) {
       }
     }
   });
-  document.getElementById("fldFontItalic").addEventListener("change", (e) => {
+  document.getElementById("fldFontItalic")?.addEventListener("change", (e) => {
     setProject(ops.setLineFont(getProject(), id, { italic: e.target.checked ? true : null }));
   });
-  document.getElementById("fldInterTypeGap").addEventListener("change", (e) => {
+  document.getElementById("fldInterTypeGap")?.addEventListener("change", (e) => {
     const v = Math.max(0, Number(e.target.value) || 0);
     const p = getProject();
     const line2 = p.lines.find(l => l.id === id);
     if (line2) setProject({ ...p, lines: p.lines.map(l => l.id === id ? { ...l, interTypeGap: v } : l) });
   });
-  document.getElementById("fldAutoKerning").addEventListener("change", (e) => {
+  document.getElementById("fldAutoKerning")?.addEventListener("change", (e) => {
     const p = getProject();
     const on = e.target.checked;
     setProject({ ...p, lines: p.lines.map(l => l.id === id ? { ...l, autoKerning: on } : l) });
   });
-  document.getElementById("fldTextColor").addEventListener("change", (e) => {
+  document.getElementById("fldTextColor")?.addEventListener("change", (e) => {
     setProject(ops.setLineTextColor(getProject(), id, e.target.value));
   });
-  document.getElementById("btnTextColorClear").addEventListener("click", () => {
+  document.getElementById("btnTextColorClear")?.addEventListener("click", () => {
     setProject(ops.setLineTextColor(getProject(), id, null));
   });
   const applyStrokeFromUi = () => {
@@ -700,20 +702,20 @@ function renderDetail(project, ui) {
     const width = Math.max(0, Number(document.getElementById("fldTextStrokeWidth").value) || 2);
     setProject(ops.setLineTextStroke(getProject(), id, { color, width }));
   };
-  document.getElementById("fldTextStrokeOn").addEventListener("change", applyStrokeFromUi);
-  document.getElementById("fldTextStrokeColor").addEventListener("change", applyStrokeFromUi);
-  document.getElementById("fldTextStrokeWidth").addEventListener("change", applyStrokeFromUi);
-  document.getElementById("fldTracking").addEventListener("change", (e) => {
+  document.getElementById("fldTextStrokeOn")?.addEventListener("change", applyStrokeFromUi);
+  document.getElementById("fldTextStrokeColor")?.addEventListener("change", applyStrokeFromUi);
+  document.getElementById("fldTextStrokeWidth")?.addEventListener("change", applyStrokeFromUi);
+  document.getElementById("fldTracking")?.addEventListener("change", (e) => {
     setProject(ops.setLineTracking(getProject(), id, e.target.value));
   });
 
-  document.getElementById("fldLayout").addEventListener("change", (e) => {
+  document.getElementById("fldLayout")?.addEventListener("change", (e) => {
     setProject(ops.setLineLayout(getProject(), id, e.target.value));
   });
-  document.getElementById("fldDx").addEventListener("change", (e) => {
+  document.getElementById("fldDx")?.addEventListener("change", (e) => {
     setProject(ops.setLinePos(getProject(), id, { dx: Number(e.target.value) || 0 }));
   });
-  document.getElementById("fldDy").addEventListener("change", (e) => {
+  document.getElementById("fldDy")?.addEventListener("change", (e) => {
     setProject(ops.setLinePos(getProject(), id, { dy: Number(e.target.value) || 0 }));
   });
   // ↑↓ キーで dx/dy を増減（通常±10 / Shift±1 / Ctrl±100）
@@ -721,7 +723,7 @@ function renderDetail(project, ui) {
   attachArrowStep("fldDy", (v) => setProject(ops.setLinePos(getProject(), id, { dy: v })));
 
   // 座布団
-  document.getElementById("fldZabOn").addEventListener("change", (e) => {
+  document.getElementById("fldZabOn")?.addEventListener("change", (e) => {
     setProject(ops.setLineZabuton(getProject(), id, { enabled: e.target.checked }));
   });
   const zabHandler = (elId, key, conv) => {
@@ -745,11 +747,11 @@ function renderDetail(project, ui) {
   attachArrowStep("fldZabPadY", (v) => setProject(ops.setLineZabuton(getProject(), id, { paddingY: v })));
   attachArrowStep("fldZabRadius", (v) => setProject(ops.setLineZabuton(getProject(), id, { cornerRadius: Math.max(0, v) })));
   attachArrowStep("fldZabStrokeW", (v) => setProject(ops.setLineZabuton(getProject(), id, { strokeWidth: Math.max(0, v) })));
-  document.getElementById("fldZabPerBlock").addEventListener("change", (e) => {
+  document.getElementById("fldZabPerBlock")?.addEventListener("change", (e) => {
     setProject(ops.setLineZabuton(getProject(), id, { perBlock: e.target.checked }));
   });
   // 光彩
-  document.getElementById("fldGlowOn").addEventListener("change", (e) => {
+  document.getElementById("fldGlowOn")?.addEventListener("change", (e) => {
     setProject(ops.setLineGlow(getProject(), id, { enabled: e.target.checked }));
   });
   const glowHandler = (elId, key, conv) => {
@@ -776,11 +778,11 @@ function renderDetail(project, ui) {
     setProject(ops.setLineZabuton(p, id, { gradient: { ...cur, ...partial } }));
   };
   gradOnEl.addEventListener("change", (e) => setGrad({ enabled: e.target.checked }));
-  document.getElementById("fldZabGradAngle").addEventListener("change", (e) => setGrad({ angle: Number(e.target.value) || 0 }));
-  document.getElementById("fldZabGradA").addEventListener("change", (e) => setGrad({ colorA: e.target.value }));
-  document.getElementById("fldZabGradB").addEventListener("change", (e) => setGrad({ colorB: e.target.value }));
-  document.getElementById("fldZabGradC").addEventListener("change", (e) => setGrad({ colorC: e.target.value }));
-  document.getElementById("fldZabGradCOn").addEventListener("change", (e) => {
+  document.getElementById("fldZabGradAngle")?.addEventListener("change", (e) => setGrad({ angle: Number(e.target.value) || 0 }));
+  document.getElementById("fldZabGradA")?.addEventListener("change", (e) => setGrad({ colorA: e.target.value }));
+  document.getElementById("fldZabGradB")?.addEventListener("change", (e) => setGrad({ colorB: e.target.value }));
+  document.getElementById("fldZabGradC")?.addEventListener("change", (e) => setGrad({ colorC: e.target.value }));
+  document.getElementById("fldZabGradCOn")?.addEventListener("change", (e) => {
     setGrad({ colorC: e.target.checked ? (document.getElementById("fldZabGradC")?.value || "#00FFFF") : null });
   });
 
@@ -791,20 +793,20 @@ function renderDetail(project, ui) {
     const cur = line2?.zabuton?.pattern || { type: "stripe", color: "#000000", angle: 45, size: 1.5, gap: 3.5 };
     setProject(ops.setLineZabuton(p, id, { pattern: { ...cur, ...partial } }));
   };
-  document.getElementById("fldZabPatOn").addEventListener("change", (e) => {
+  document.getElementById("fldZabPatOn")?.addEventListener("change", (e) => {
     if (e.target.checked) setPat({});
     else setProject(ops.setLineZabuton(getProject(), id, { pattern: null }));
   });
-  document.getElementById("fldZabPatSize").addEventListener("change", (e) => setPat({ size: Math.max(0.5, Number(e.target.value) || 1.5) }));
-  document.getElementById("fldZabPatGap").addEventListener("change", (e) => setPat({ gap: Math.max(0.5, Number(e.target.value) || 3.5) }));
-  document.getElementById("fldZabPatAngle").addEventListener("change", (e) => setPat({ angle: Number(e.target.value) || 0 }));
-  document.getElementById("fldZabPatColor").addEventListener("change", (e) => setPat({ color: e.target.value }));
+  document.getElementById("fldZabPatSize")?.addEventListener("change", (e) => setPat({ size: Math.max(0.5, Number(e.target.value) || 1.5) }));
+  document.getElementById("fldZabPatGap")?.addEventListener("change", (e) => setPat({ gap: Math.max(0.5, Number(e.target.value) || 3.5) }));
+  document.getElementById("fldZabPatAngle")?.addEventListener("change", (e) => setPat({ angle: Number(e.target.value) || 0 }));
+  document.getElementById("fldZabPatColor")?.addEventListener("change", (e) => setPat({ color: e.target.value }));
   attachArrowStep("fldZabPatSize", (v) => setPat({ size: Math.max(0.5, v) }));
   attachArrowStep("fldZabPatGap", (v) => setPat({ gap: Math.max(0.5, v) }));
   attachArrowStep("fldZabPatAngle", (v) => setPat({ angle: v }));
 
   // ジッター
-  document.getElementById("fldJitOn").addEventListener("change", (e) => {
+  document.getElementById("fldJitOn")?.addEventListener("change", (e) => {
     setProject(ops.setLineJitter(getProject(), id, { enabled: e.target.checked }));
   });
   const jitHandler = (elId, key, conv) => {
@@ -825,19 +827,19 @@ function renderDetail(project, ui) {
     const s = Math.floor(Math.random() * 100000);
     setProject(ops.setLineJitter(getProject(), id, { seed: s }));
   });
-  document.getElementById("fldJitPreventOverlap").addEventListener("change", (e) => {
+  document.getElementById("fldJitPreventOverlap")?.addEventListener("change", (e) => {
     setProject(ops.setLineJitter(getProject(), id, { preventOverlap: e.target.checked }));
   });
-  document.getElementById("fldLayerMode").addEventListener("change", (e) => {
+  document.getElementById("fldLayerMode")?.addEventListener("change", (e) => {
     setProject(ops.setLineLayerMode(getProject(), id, e.target.value || null));
   });
-  document.getElementById("fldNote").addEventListener("change", (e) => {
+  document.getElementById("fldNote")?.addEventListener("change", (e) => {
     setProject(ops.setLineNote(getProject(), id, e.target.value));
   });
-  document.getElementById("btnPreviewSize").addEventListener("click", () => {
+  document.getElementById("btnPreviewSize")?.addEventListener("click", () => {
     setUi({ previewLarge: !getUi().previewLarge });
   });
-  document.getElementById("btnApplyToProject").addEventListener("click", () => {
+  document.getElementById("btnApplyToProject")?.addEventListener("click", () => {
     const msg = "この行の設定を全体に反映します：\n"
       + "・フォント / サイズ → 全体設定のデフォルトへ\n"
       + "・レイアウト / layerMode / 固定テンプレ → デフォルトへ\n"
@@ -846,7 +848,7 @@ function renderDetail(project, ui) {
     if (!confirm(msg)) return;
     setProject(ops.applyLineSettingsToProject(getProject(), id));
   });
-  document.getElementById("fldEmphasis").addEventListener("change", (e) => {
+  document.getElementById("fldEmphasis")?.addEventListener("change", (e) => {
     const specs = parseEmphasisSpecs(e.target.value);
     setProject(ops.setLineEmphasis(getProject(), id, specs));
   });
