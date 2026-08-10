@@ -8,6 +8,7 @@ import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts
 import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js";
 import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js";
 import { AE_ENABLED } from "../core/features.js";
+import { EASINGS, SLIDE_DIRS, defaultMotion } from "../core/motion.js";
 import { escapeHtml } from "../core/html.js";
 import { renderLinePreviewHtml } from "../core/render_line.js";
 
@@ -141,7 +142,6 @@ function renderDetail(project, ui) {
   const tOut = line.tOut != null ? secondsToTC(line.tOut, project.fps) : "";
   const ttext = (line.text || "").replace(/\\n/g, "\n");
   let detailTab = ["content", "look", "motion"].includes(ui.detailTab) ? ui.detailTab : "look";
-  if (detailTab === "motion" && !AE_ENABLED) detailTab = "look";   // AE 非表示時は空になるため
 
   const resolved = resolveLineTemplate(line, project);
 
@@ -189,7 +189,7 @@ function renderDetail(project, ui) {
 
     <div class="detail-tabs">
       ${[["content","内容"],["look","見た目"],["motion","動き"]].map(([k, label]) =>
-        `<button class="detail-tab ${detailTab === k ? "is-active" : ""}" data-tab="${k}"${k === "motion" ? ' data-ae="1"' : ""}>${label}</button>`
+        `<button class="detail-tab ${detailTab === k ? "is-active" : ""}" data-tab="${k}">${label}</button>`
       ).join("")}
     </div>
 
@@ -266,17 +266,31 @@ function renderDetail(project, ui) {
       </div>
     </div>
 
-    <div class="section" data-pane="motion" data-ae="1">
-      <div class="section-title">モーション</div>
+    <div class="section" data-pane="motion">
+      <div class="section-title">動かす単位</div>
+      <div class="field">
+        <span class="field-label">単位</span>
+        <select class="field-select" id="fldMUnit" style="flex:1">
+          <option value="line" ${(line.motion?.unit || "line") === "line" ? "selected" : ""}>行ごと（1行まとめて）</option>
+          <option value="char" ${line.motion?.unit === "char" ? "selected" : ""}>文字ごと（1文字ずつ）</option>
+        </select>
+      </div>
+      <div class="field" style="${line.motion?.unit === "char" ? "" : "display:none"}">
+        <span class="field-label">ずらし</span>
+        <input class="field-input" id="fldMStagger" type="number" step="0.01" min="0" value="${line.motion?.stagger ?? 0.03}" style="width:70px">
+        <span style="font-size:10px;color:var(--gray-3);margin-left:6px">秒／文字</span>
+      </div>
+    </div>
+    ${motionSideHtml("in", line.motion || defaultMotion(), "出るとき（イン）")}
+    ${motionSideHtml("out", line.motion || defaultMotion(), "消えるとき（アウト）")}
+
+    ${AE_ENABLED ? `<div class="section" data-pane="motion" data-ae="1">
+      <div class="section-title">AE テンプレ</div>
       ${tmplSlotHtml("entry", "Entry")}
       ${tmplSlotHtml("hold", "Hold")}
       ${tmplSlotHtml("exit", "Exit")}
-    </div>
-
-    <div class="section" data-pane="motion" data-ae="1">
-      <div class="section-title">デザイン</div>
       ${tmplSlotHtml("design", "Design")}
-    </div>
+    </div>` : ``}
 
     <div class="section" data-pane="look">
       <div class="section-title">フォント（行で上書き）</div>
@@ -523,6 +537,28 @@ function renderDetail(project, ui) {
       </div>
     </div>
   `;
+
+  // 動きのハンドラ
+  const onM = (elId, build) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.addEventListener("change", (e) => {
+      const v = el.type === "checkbox" ? el.checked : el.value;
+      setProject(ops.setLineMotion(getProject(), id, build(v)));
+    });
+  };
+  onM("fldMUnit",    v => ({ unit: v }));
+  onM("fldMStagger", v => ({ stagger: Math.max(0, Number(v) || 0) }));
+  for (const side of ["in", "out"]) {
+    onM(`fldM_${side}_dur`,       v => ({ [side]: { dur: Math.max(0, Number(v) || 0) } }));
+    onM(`fldM_${side}_ease`,      v => ({ [side]: { ease: v } }));
+    onM(`fldM_${side}_fade`,      v => ({ [side]: { fade: !!v } }));
+    onM(`fldM_${side}_slideOn`,   v => ({ [side]: { slide: { enabled: !!v } } }));
+    onM(`fldM_${side}_slideDir`,  v => ({ [side]: { slide: { dir: v } } }));
+    onM(`fldM_${side}_slideDist`, v => ({ [side]: { slide: { dist: Math.max(0, Number(v) || 0) } } }));
+    onM(`fldM_${side}_scaleOn`,   v => ({ [side]: { scale: { enabled: !!v } } }));
+    onM(`fldM_${side}_scaleFrom`, v => ({ [side]: { scale: { from: Math.max(0, Number(v) || 0) } } }));
+  }
 
   // サブタブ：セクションの DOM 並び順は変えず、data-active-tab で CSS 出し分け
   detailPaneEl.dataset.activeTab = detailTab;
@@ -818,6 +854,57 @@ function renderDetail(project, ui) {
 
 // ↑↓ キーで数値入力を増減するヘルパー
 // 通常 ±10 / Shift ±1 / Ctrl ±100。setProject で再描画されてもフォーカスを復元する。
+
+// 出入りの動きの UI。in / out で同じ形なので関数にする。
+function motionSideHtml(side, m, label) {
+  const s = m[side] || {};
+  const p = (k) => `fldM_${side}_${k}`;
+  return `
+    <div class="section" data-pane="motion">
+      <div class="section-title">${label}</div>
+      <div class="field">
+        <span class="field-label">長さ</span>
+        <input class="field-input" id="${p("dur")}" type="number" step="0.05" min="0" value="${s.dur ?? 0.4}" style="width:70px">
+        <span style="font-size:10px;color:var(--gray-3);margin-left:6px">秒（0 で動かさない）</span>
+      </div>
+      <div class="field">
+        <span class="field-label">効き方</span>
+        <select class="field-select" id="${p("ease")}" style="flex:1">
+          ${Object.entries(EASINGS).map(([k, v]) =>
+            `<option value="${k}" ${s.ease === k ? "selected" : ""}>${escapeHtml(v.label)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field">
+        <span class="field-label">フェード</span>
+        <label class="lock-toggle"><input type="checkbox" id="${p("fade")}" ${s.fade ? "checked" : ""}><span>透明度で出し入れ</span></label>
+      </div>
+      <div class="field">
+        <span class="field-label">スライド</span>
+        <label class="lock-toggle"><input type="checkbox" id="${p("slideOn")}" ${s.slide?.enabled ? "checked" : ""}><span>動かしながら</span></label>
+      </div>
+      <div class="field" style="${s.slide?.enabled ? "" : "display:none"}">
+        <span class="field-label">向き / 距離</span>
+        <select class="field-select" id="${p("slideDir")}" style="flex:1">
+          ${Object.entries(SLIDE_DIRS).map(([k, v]) =>
+            `<option value="${k}" ${s.slide?.dir === k ? "selected" : ""}>${escapeHtml(v.label)}</option>`).join("")}
+        </select>
+        <input class="field-input" id="${p("slideDist")}" type="number" step="5" min="0" value="${s.slide?.dist ?? 40}" style="width:60px;margin-left:6px">
+        <span style="font-size:10px;color:var(--gray-3);margin-left:4px">px</span>
+      </div>
+      <div class="field">
+        <span class="field-label">スケール</span>
+        <label class="lock-toggle"><input type="checkbox" id="${p("scaleOn")}" ${s.scale?.enabled ? "checked" : ""}><span>大きさを変えながら</span></label>
+      </div>
+      <div class="field" style="${s.scale?.enabled ? "" : "display:none"}">
+        <span class="field-label">開始倍率</span>
+        <input class="field-input" id="${p("scaleFrom")}" type="number" step="0.05" min="0" value="${s.scale?.from ?? 0.8}" style="width:70px">
+        <span style="font-size:10px;color:var(--gray-3);margin-left:6px">
+          1.0 へ向かう。「ぽよん」は効き方で選ぶ
+        </span>
+      </div>
+    </div>`;
+}
+
 function attachArrowStep(inputId, commit) {
   const el = document.getElementById(inputId);
   if (!el) return;

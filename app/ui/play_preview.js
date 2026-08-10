@@ -11,6 +11,7 @@
 import { getProject, getUi } from "./state.js";
 import { renderLinePreviewHtml, renderPreviewBackgrounds } from "../core/render_line.js";
 import { secondsToTC } from "./tc.js";
+import { transformAt, defaultMotion } from "../core/motion.js";
 
 let overlayEl = null;
 let rafId = null;
@@ -18,7 +19,6 @@ let player = null;
 let layers = [];        // { line, el }
 let bgHost = null;
 let bgKey = "";
-let fadeIn = 0.4, fadeOut = 0.4;
 
 export function init() {
   document.getElementById("btnPlayPreview")?.addEventListener("click", open);
@@ -44,10 +44,7 @@ function open() {
         <button class="tool-btn" id="ppPlay">▶</button>
         <span class="pp-tc" id="ppTC">00:00:00:00</span>
         <div class="pp-seek" id="ppSeek"><i id="ppSeekFill"></i></div>
-        <span class="pp-fade">フェード
-          <input class="field-input" id="ppFadeIn" type="number" step="0.1" min="0" value="0.4" style="width:56px">
-          <input class="field-input" id="ppFadeOut" type="number" step="0.1" min="0" value="0.4" style="width:56px"> 秒
-        </span>
+        <span class="pp-fade">動きは「見た目」の隣の<b>動き</b>タブで設定します</span>
       </div>
       <div class="at-note" id="ppNote"></div>
     </div>`;
@@ -56,8 +53,6 @@ function open() {
   overlayEl.querySelector("#ppClose").addEventListener("click", close);
   overlayEl.addEventListener("click", (e) => { if (e.target === overlayEl) close(); });
   overlayEl.querySelector("#ppPlay").addEventListener("click", togglePlay);
-  overlayEl.querySelector("#ppFadeIn").addEventListener("change", e => { fadeIn = Number(e.target.value) || 0; });
-  overlayEl.querySelector("#ppFadeOut").addEventListener("change", e => { fadeOut = Number(e.target.value) || 0; });
   const seek = overlayEl.querySelector("#ppSeek");
   seek.addEventListener("click", (e) => {
     if (!player?.duration) return;
@@ -99,6 +94,8 @@ function build() {
     const inner = tmp.firstElementChild?.lastElementChild;
     if (!inner) continue;
     const el = inner.cloneNode(true);
+    // 元の配置用 transform（translate(-50%,-50%) 等）を控え、動きの分を後ろに足す
+    el._base = (el.style.transform || "").replace(/translate\(-50%,\s*-50%\)\s*/, "");
     el.style.opacity = "0";
     el.style.willChange = "opacity";
     stage.appendChild(el);
@@ -112,24 +109,19 @@ function build() {
     : "TC が入っている行がありません。先にタイミングを入れてください。";
 }
 
-// その時刻での不透明度。フェードイン中／アウト中は途中の値になる。
-function alphaAt(line, t) {
-  const fi = Math.min(fadeIn, (line.tOut - line.tIn) / 2);
-  const fo = Math.min(fadeOut, (line.tOut - line.tIn) / 2);
-  if (t < line.tIn || t > line.tOut + fo) return 0;
-  if (t < line.tIn + fi) return fi > 0 ? (t - line.tIn) / fi : 1;
-  if (t > line.tOut) return fo > 0 ? 1 - (t - line.tOut) / fo : 0;
-  return 1;
-}
 
 function tick() {
   if (!overlayEl || !player) return;
   const t = player.currentTime || 0;
   const p = getProject();
 
+  // 書き出しと同じ式（core/motion.js）で見た目を決める
+  const sx = (overlayEl.querySelector("#ppStage")?.clientWidth || p.resolution.w) / p.resolution.w;
   for (const { line, el } of layers) {
-    const a = alphaAt(line, t);
-    if (el._a !== a) { el.style.opacity = String(a); el._a = a; }
+    const r = transformAt(t, line.tIn, line.tOut, line.motion || defaultMotion());
+    const css = `translate(-50%,-50%) translate(${(r.dx * sx).toFixed(2)}px, ${(r.dy * sx).toFixed(2)}px) scale(${r.scale.toFixed(4)})`;
+    if (el._a !== r.opacity) { el.style.opacity = String(r.opacity); el._a = r.opacity; }
+    if (el._tr !== css) { el.style.transform = el._base ? `${el._base} ${css}` : css; el._tr = css; }
   }
 
   // 背景は「今どれが出ているか」が変わったときだけ作り直す

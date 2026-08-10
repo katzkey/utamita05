@@ -2,6 +2,7 @@
 // 純粋関数のみ。
 
 import { now, syncChars, deepClone } from "./utils.js";
+import { defaultMotion } from "./motion.js";
 
 // emptyLineTemplate を内部で先行参照するため宣言だけ前置（実体は下で）
 // （JS は関数宣言を巻き上げるので問題なし）
@@ -170,6 +171,7 @@ export function createLine(id, opts = {}) {
     underline: opts.underline ?? null, // 下線装飾。null = 無し / { enabled, color, width(px), offset(px) }
     glow: opts.glow ?? null,       // テキストの光彩（グロー）。null = なし / { enabled, color, opacity, blur }
     jitter: opts.jitter ?? null,   // null = 無し / defaultJitter() 形式のオブジェクト
+    motion: opts.motion ?? defaultMotion(),  // 出入りの動き（フェード/スライド/スケール）
     skip: opts.skip || false,
     note: opts.note || "",
   };

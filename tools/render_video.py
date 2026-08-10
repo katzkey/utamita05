@@ -73,6 +73,48 @@ def fit_scale_filter(fit, W, H):
             f"crop={W}:{H}")   # cover
 
 
+# ブラウザ側（app/core/motion.js）と同じイージングを ffmpeg の式にする。
+# 見たものと書き出したものがずれないよう、式を対応させておく。
+def ease_expr(name, p):
+    if name == "linear":    return f"({p})"
+    if name == "easeIn":    return f"(pow(({p}),3))"
+    if name == "easeInOut": return f"(if(lt(({p}),0.5),4*pow(({p}),3),1-pow(-2*({p})+2,3)/2))"
+    if name in ("back", "elastic"):
+        # elastic は式が長くなるので back で近似する
+        return f"(1+2.70158*pow(({p})-1,3)+1.70158*pow(({p})-1,2))"
+    return f"(1-pow(1-({p}),3))"   # easeOut
+
+
+def slide_expr(mi, mo, di, do, span, t_in):
+    """overlay の x/y に足すずれ。
+
+    注意：overlay の t は「出力の絶対時刻」で、レイヤー内部の 0 始まりの時刻とは違う。
+    fade や scale はレイヤー側のフィルタなので 0 始まりだが、ここは絶対時刻で組む。
+    """
+    dirs = {"up": (0, 1), "down": (0, -1), "left": (1, 0), "right": (-1, 0)}
+    sl_in = mi.get("slide") or {}
+    sl_out = mo.get("slide") or {}
+    if not sl_in.get("enabled") and not sl_out.get("enabled"):
+        return "", ""
+
+    ex, ey = "0", "0"
+    if sl_out.get("enabled") and do > 0:
+        dx, dy = dirs.get(sl_out.get("dir", "up"), (0, 1))
+        dist = float(sl_out.get("dist", 40))
+        p = f"min(1,max(0,1-(t-{t_in + span:.3f})/{do:.4f}))"
+        e = ease_expr(mo.get("ease", "easeIn"), p)
+        ex = f"if(gt(t,{t_in + span:.3f}),{dx * dist}*(1-({e})),{ex})"
+        ey = f"if(gt(t,{t_in + span:.3f}),{dy * dist}*(1-({e})),{ey})"
+    if sl_in.get("enabled") and di > 0:
+        dx, dy = dirs.get(sl_in.get("dir", "up"), (0, 1))
+        dist = float(sl_in.get("dist", 40))
+        p = f"min(1,max(0,(t-{t_in:.3f})/{di:.4f}))"
+        e = ease_expr(mi.get("ease", "easeOut"), p)
+        ex = f"if(lt(t,{t_in + di:.3f}),{dx * dist}*(1-({e})),{ex})"
+        ey = f"if(lt(t,{t_in + di:.3f}),{dy * dist}*(1-({e})),{ey})"
+    return f"+({ex})", f"+({ey})"
+
+
 def build_command(spec, out_path, workdir):
     W = int(spec.get("width", 1920))
     H = int(spec.get("height", 1080))
@@ -113,7 +155,8 @@ def build_command(spec, out_path, workdir):
     layer_idx = []
     for ln in lines:
         span = max(0.05, float(ln["tOut"]) - float(ln["tIn"]))
-        fo = float(ln.get("fadeOut", spec.get("fadeOut", 0.3)))
+        mo = (ln.get("motion") or {}).get("out") or {}
+        fo = max(0.0, float(mo.get("dur", 0.4)))
         cmd += ["-loop", "1", "-t", f"{span + fo:.3f}", "-i", ln["file"]]
         layer_idx.append(len(inputs)); inputs.append("layer")
 
@@ -154,24 +197,52 @@ def build_command(spec, out_path, workdir):
     for k, (ln, idx) in enumerate(zip(lines, layer_idx)):
         t_in = float(ln["tIn"])
         span = max(0.05, float(ln["tOut"]) - t_in)
-        fi = float(ln.get("fadeIn", spec.get("fadeIn", 0.3)))
-        fo = float(ln.get("fadeOut", spec.get("fadeOut", 0.3)))
-        fi = min(fi, span / 2); fo = min(fo, span / 2)
+        m = ln.get("motion") or {}
+        mi, mo = m.get("in") or {}, m.get("out") or {}
+        di = max(0.0, float(mi.get("dur", 0.4)))
+        do = max(0.0, float(mo.get("dur", 0.4)))
+        di = min(di, span); do = min(do, span)
 
-        # レイヤーは絵のある範囲だけを切り出したもの。元の位置へ置くだけで
-        # 拡大も余白埋めも要らない。全画面のまま重ねると行数分だけ
-        # 全面合成が走り、書き出しが極端に遅くなる。
+        # レイヤーは絵のある範囲だけを切り出したもの。元の位置へ置く。
         x = int(ln.get("x", 0)); y = int(ln.get("y", 0))
-        fg.append(
-            f"[{idx}:v]format=rgba,"
-            f"fade=t=in:st=0:d={fi:.3f}:alpha=1,"
-            f"fade=t=out:st={max(0.0, span - fo):.3f}:d={fo:.3f}:alpha=1,"
-            f"setpts=PTS-STARTPTS+{t_in:.3f}/TB[l{k}]"
-        )
+        w = int(ln.get("w", 0)); h = int(ln.get("h", 0))
+
+        # 進み具合 e（0=出る前 / 1=定常）。イン中とアウト中で式を切り替える。
+        # t はこの入力の先頭からの秒数（setpts でずらす前）。
+        e = ease_expr(mi.get("ease", "easeOut"), f"min(1,max(0,t/{max(di,0.0001):.4f}))")
+        e_out = ease_expr(mo.get("ease", "easeIn"), f"min(1,max(0,1-(t-{span:.3f})/{max(do,0.0001):.4f}))")
+        E = f"if(lt(t,{di:.3f}),{e},if(lt(t,{span:.3f}),1,{e_out}))" if (di > 0 or do > 0) else "1"
+
+        chain = [f"[{idx}:v]format=rgba"]
+
+        # スケール（1 に向かって変化する）
+        sc_in, sc_out = mi.get("scale") or {}, mo.get("scale") or {}
+        if (sc_in.get("enabled") and di > 0) or (sc_out.get("enabled") and do > 0):
+            fi_from = float(sc_in.get("from", 0.8)) if sc_in.get("enabled") else 1.0
+            fo_from = float(sc_out.get("from", 0.8)) if sc_out.get("enabled") else 1.0
+            sc = (f"if(lt(t,{di:.3f}), {fi_from}+(1-{fi_from})*({e}),"
+                  f"if(lt(t,{span:.3f}), 1, {fo_from}+(1-{fo_from})*({e_out})))")
+            chain.append(f"scale=w='max(2,{w}*({sc}))':h='max(2,{h}*({sc}))':eval=frame")
+
+        # フェード
+        if mi.get("fade", True) and di > 0:
+            chain.append(f"fade=t=in:st=0:d={di:.3f}:alpha=1")
+        if mo.get("fade", True) and do > 0:
+            chain.append(f"fade=t=out:st={max(0.0, span - do):.3f}:d={do:.3f}:alpha=1")
+
+        chain.append(f"setpts=PTS-STARTPTS+{t_in:.3f}/TB")
+        fg.append(",".join(chain) + f"[l{k}]")
+
+        # スライド（重ねる位置を時間で動かす）。スケールで大きさが変わる分は
+        # 中心がずれないよう overlay 側で補正する。
+        ox, oy = slide_expr(mi, mo, di, do, span, t_in)
+        cx = f"{x}+{w}/2-w/2" if "scale=" in ",".join(chain) else f"{x}"
+        cy = f"{y}+{h}/2-h/2" if "scale=" in ",".join(chain) else f"{y}"
+
         nxt = f"v{k}"
         fg.append(
-            f"[{cur}][l{k}]overlay=x={x}:y={y}:eof_action=pass:"
-            f"enable='between(t,{t_in:.3f},{t_in + span + fo:.3f})'[{nxt}]"
+            f"[{cur}][l{k}]overlay=x='{cx}{ox}':y='{cy}{oy}':eof_action=pass:"
+            f"enable='between(t,{t_in:.3f},{t_in + span + do:.3f})'[{nxt}]"
         )
         cur = nxt
 

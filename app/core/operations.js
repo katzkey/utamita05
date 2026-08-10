@@ -188,6 +188,7 @@ function extractLook(line) {
     underline: clone(line.underline),
     glow: clone(line.glow),
     jitter: clone(line.jitter),
+    motion: clone(line.motion),
     template: { ...line.template },
     fontPresetId: line.fontPresetId ?? null,
     zabutonPresetId: line.zabutonPresetId ?? null,
@@ -212,6 +213,7 @@ function applyLook(line, look) {
     underline: clone(look.underline),
     glow: clone(look.glow),
     jitter: clone(look.jitter),
+    motion: clone(look.motion),
     template: { ...look.template },
     fontPresetId: look.fontPresetId,
     zabutonPresetId: look.zabutonPresetId,
@@ -321,6 +323,20 @@ export function applyZabutonPresetToLine(project, id, presetId) {
 // カスタムプリセットを削除したときに、行が消えた id を指したままにならないよう使う
 export function setLineZabutonPresetId(project, id, presetId) {
   return updateLine(project, id, (line) => ({ ...line, zabutonPresetId: presetId ?? null }));
+}
+
+// 出入りの動き。partial を深さ 2 までマージする（in/out の中身を個別に触れるように）
+export function setLineMotion(project, id, partial) {
+  return updateLine(project, id, (line) => {
+    const base = line.motion || {};
+    const next = { ...base, ...partial };
+    for (const side of ["in", "out"]) {
+      if (partial[side]) next[side] = { ...(base[side] || {}), ...partial[side] };
+      if (partial[side]?.slide) next[side].slide = { ...(base[side]?.slide || {}), ...partial[side].slide };
+      if (partial[side]?.scale) next[side].scale = { ...(base[side]?.scale || {}), ...partial[side].scale };
+    }
+    return { ...line, motion: next };
+  });
 }
 
 // 下線装飾設定

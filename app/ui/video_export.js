@@ -107,9 +107,8 @@ function renderIdle(helper = "checking") {
       ${bgs.missing.map(escapeHtml).join("、")}</div>` : ``}
     <div class="at-section">
       <div class="at-row">
-        <span>歌詞のフェード</span>
-        <span>イン <input class="field-input" id="veFadeIn" type="number" step="0.1" min="0" value="0.4" style="width:60px">
-              アウト <input class="field-input" id="veFadeOut" type="number" step="0.1" min="0" value="0.4" style="width:60px"> 秒</span>
+        <span>歌詞の動き</span>
+        <b>行ごとに「動き」タブの設定を使います</b>
       </div>
       <div class="at-row">
         <span>下地の色</span>
@@ -133,8 +132,6 @@ async function checkHelper() {
 async function run() {
   const p = getProject();
   const lines = timedLines();
-  const fadeIn = Number(document.getElementById("veFadeIn").value) || 0;
-  const fadeOut = Number(document.getElementById("veFadeOut").value) || 0;
   const bgColor = document.getElementById("veBgColor").value || "#101014";
   const W = p.resolution.w, H = p.resolution.h;
 
@@ -176,7 +173,8 @@ async function run() {
   const { items: bgItems } = exportableBackgrounds();
   const lastLineOut = Math.max(...lines.map(l => l.tOut));
   const lastBgOut = bgItems.length ? Math.max(...bgItems.map(x => x.bg.tOut || 0)) : 0;
-  const duration = Math.max(lastLineOut + fadeOut, lastBgOut) + 0.5;
+  const maxOut = Math.max(0, ...lines.map(l => l.motion?.out?.dur || 0));
+  const duration = Math.max(lastLineOut + maxOut, lastBgOut) + 0.5;
 
   const spec = {
     width: W, height: H, fps: p.fps, duration,
@@ -192,10 +190,10 @@ async function run() {
       fit: bg.fit || "cover",
       opacity: bg.opacity ?? 1.0,
     })),
-    fadeIn, fadeOut,
     lines: lines.map((l, i) => ({
       tIn: l.tIn, tOut: l.tOut,
       x: layers[i].x, y: layers[i].y, w: layers[i].w, h: layers[i].h,
+      motion: l.motion || null,
     })),
   };
 
