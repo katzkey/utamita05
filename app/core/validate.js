@@ -1,7 +1,7 @@
 // プロジェクトの整合性チェック
 // validate(project) → { ok, errors, warnings }
 
-import { splitChars } from "./utils.js";
+import { splitChars } from "./utils.js?v=b06879e";
 
 export function validate(project) {
   const errors = [];

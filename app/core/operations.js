@@ -5,14 +5,14 @@ import {
   now, indexOfId, findById,
   insertAt, removeAt, moveItem, replaceAt,
   syncChars, splitChars,
-} from "./utils.js";
+} from "./utils.js?v=b06879e";
 
 import {
   createLine, createBackground, createTitle, createTemplateRef,
   defaultZabuton, defaultJitter,
   PROJECT_VERSION,
-} from "./project.js";
-import { getPresetById, getFontPresetById, getZabutonPresetById } from "./presets.js";
+} from "./project.js?v=b06879e";
+import { getPresetById, getFontPresetById, getZabutonPresetById } from "./presets.js?v=b06879e";
 
 // ──────────────────────────────────────────────────
 // 内部ヘルパー

@@ -8,10 +8,10 @@
 //   再生中は opacity を書き換えるだけにする（毎フレーム作り直さない）。
 //   音は既存の #player をそのまま使うので、再生バーと状態が食い違わない。
 
-import { getProject, getUi } from "./state.js";
-import { renderLinePreviewHtml, renderPreviewBackgrounds } from "../core/render_line.js";
-import { secondsToTC } from "./tc.js";
-import { transformAt, defaultMotion } from "../core/motion.js";
+import { getProject, getUi } from "./state.js?v=b06879e";
+import { renderLinePreviewHtml, renderPreviewBackgrounds } from "../core/render_line.js?v=b06879e";
+import { secondsToTC } from "./tc.js?v=b06879e";
+import { transformAt, defaultMotion } from "../core/motion.js?v=b06879e";
 
 let overlayEl = null;
 let rafId = null;
