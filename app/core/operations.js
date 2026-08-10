@@ -5,14 +5,15 @@ import {
   now, indexOfId, findById,
   insertAt, removeAt, moveItem, replaceAt,
   syncChars, splitChars,
-} from "./utils.js?v=3bcc14c";
+} from "./utils.js?v=ab744b0";
 
 import {
   createLine, createBackground, createTitle, createTemplateRef,
   defaultZabuton, defaultJitter,
   PROJECT_VERSION,
-} from "./project.js?v=3bcc14c";
-import { getPresetById, getFontPresetById, getZabutonPresetById } from "./presets.js?v=3bcc14c";
+} from "./project.js?v=ab744b0";
+import { normalizeMotion } from "./motion.js?v=ab744b0";
+import { getPresetById, getFontPresetById, getZabutonPresetById } from "./presets.js?v=ab744b0";
 
 // ──────────────────────────────────────────────────
 // 内部ヘルパー
@@ -328,12 +329,14 @@ export function setLineZabutonPresetId(project, id, presetId) {
 // 出入りの動き。partial を深さ 2 までマージする（in/out の中身を個別に触れるように）
 export function setLineMotion(project, id, partial) {
   return updateLine(project, id, (line) => {
-    const base = line.motion || {};
+    // motion を持たない行（この機能より前に作られたもの）に 1 項目だけ書き込むと、
+    // 長さが入らないまま「長さ 0 = 動かない」設定になってしまう。既定値から始める。
+    const base = normalizeMotion(line.motion);
     const next = { ...base, ...partial };
     for (const side of ["in", "out"]) {
-      if (partial[side]) next[side] = { ...(base[side] || {}), ...partial[side] };
-      if (partial[side]?.slide) next[side].slide = { ...(base[side]?.slide || {}), ...partial[side].slide };
-      if (partial[side]?.scale) next[side].scale = { ...(base[side]?.scale || {}), ...partial[side].scale };
+      if (partial[side]) next[side] = { ...base[side], ...partial[side] };
+      if (partial[side]?.slide) next[side].slide = { ...base[side].slide, ...partial[side].slide };
+      if (partial[side]?.scale) next[side].scale = { ...base[side].scale, ...partial[side].scale };
     }
     return { ...line, motion: next };
   });

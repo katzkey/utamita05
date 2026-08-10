@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=3bcc14c";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=3bcc14c";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=3bcc14c";
-import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=3bcc14c";
-import { escapeHtml } from "./html.js?v=3bcc14c";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=ab744b0";
+import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=ab744b0";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=ab744b0";
+import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=ab744b0";
+import { escapeHtml } from "./html.js?v=ab744b0";
 
 // 選択行のプレビュー：最終解像度の比率のステージ上に、AE と同じ配置ルールで描画
 // - Y: layoutToY 相当（top=15% / center=50% / bottom=85%）+ dy

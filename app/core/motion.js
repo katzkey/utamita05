@@ -52,6 +52,27 @@ export function defaultMotion() {
   };
 }
 
+/**
+ * 欠けている項目を既定値で埋める。
+ * 古いプロジェクトには motion が無く、UI で 1 項目だけ触った行も
+ * 途中までしか入っていないことがあるため、使う前に必ず通す。
+ */
+export function normalizeMotion(m) {
+  const d = defaultMotion();
+  if (!m) return d;
+  const side = (s, def) => ({
+    ...def, ...(s || {}),
+    slide: { ...def.slide, ...((s || {}).slide || {}) },
+    scale: { ...def.scale, ...((s || {}).scale || {}) },
+  });
+  return {
+    unit: m.unit || d.unit,
+    stagger: m.stagger ?? d.stagger,
+    in: side(m.in, d.in),
+    out: side(m.out, d.out),
+  };
+}
+
 // ---- 進み具合 ----
 
 /**
@@ -60,8 +81,9 @@ export function defaultMotion() {
  *   phase: "before" | "in" | "hold" | "out" | "after"
  */
 export function phaseAt(t, tIn, tOut, motion) {
-  const di = Math.max(0, motion?.in?.dur ?? 0);
-  const doo = Math.max(0, motion?.out?.dur ?? 0);
+  const m = normalizeMotion(motion);
+  const di = Math.max(0, m.in.dur ?? 0);
+  const doo = Math.max(0, m.out.dur ?? 0);
   if (t < tIn) return { phase: "before", p: 0 };
   if (t < tIn + di) return { phase: "in", p: di > 0 ? (t - tIn) / di : 1 };
   if (t <= tOut) return { phase: "hold", p: 1 };
@@ -75,7 +97,7 @@ export function phaseAt(t, tIn, tOut, motion) {
  *   dx / dy は AE px。scale は倍率。
  */
 export function transformAt(t, tIn, tOut, motion, delay = 0) {
-  const m = motion || defaultMotion();
+  const m = normalizeMotion(motion);
   const { phase, p } = phaseAt(t - delay, tIn, tOut, m);
   const idle = { opacity: 0, dx: 0, dy: 0, scale: 1, visible: false };
   if (phase === "before" || phase === "after") return idle;

@@ -73,6 +73,24 @@ def fit_scale_filter(fit, W, H):
             f"crop={W}:{H}")   # cover
 
 
+DEFAULT_SIDE = {"dur": 0.4, "ease": "easeOut", "fade": True,
+                "slide": {"enabled": False, "dir": "up", "dist": 40},
+                "scale": {"enabled": False, "from": 0.8}}
+
+
+def normalize_motion(m):
+    """欠けている項目を既定値で埋める（app/core/motion.js の normalizeMotion と対）。"""
+    def side(s, ease):
+        s = s or {}
+        out = {**DEFAULT_SIDE, "ease": ease, **s}
+        out["slide"] = {**DEFAULT_SIDE["slide"], **(s.get("slide") or {})}
+        out["scale"] = {**DEFAULT_SIDE["scale"], **(s.get("scale") or {})}
+        return out
+    m = m or {}
+    return {"unit": m.get("unit", "line"), "stagger": m.get("stagger", 0.03),
+            "in": side(m.get("in"), "easeOut"), "out": side(m.get("out"), "easeIn")}
+
+
 # ブラウザ側（app/core/motion.js）と同じイージングを ffmpeg の式にする。
 # 見たものと書き出したものがずれないよう、式を対応させておく。
 def ease_expr(name, p):
@@ -155,8 +173,7 @@ def build_command(spec, out_path, workdir):
     layer_idx = []
     for ln in lines:
         span = max(0.05, float(ln["tOut"]) - float(ln["tIn"]))
-        mo = (ln.get("motion") or {}).get("out") or {}
-        fo = max(0.0, float(mo.get("dur", 0.4)))
+        fo = max(0.0, float(normalize_motion(ln.get("motion"))["out"].get("dur", 0.4)))
         cmd += ["-loop", "1", "-t", f"{span + fo:.3f}", "-i", ln["file"]]
         layer_idx.append(len(inputs)); inputs.append("layer")
 
@@ -197,8 +214,10 @@ def build_command(spec, out_path, workdir):
     for k, (ln, idx) in enumerate(zip(lines, layer_idx)):
         t_in = float(ln["tIn"])
         span = max(0.05, float(ln["tOut"]) - t_in)
-        m = ln.get("motion") or {}
-        mi, mo = m.get("in") or {}, m.get("out") or {}
+        # 欠けた項目は既定値で埋める。アプリ側で 1 項目だけ触った行は
+        # 途中までしか入っていないことがあり、そのままだと長さ 0 = 動かない。
+        m = normalize_motion(ln.get("motion"))
+        mi, mo = m["in"], m["out"]
         di = max(0.0, float(mi.get("dur", 0.4)))
         do = max(0.0, float(mo.get("dur", 0.4)))
         di = min(di, span); do = min(do, span)

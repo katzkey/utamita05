@@ -1,16 +1,16 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=3bcc14c";
-import * as ops from "../core/operations.js?v=3bcc14c";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=3bcc14c";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=3bcc14c";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=3bcc14c";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=3bcc14c";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=3bcc14c";
-import { AE_ENABLED } from "../core/features.js?v=3bcc14c";
-import { EASINGS, SLIDE_DIRS, defaultMotion } from "../core/motion.js?v=3bcc14c";
-import { escapeHtml } from "../core/html.js?v=3bcc14c";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=3bcc14c";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=ab744b0";
+import * as ops from "../core/operations.js?v=ab744b0";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=ab744b0";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=ab744b0";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=ab744b0";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=ab744b0";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=ab744b0";
+import { AE_ENABLED } from "../core/features.js?v=ab744b0";
+import { EASINGS, SLIDE_DIRS, defaultMotion } from "../core/motion.js?v=ab744b0";
+import { escapeHtml } from "../core/html.js?v=ab744b0";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=ab744b0";
 
 let detailPaneEl;
 let lyricRowsEl;
