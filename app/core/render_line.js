@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=0f614f9";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=0f614f9";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=0f614f9";
-import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=0f614f9";
-import { escapeHtml } from "./html.js?v=0f614f9";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=de7ef3a";
+import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=de7ef3a";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=de7ef3a";
+import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=de7ef3a";
+import { escapeHtml } from "./html.js?v=de7ef3a";
 
 // プレビューのステージ枠。
 // 「この行」と「曲に合わせて」で枠の見た目・寸法が変わらないよう、一箇所に置く。
@@ -313,9 +313,9 @@ function buildZabLayerCss(zab, toCqw, isVertical, filterId, spanCqw = 100, seed 
   //  - 乱数の種に行を混ぜてあるので、行ごとにちぎれ方が変わる。
   const edge = zab.edge;
   if (edge && edge.type === "torn") {
-    const pitch = toCqw(Math.max(2, Number(edge.pitch) || 6));
+    const pitch = toCqw(Math.max(2, Number(edge.pitch) || 14));
     // 旧データの amp（帯の厚みに対する割合）は実寸へ読み替える
-    const depthPx = Number(edge.depth) || (edge.amp != null ? Number(edge.amp) * 40 : 7);
+    const depthPx = Number(edge.depth) || (edge.amp != null ? Number(edge.amp) * 50 : 9);
     const depth = toCqw(Math.max(0.5, depthPx));
     const n = Math.max(4, Math.min(400, Math.round(spanCqw / pitch)));
 

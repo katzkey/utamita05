@@ -128,12 +128,12 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: {
         // PDF 実測 (216,209,204) を暗い背景(46,17,0)から逆算 → 白 80%（クリームではない）
-        // ちぎれ幅は帯高の 4〜5%、ピッチ約 4px の細かいギザ
+        // 歯の大きさは PDF 未計測。手でちぎった紙に見える粗さを既定値に置いてある
         ...ZABUTON_BASE, shape: "rect", color: "#FFFFFF", opacity: 0.80,
         cornerRadius: 0, paddingX: 30, paddingY: 14,
         // 歯の大きさは AE px 指定。行の長さで詰まったり間延びしたりしない。
         // 種は行ごとに混ぜるので、同じ形の切り抜きが並ぶこともない。
-        edge: { type: "torn", pitch: 6, depth: 7, seed: 7 },
+        edge: { type: "torn", pitch: 14, depth: 9, seed: 7 },
       },
       glow: null, textColor: "#000000", textStroke: null,
     },

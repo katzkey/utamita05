@@ -1,19 +1,19 @@
 // うたみた05 — メインエントリ
 // 全体のレンダー調整、タブ切替、ショートカットキー
 
-import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=0f614f9";
-import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=0f614f9";
-import { initCustomPresets } from "./core/custom_presets.js?v=0f614f9";
-import { applyFeatureFlags } from "./core/features.js?v=0f614f9";
-import * as lyrics from "./ui/lyrics_tab.js?v=0f614f9";
-import * as bgTab from "./ui/background_tab.js?v=0f614f9";
-import * as titlesTab from "./ui/titles_tab.js?v=0f614f9";
-import * as tmplTab from "./ui/templates_tab.js?v=0f614f9";
-import * as settings from "./ui/settings_tab.js?v=0f614f9";
-import * as playbar from "./ui/playbar.js?v=0f614f9";
-import * as fileio from "./ui/file_io.js?v=0f614f9";
-import * as autoTiming from "./ui/auto_timing.js?v=0f614f9";
-import * as videoExport from "./ui/video_export.js?v=0f614f9";
+import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=de7ef3a";
+import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=de7ef3a";
+import { initCustomPresets } from "./core/custom_presets.js?v=de7ef3a";
+import { applyFeatureFlags } from "./core/features.js?v=de7ef3a";
+import * as lyrics from "./ui/lyrics_tab.js?v=de7ef3a";
+import * as bgTab from "./ui/background_tab.js?v=de7ef3a";
+import * as titlesTab from "./ui/titles_tab.js?v=de7ef3a";
+import * as tmplTab from "./ui/templates_tab.js?v=de7ef3a";
+import * as settings from "./ui/settings_tab.js?v=de7ef3a";
+import * as playbar from "./ui/playbar.js?v=de7ef3a";
+import * as fileio from "./ui/file_io.js?v=de7ef3a";
+import * as autoTiming from "./ui/auto_timing.js?v=de7ef3a";
+import * as videoExport from "./ui/video_export.js?v=de7ef3a";
 
 let projectNameEl;
 let dirtyStatusEl;
