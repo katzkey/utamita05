@@ -1,17 +1,26 @@
 // 行の見た目を HTML として組み立てる
 //
 // ここは「行データ → HTML 文字列」の変換だけを持ち、状態には触らない。
-// 詳細ペインのプレビュー・再生プレビュー・動画書き出しの 3 箇所から使うので、
+// 詳細ペインのプレビュー（この行 / 曲に合わせて）と動画書き出しから使うので、
 // UI の都合（選択状態や再描画）とは切り離してある。
 //
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=c86b3e0";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=c86b3e0";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=c86b3e0";
-import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=c86b3e0";
-import { escapeHtml } from "./html.js?v=c86b3e0";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=432cea1";
+import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=432cea1";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=432cea1";
+import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=432cea1";
+import { escapeHtml } from "./html.js?v=432cea1";
+
+// プレビューのステージ枠。
+// 「この行」と「曲に合わせて」で枠の見た目・寸法が変わらないよう、一箇所に置く。
+export function previewStageStyle(project) {
+  const w = project.resolution?.w || 1920;
+  const h = project.resolution?.h || 1080;
+  return `container-type:inline-size;width:100%;aspect-ratio:${w}/${h};background:#101014;`
+       + `border:1px solid var(--gray-5,#333);border-radius:4px;position:relative;overflow:hidden`;
+}
 
 // 選択行のプレビュー：最終解像度の比率のステージ上に、AE と同じ配置ルールで描画
 // - Y: layoutToY 相当（top=15% / center=50% / bottom=85%）+ dy
@@ -181,7 +190,7 @@ export function renderLinePreviewHtml(line, project) {
 
   const meta = `${escapeHtml(labelFor(familyValue) || "(継承)")} / size ${rawSize} / tracking ${tracking} / ${escapeHtml(layout)}${dx || dy ? ` / dx:${dx} dy:${dy}` : ""}`;
   return `
-    <div style="container-type:inline-size;width:100%;aspect-ratio:${resW}/${resH};background:#101014;border:1px solid var(--gray-5,#333);border-radius:4px;position:relative;overflow:hidden">
+    <div style="${previewStageStyle(project)}">
       ${renderPreviewBackgrounds(line, project)}
       ${guide(15)}${guide(50)}${guide(85)}
       ${vGuide}
@@ -196,7 +205,7 @@ export function renderLinePreviewHtml(line, project) {
 }
 
 // 行の tIn 時点でアクティブな背景をステージに描画（画像/動画/単色、fit/opacity/blend 反映）
-// 再生プレビューでも使うため公開（app/ui/play_preview.js）
+// 曲に合わせたプレビューでも使うため公開（app/ui/song_preview.js）
 export function renderPreviewBackgrounds(line, project) {
   const bgs = project.backgrounds || [];
   if (!bgs.length) return "";

@@ -1,16 +1,17 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=c86b3e0";
-import * as ops from "../core/operations.js?v=c86b3e0";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=c86b3e0";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=c86b3e0";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=c86b3e0";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=c86b3e0";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=c86b3e0";
-import { AE_ENABLED } from "../core/features.js?v=c86b3e0";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=c86b3e0";
-import { escapeHtml } from "../core/html.js?v=c86b3e0";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=c86b3e0";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=432cea1";
+import * as ops from "../core/operations.js?v=432cea1";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=432cea1";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=432cea1";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=432cea1";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=432cea1";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=432cea1";
+import { AE_ENABLED } from "../core/features.js?v=432cea1";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=432cea1";
+import { escapeHtml } from "../core/html.js?v=432cea1";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=432cea1";
+import * as songPreview from "./song_preview.js?v=432cea1";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -29,7 +30,7 @@ function stopPreviewMotion() {
 function startPreviewMotion(line) {
   stopPreviewMotion();
   if (!getUi().previewMotion) return;
-  const stage = detailPaneEl.querySelector("#linePreview > div");
+  const stage = detailPaneEl.querySelector("#previewHost > div");
   const el = stage?.lastElementChild;
   if (!el || isStatic(line.motion)) return;
 
@@ -118,6 +119,7 @@ function renderRows(project, ui) {
 
 function renderDetail(project, ui) {
   stopPreviewMotion();
+  songPreview.stop();
   const selected = [...ui.selectedLineIds];
   if (selected.length === 0) {
     detailPaneEl.innerHTML = `<div class="empty-state">行を選択してください</div>`;
@@ -176,6 +178,7 @@ function renderDetail(project, ui) {
   const tOut = line.tOut != null ? secondsToTC(line.tOut, project.fps) : "";
   const ttext = (line.text || "").replace(/\\n/g, "\n");
   let detailTab = ["content", "look", "motion"].includes(ui.detailTab) ? ui.detailTab : "look";
+  const previewMode = ui.previewMode === "song" ? "song" : "line";
 
   const resolved = resolveLineTemplate(line, project);
 
@@ -217,9 +220,17 @@ function renderDetail(project, ui) {
     </div>
 
     <div class="preview-box ${ui.previewLarge ? "preview-large" : ""}" id="linePreview" style="margin:8px 0 4px">
+      <div class="preview-modes">
+        <button data-pmode="line" class="${previewMode === "line" ? "is-active" : ""}"
+          title="選んだ行の動きだけを繰り返し見る">この行</button>
+        <button data-pmode="song" class="${previewMode === "song" ? "is-active" : ""}"
+          title="曲に合わせて全行を見る（下の再生バーで操作します）">曲に合わせて</button>
+      </div>
       <button class="preview-toggle" id="btnPreviewSize" title="プレビューを${ui.previewLarge ? "縮小" : "拡大"}">${ui.previewLarge ? "🗕" : "⤢"}</button>
-      <button class="preview-toggle preview-toggle-2" id="btnPreviewMotion" title="${ui.previewMotion ? "動きの確認を止める" : "動きを繰り返し再生"}">${ui.previewMotion ? "⏸" : "▶"}</button>
-      ${renderLinePreviewHtml(line, project)}
+      ${previewMode === "line"
+        ? `<button class="preview-toggle preview-toggle-2" id="btnPreviewMotion" title="${ui.previewMotion ? "動きの確認を止める" : "動きを繰り返し再生"}">${ui.previewMotion ? "⏸" : "▶"}</button>`
+        : ``}
+      <div id="previewHost">${previewMode === "line" ? renderLinePreviewHtml(line, project) : ``}</div>
     </div>
 
     <div class="detail-tabs">
@@ -595,8 +606,15 @@ function renderDetail(project, ui) {
     onM(`fldM_${side}_scaleFrom`, v => ({ [side]: { scale: { from: Math.max(0, Number(v) || 0) } } }));
   }
 
-  // プレビューで動きを繰り返し見せる
-  startPreviewMotion(line);
+  // プレビューの切り替え（この行を繰り返す / 曲に合わせて全行）
+  detailPaneEl.querySelectorAll(".preview-modes button").forEach(btn => {
+    btn.addEventListener("click", () => setUi({ previewMode: btn.getAttribute("data-pmode") }));
+  });
+  if (previewMode === "song") {
+    songPreview.start(detailPaneEl.querySelector("#previewHost"));
+  } else {
+    startPreviewMotion(line);
+  }
 
   // サブタブ：セクションの DOM 並び順は変えず、data-active-tab で CSS 出し分け
   detailPaneEl.dataset.activeTab = detailTab;
