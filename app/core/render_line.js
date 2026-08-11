@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=432cea1";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=432cea1";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=432cea1";
-import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=432cea1";
-import { escapeHtml } from "./html.js?v=432cea1";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=db1323d";
+import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=db1323d";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=db1323d";
+import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=db1323d";
+import { escapeHtml } from "./html.js?v=db1323d";
 
 // プレビューのステージ枠。
 // 「この行」と「曲に合わせて」で枠の見た目・寸法が変わらないよう、一箇所に置く。
@@ -204,8 +204,36 @@ export function renderLinePreviewHtml(line, project) {
   `;
 }
 
+const BG_FIT = { cover: "cover", contain: "contain", stretch: "fill", original: "none" };
+const BG_BLEND = { normal: "normal", multiply: "multiply", screen: "screen", overlay: "overlay",
+                   add: "plus-lighter", lighten: "lighten", darken: "darken" };
+export const VIDEO_EXTS = /\.(mp4|m4v|mov|webm)$/i;
+
+// 背景 1 つ分の HTML。
+// 不透明度はここでは bg.opacity のみ。フェードは時間で変わるので、
+// 曲に合わせたプレビュー側が毎フレーム上書きする（書き出しは ffmpeg 側で掛ける）。
+export function backgroundLayerHtml(bg) {
+  const blend = BG_BLEND[bg.blend] || "normal";
+  const common = `position:absolute;inset:0;opacity:${bg.opacity ?? 1.0};mix-blend-mode:${blend}`;
+  if (bg.solidColor) {
+    return `<div style="${common};background:${escapeHtml(bg.solidColor)}"></div>`;
+  }
+  if (bg.file) {
+    // Web 版：ブラウザで選択したファイルを Blob URL レジストリから引く
+    const src = getFileBlobUrl(bg.file);
+    if (!src) {
+      return `<div style="${common};background:#222;display:flex;align-items:center;justify-content:center;color:#666;font-size:11px">背景ファイル未読込<br>${escapeHtml(bg.file)}</div>`;
+    }
+    const fit = BG_FIT[bg.fit] || "cover";
+    if (VIDEO_EXTS.test(bg.file)) {
+      return `<video src="${escapeHtml(src)}" preload="auto" muted playsinline style="${common};width:100%;height:100%;object-fit:${fit}"></video>`;
+    }
+    return `<img src="${escapeHtml(src)}" style="${common};width:100%;height:100%;object-fit:${fit}">`;
+  }
+  return "";
+}
+
 // 行の tIn 時点でアクティブな背景をステージに描画（画像/動画/単色、fit/opacity/blend 反映）
-// 曲に合わせたプレビューでも使うため公開（app/ui/song_preview.js）
 export function renderPreviewBackgrounds(line, project) {
   const bgs = project.backgrounds || [];
   if (!bgs.length) return "";
@@ -216,33 +244,9 @@ export function renderPreviewBackgrounds(line, project) {
     : [bgs[0]];
   if (!active.length && t != null) return "";
 
-  const fitMap = { cover: "cover", contain: "contain", stretch: "fill", original: "none" };
-  const blendMap = { normal: "normal", multiply: "multiply", screen: "screen", overlay: "overlay", add: "plus-lighter", lighten: "lighten", darken: "darken" };
-  const videoExts = /\.(mp4|m4v|mov|webm)$/i;
-
   // リストの上にあるものを手前にする（After Effects と同じ並び）。
   // DOM は後に書いたものが手前に来るので、逆順にして描く。
-  return active.slice().reverse().map(bg => {
-    const opacity = bg.opacity ?? 1.0;
-    const blend = blendMap[bg.blend] || "normal";
-    const common = `position:absolute;inset:0;opacity:${opacity};mix-blend-mode:${blend}`;
-    if (bg.solidColor) {
-      return `<div style="${common};background:${escapeHtml(bg.solidColor)}"></div>`;
-    }
-    if (bg.file) {
-      // Web 版：ブラウザで選択したファイルを Blob URL レジストリから引く
-      const src = getFileBlobUrl(bg.file);
-      if (!src) {
-        return `<div style="${common};background:#222;display:flex;align-items:center;justify-content:center;color:#666;font-size:11px">背景ファイル未読込<br>${escapeHtml(bg.file)}</div>`;
-      }
-      const fit = fitMap[bg.fit] || "cover";
-      if (videoExts.test(bg.file)) {
-        return `<video src="${escapeHtml(src)}" preload="metadata" muted style="${common};width:100%;height:100%;object-fit:${fit}"></video>`;
-      }
-      return `<img src="${escapeHtml(src)}" style="${common};width:100%;height:100%;object-fit:${fit}">`;
-    }
-    return "";
-  }).join("");
+  return active.slice().reverse().map(backgroundLayerHtml).join("");
 }
 
 // #RRGGBB + opacity → rgba() 文字列

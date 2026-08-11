@@ -10,23 +10,54 @@
 //   音と再生位置は既存の #player をそのまま使うので、下の再生バーで操作でき、
 //   状態が食い違うこともない。
 
-import { getProject } from "./state.js?v=432cea1";
-import { renderLinePreviewHtml, renderPreviewBackgrounds, previewStageStyle } from "../core/render_line.js?v=432cea1";
-import { secondsToTC } from "./tc.js?v=432cea1";
-import { transformAt, motionTransformCss } from "../core/motion.js?v=432cea1";
+import { getProject } from "./state.js?v=db1323d";
+import { renderLinePreviewHtml, backgroundLayerHtml, previewStageStyle, VIDEO_EXTS } from "../core/render_line.js?v=db1323d";
+import { secondsToTC } from "./tc.js?v=db1323d";
+import { transformAt, motionTransformCss } from "../core/motion.js?v=db1323d";
 
 let timer = null;
 let stageEl = null;
 let noteEl = null;
 let bgHost = null;
-let bgKey = "";
 let layers = [];        // { line, el }
+let bgLayers = [];      // { bg, el, video }
 let player = null;
+
+/**
+ * 背景のその時刻の不透明度。
+ * tools/render_video.py の背景フェード（fade=alpha=1）と同じ形にしてある。
+ * 直線的に上げ下げし、フェード秒は表示時間の半分で頭打ち。
+ */
+function bgAlpha(bg, t) {
+  const tIn = bg.tIn ?? 0;
+  const span = Math.max(0.05, (bg.tOut ?? Infinity) - tIn);
+  if (!isFinite(span)) return t >= tIn ? (bg.opacity ?? 1) : 0;
+  if (t < tIn || t > tIn + span) return 0;
+  const fi = Math.min(Number(bg.fadeIn) || 0, span / 2);
+  const fo = Math.min(Number(bg.fadeOut) || 0, span / 2);
+  const local = t - tIn;
+  let a = 1;
+  if (fi > 0 && local < fi) a = local / fi;
+  if (fo > 0 && local > span - fo) a = Math.min(a, (span - local) / fo);
+  return Math.max(0, Math.min(1, a)) * (bg.opacity ?? 1);
+}
+
+// 背景動画を曲の時刻に合わせる（ずれたときだけシークする）
+function syncVideo(el, local, playing) {
+  if (!el || !el.duration) return;
+  const want = Math.max(0, Math.min(local, el.duration - 0.05));
+  if (Math.abs(el.currentTime - want) > 0.3) {
+    try { el.currentTime = want; } catch (e) { /* 読み込み中は無視 */ }
+  }
+  if (playing && el.paused) el.play().catch(() => {});
+  else if (!playing && !el.paused) el.pause();
+}
 
 export function stop() {
   if (timer) { clearInterval(timer); timer = null; }
-  stageEl = null; noteEl = null; bgHost = null; bgKey = "";
-  layers = [];
+  for (const b of bgLayers) b.video?.pause();
+  stageEl = null; noteEl = null; bgHost = null;
+  layers = []; bgLayers = [];
 }
 
 /** hostEl の中身を「曲に合わせたプレビュー」に差し替えて回し始める */
@@ -49,11 +80,25 @@ export function start(hostEl) {
   timer = setInterval(tick, 1000 / 60);
 }
 
-// 全行のレイヤーを 1 回だけ積む
+// 背景と全行のレイヤーを 1 回だけ積む
 function build(p) {
   bgHost = document.createElement("div");
   bgHost.style.cssText = "position:absolute;inset:0;overflow:hidden";
   stageEl.appendChild(bgHost);
+
+  // 背景も最初に全部積んでおき、あとは不透明度だけ動かす。
+  // 出入りのたびに作り直すと、そのたび画像を読み直してちらつくため。
+  // リストの上にあるものが手前（AE と同じ）なので、逆順に積む。
+  const tmpBg = document.createElement("div");
+  bgLayers = [];
+  for (const bg of (p.backgrounds || []).slice().reverse()) {
+    tmpBg.innerHTML = backgroundLayerHtml(bg);
+    const el = tmpBg.firstElementChild;
+    if (!el) continue;
+    el.style.opacity = "0";
+    bgHost.appendChild(el);
+    bgLayers.push({ bg, el, video: (bg.file && VIDEO_EXTS.test(bg.file)) ? el : null });
+  }
 
   const tmp = document.createElement("div");
   layers = [];
@@ -88,12 +133,15 @@ function tick() {
     if (el._tr !== css) { el.style.transform = css; el._tr = css; }
   }
 
-  // 背景は「今どれが出ているか」が変わったときだけ作り直す
-  const active = (p.backgrounds || []).filter(b => (b.tIn ?? 0) <= t && t < (b.tOut ?? Infinity));
-  const key = active.map(b => b.id).join(",");
-  if (key !== bgKey) {
-    bgKey = key;
-    bgHost.innerHTML = renderPreviewBackgrounds({ tIn: t }, p);
+  // 背景はフェードを含めて不透明度を毎フレーム決める（書き出しと同じ形）
+  const playing = !!player && !player.paused;
+  for (const { bg, el, video } of bgLayers) {
+    const a = bgAlpha(bg, t);
+    if (el._a !== a) { el.style.opacity = String(a); el._a = a; }
+    if (video) {
+      if (a > 0) syncVideo(video, t - (bg.tIn ?? 0), playing);
+      else if (!video.paused) video.pause();
+    }
   }
 
   const note = !player?.src
