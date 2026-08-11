@@ -1,12 +1,17 @@
 // 下部の再生バー：再生制御、TC表示、マーキング
 
-import { getProject, getUi, setProject, setUi } from "./state.js?v=058eb8e";
-import * as ops from "../core/operations.js?v=058eb8e";
-import { secondsToTC } from "./tc.js?v=058eb8e";
+import { getProject, getUi, setProject, setUi } from "./state.js?v=ba1092b";
+import * as ops from "../core/operations.js?v=ba1092b";
+import { secondsToTC } from "./tc.js?v=ba1092b";
 
 let player, playBtn, loopBtn, markingBtn, markInBtn, markOutBtn;
 let currentTCEl, totalTCEl, progressFill, progressMarker, progressBar;
 let state = { loopRange: null, loopLineId: null };
+
+function clearLoop() {
+  state.loopRange = null;
+  state.loopLineId = null;
+}
 
 export function init() {
   player = document.getElementById("player");
@@ -27,13 +32,14 @@ export function init() {
     updateButtonStates();
   });
   markingBtn.addEventListener("click", () => {
-    const ui = getUi();
-    setUi({ markingMode: !ui.markingMode });
-    if (!ui.markingMode) {
-      // マーキングONにする時はループOFF
+    // getUi() は状態そのものを返すので、setUi のあとに読むと新しい値になる。
+    // 切り替え後の値を先に持っておく（ここを取り違えると判定が逆になる）。
+    const next = !getUi().markingMode;
+    setUi({ markingMode: next });
+    if (next) {
+      // マーキング中は通し再生。ループ指定が残っていると再生がすぐ止まる
       setUi({ loopCurrentRow: false });
-      state.loopRange = null;
-      state.loopLineId = null;
+      clearLoop();
     }
     updateButtonStates();
   });
@@ -45,8 +51,7 @@ export function init() {
     const pct = (e.clientX - rect.left) / rect.width;
     if (!isNaN(player.duration)) {
       player.currentTime = pct * player.duration;
-      state.loopRange = null;
-      state.loopLineId = null;
+      clearLoop();
     }
   });
 
@@ -71,7 +76,15 @@ function updateButtonStates() {
 
 function togglePlay() {
   if (!player.src) return;
-  if (player.paused) player.play(); else player.pause();
+  if (player.paused) {
+    // 再生位置がループの範囲外なら、その指定はもう用済み。
+    // 残しておくと「範囲の終わりを過ぎている」と判定されて即座に止まる。
+    const t = player.currentTime;
+    if (state.loopRange && (t < state.loopRange.start || t >= state.loopRange.end)) clearLoop();
+    player.play();
+  } else {
+    player.pause();
+  }
   playBtn.textContent = player.paused ? "▶" : "⏸";
 }
 
@@ -80,6 +93,9 @@ function onTimeUpdate() {
   const fps = getProject().fps;
   currentTCEl.textContent = secondsToTC(t, fps);
   // ui.currentTime の setUi は毎 timeupdate 全再レンダを引き起こしてたので削除。
+
+  // マーキング中は通し再生。ループも自動停止もしない
+  if (getUi().markingMode) { updateProgress(t); return; }
 
   // ループ判定：ループ対象行の tIn/tOut は毎回プロジェクトから引く（TC 変更を追随）
   if (state.loopLineId != null) {
@@ -99,7 +115,10 @@ function onTimeUpdate() {
     }
   }
 
-  // プログレス
+  updateProgress(t);
+}
+
+function updateProgress(t) {
   const dur = player.duration || 1;
   const pct = (t / dur) * 100;
   progressFill.style.width = pct + "%";
@@ -126,8 +145,7 @@ export function playRow(lineId) {
   }
 
   if (ui.markingMode) {
-    state.loopRange = null;
-    state.loopLineId = null;
+    clearLoop();
     player.currentTime = line.tIn;
   } else {
     const tOut = line.tOut != null ? line.tOut : line.tIn + 5;
