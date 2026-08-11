@@ -158,10 +158,17 @@ export function charDelay(motion, i) {
   return (Number(motion.stagger) || 0) * i;
 }
 
-/** 動きが何も設定されていない（＝ずっと出しっぱなし）か */
+/**
+ * 動きが何も設定されていない（＝ずっと出しっぱなし）か。
+ * 未設定や途中までの設定は、既定値（フェード 0.4 秒）として扱う。
+ * ここで埋めないと、動きに触っていない行が「動き無し」と判定され、
+ * 動きタブには フェード ON と出ているのにプレビューだけ動かない、
+ * という食い違いが起きる（書き出しと再生プレビューは既定値で動く）。
+ */
 export function isStatic(motion) {
-  const none = s => !s || (!s.fade && !s.slide?.enabled && !s.scale?.enabled) || !(s.dur > 0);
-  return none(motion?.in) && none(motion?.out);
+  const m = normalizeMotion(motion);
+  const none = s => !(s.dur > 0) || (!s.fade && !s.slide?.enabled && !s.scale?.enabled);
+  return none(m.in) && none(m.out);
 }
 
 // ---- ffmpeg 用の式 ----

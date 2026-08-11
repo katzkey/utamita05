@@ -1,16 +1,16 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=16953a6";
-import * as ops from "../core/operations.js?v=16953a6";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=16953a6";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=16953a6";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=16953a6";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=16953a6";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=16953a6";
-import { AE_ENABLED } from "../core/features.js?v=16953a6";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=16953a6";
-import { escapeHtml } from "../core/html.js?v=16953a6";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=16953a6";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=c86b3e0";
+import * as ops from "../core/operations.js?v=c86b3e0";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=c86b3e0";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=c86b3e0";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=c86b3e0";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=c86b3e0";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=c86b3e0";
+import { AE_ENABLED } from "../core/features.js?v=c86b3e0";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=c86b3e0";
+import { escapeHtml } from "../core/html.js?v=c86b3e0";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=c86b3e0";
 
 let detailPaneEl;
 let lyricRowsEl;
