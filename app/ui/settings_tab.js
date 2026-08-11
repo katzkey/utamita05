@@ -1,11 +1,11 @@
 // 全体設定タブ
 
-import { getProject, setProject } from "./state.js?v=3bae95b";
-import * as ops from "../core/operations.js?v=3bae95b";
-import { loadFonts, getFontEntries } from "../core/fonts_loader.js?v=3bae95b";
-import { getCustomZabutonPresets } from "../core/presets.js?v=3bae95b";
-import { exportCustomPresetsJson, importCustomPresetsJson } from "../core/custom_presets.js?v=3bae95b";
-import { escapeHtml } from "../core/html.js?v=3bae95b";
+import { getProject, setProject } from "./state.js?v=db39581";
+import * as ops from "../core/operations.js?v=db39581";
+import { loadFonts, getFontEntries } from "../core/fonts_loader.js?v=db39581";
+import { getCustomZabutonPresets } from "../core/presets.js?v=db39581";
+import { exportCustomPresetsJson, importCustomPresetsJson } from "../core/custom_presets.js?v=db39581";
+import { escapeHtml } from "../core/html.js?v=db39581";
 
 let pane;
 

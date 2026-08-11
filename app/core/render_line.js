@@ -7,11 +7,43 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=3bae95b";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=3bae95b";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=3bae95b";
-import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=3bae95b";
-import { escapeHtml } from "./html.js?v=3bae95b";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=db39581";
+import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=db39581";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=db39581";
+import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=db39581";
+import { escapeHtml } from "./html.js?v=db39581";
+
+// フォントごとの「行ボックスの中心」と「文字のインクの中心」のずれ（em、＋で文字が下寄り）。
+//
+// 行ボックスの高さはフォントの上下（fontBoundingBox）で決まるが、その上下は
+// 欧文のアクセントや下ぶら下がりの分を含むため、和文の字面は真ん中に来ない。
+// 座布団をそのまま行ボックスに合わせると、フォントによって上下どちらかへ寄る。
+// 実測は 0.075em〜-0.06em（60px で ±4px 前後）あり、目で分かる差になる。
+//
+// 縦組みは字面が列の中央に来るので補正しない（ラスタライズして実測、ずれ 0px）。
+const inkOffsetCache = new Map();
+let inkCanvas = null;
+function inkCenterOffsetEm(cssFam, italic, lineHeight) {
+  const key = `${cssFam}|${italic ? 1 : 0}|${lineHeight}`;
+  if (inkOffsetCache.has(key)) return inkOffsetCache.get(key);
+  let v = 0;
+  try {
+    inkCanvas = inkCanvas || document.createElement("canvas");
+    const c = inkCanvas.getContext("2d");
+    c.font = `${italic ? "italic " : ""}100px '${String(cssFam).replace(/'/g, "\\'")}', system-ui, sans-serif`;
+    const m = c.measureText("国");     // 字面いっぱいの全角字を基準にする
+    const fa = m.fontBoundingBoxAscent / 100, fd = m.fontBoundingBoxDescent / 100;
+    const asc = m.actualBoundingBoxAscent / 100, des = m.actualBoundingBoxDescent / 100;
+    if ([fa, fd, asc, des].every(n => isFinite(n))) {
+      const baseline = (lineHeight - (fa + fd)) / 2 + fa;   // 行ボックス上端からベースラインまで
+      v = (baseline + (des - asc) / 2) - lineHeight / 2;    // インクの中心 − 行ボックスの中心
+    }
+  } catch (e) {
+    v = 0;   // 測れない環境では補正しない（今までどおりの位置）
+  }
+  inkOffsetCache.set(key, v);
+  return v;
+}
 
 // プレビューのステージ枠。
 // 「この行」と「曲に合わせて」で枠の見た目・寸法が変わらないよう、一箇所に置く。
@@ -90,8 +122,10 @@ export function renderLinePreviewHtml(line, project) {
   })();
   // 行ごとにちぎれ方を変える（同じ形が並ぶと切り抜きに見えるため）
   const zabSeed = (Number(zab?.edge?.seed) || 1) + (Number(line.id) || 0) * 977;
+  // 縦組みは字面が列の中央に来るので補正しない
+  const zabShiftEm = vertical ? 0 : inkCenterOffsetEm(cssFam, !!line.fontOverride?.italic, 1.3);
   const zabResult = (zab && zab.enabled && !perBlockZab)
-    ? buildZabLayerCss(zab, toCqw, vertical, filterId, zabSpanCqw, zabSeed)
+    ? buildZabLayerCss(zab, toCqw, vertical, filterId, zabSpanCqw, zabSeed, zabShiftEm, fontCqw)
     : { css: "", svgDef: "" };
   const zabLayerHtml = zabResult.css
     ? `${zabResult.svgDef}<div style="${zabResult.css}"></div>`
@@ -186,6 +220,10 @@ export function renderLinePreviewHtml(line, project) {
     `font-family: '${(cssFam || "").replace(/'/g, "\\'")}', system-ui, sans-serif`,
     `font-size: ${fontCqw.toFixed(3)}cqw`,
     `letter-spacing: ${letterCqw.toFixed(3)}cqw`,
+    // letter-spacing は最後の 1 文字の後ろにも入る。そのままだと行の箱が
+    // 字間 1 つ分だけ広くなり、座布団が読み終わり側へずれて見える
+    //（横組みは右へ、縦組みは下へ）。その分を戻す。
+    letterCqw ? `margin-inline-end: -${letterCqw.toFixed(3)}cqw` : ``,
     `line-height: ${vertical ? 1 : 1.3}`,
     `color: ${line.textColor || "#fff"}`,
     line.textStroke ? `-webkit-text-stroke: ${Number(line.textStroke.width)||2}px ${line.textStroke.color || "#000"}` : ``,
@@ -275,7 +313,7 @@ const EMPHASIS_COLORS = { 1: "#ffd54a", 2: "#ff8a65", 3: "#ff5252" };
 // 座布団の CSS スタイル配列を返す（外側でも per-block span でも共用）
 // 座布団を absolute layer として描画する用の CSS（text と分離、blur は text に影響しない）。
 // inset で padding 分外側に広げる。
-function buildZabLayerCss(zab, toCqw, isVertical, filterId, spanCqw = 100, seed = 1) {
+function buildZabLayerCss(zab, toCqw, isVertical, filterId, spanCqw = 100, seed = 1, shiftEm = 0, fontCqw = 0) {
   if (!zab || !zab.enabled) return { css: "", svgDef: "" };
   const px = toCqw(zab.paddingX ?? 0);
   const py = toCqw(zab.paddingY ?? 0);
@@ -297,9 +335,15 @@ function buildZabLayerCss(zab, toCqw, isVertical, filterId, spanCqw = 100, seed 
       ? `linear-gradient(${angle}deg, ${cA}, ${cB}, ${hexToRgba(grad.colorC, opacity)})`
       : `linear-gradient(${angle}deg, ${cA}, ${cB})`;
   }
+  // 座布団は行ボックスに合わせて置かれるが、文字のインクは行ボックスの
+  // 真ん中には来ない（フォントごとに上下の余白が違う）。そのぶんずらして、
+  // 文字から見て中央に見えるようにする。shift は em 単位（＋で下へ）。
+  const sh = (Number(shiftEm) || 0) * fontCqw;
   const styles = [
     `position:absolute`,
-    `inset: -${py.toFixed(3)}cqw -${px.toFixed(3)}cqw`,
+    sh
+      ? `inset: ${(-py + sh).toFixed(3)}cqw -${px.toFixed(3)}cqw ${(-py - sh).toFixed(3)}cqw -${px.toFixed(3)}cqw`
+      : `inset: -${py.toFixed(3)}cqw -${px.toFixed(3)}cqw`,
     `border-radius: ${radius}`,
     `z-index: 0`,
     `pointer-events: none`,

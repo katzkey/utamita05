@@ -10,10 +10,10 @@
 //   音と再生位置は既存の #player をそのまま使うので、下の再生バーで操作でき、
 //   状態が食い違うこともない。
 
-import { getProject } from "./state.js?v=3bae95b";
-import { renderLinePreviewHtml, backgroundLayerHtml, previewStageStyle, VIDEO_EXTS } from "../core/render_line.js?v=3bae95b";
-import { secondsToTC } from "./tc.js?v=3bae95b";
-import { transformAt, motionTransformCss } from "../core/motion.js?v=3bae95b";
+import { getProject } from "./state.js?v=db39581";
+import { renderLinePreviewHtml, backgroundLayerHtml, previewStageStyle, VIDEO_EXTS } from "../core/render_line.js?v=db39581";
+import { secondsToTC } from "./tc.js?v=db39581";
+import { transformAt, motionTransformCss } from "../core/motion.js?v=db39581";
 
 let timer = null;
 let stageEl = null;
