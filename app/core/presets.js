@@ -58,7 +58,9 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: {
         ...ZABUTON_BASE, shape: "round", cornerRadius: 24,
-        color: "#802080", opacity: 0.9, paddingX: 30, paddingY: 10,
+        // 01_座布団.pdf p1 の図形データ実測（フォント 30.47px）：厚み 56.0px = 1.838em
+        //   → paddingY = (1.838 - 1.3) * 28 / 2 = 7.5 → 8。左右は未計測（30 のまま）
+        color: "#802080", opacity: 0.9, paddingX: 30, paddingY: 8,
       },
       glow: null, textColor: "#FFFFFF", textStroke: null,
     },
@@ -92,7 +94,10 @@ export const ZABUTON_PRESETS = [
         // PDF 実測: 線間 (27,60,87) / 帯外背景 (41,89,129) → 比 0.67 = 黒 33% の下地
         // 斜線は純黒、向きは "\"（CSS 45deg）、細かいピッチ
         ...ZABUTON_BASE, shape: "rect", color: "#000000", opacity: 0.33,
-        cornerRadius: 0, paddingX: 30, paddingY: 12,
+        // 02_座布団.pdf p1 の図形データ実測（フォント 31.18px）
+        //   座布団 954.3x56.0px  厚み 1.796em / 左右の余白 15.5px = 0.496em
+        //   → paddingY = (1.796 - 1.3) * 28 / 2 = 6.9 → 7   paddingX = 0.496 * 28 = 13.9 → 14
+        cornerRadius: 0, paddingX: 14, paddingY: 7,
         pattern: { type: "stripe", color: "#000000", angle: 45, size: 1.5, gap: 3.5 },
       },
       glow: null, textColor: "#FFFFFF", textStroke: null, underline: null,
@@ -104,7 +109,10 @@ export const ZABUTON_PRESETS = [
       zabuton: {
         // PDF 実測 (4,10,217) → #0208D9
         ...ZABUTON_BASE, shape: "rect", color: "#0208D9", opacity: 0.95, cornerRadius: 0,
-        paddingX: 80, paddingY: 12,
+        // 02_座布団.pdf p2 実測（フォント 31.18px）：帯の厚み 51.0px = 1.636em
+        //   → paddingY = (1.636 - 1.3) * 28 / 2 = 4.7 → 5
+        // PDF では画面の全幅に敷いてあるので、左右のぼかし幅 80 はそのまま
+        paddingX: 80, paddingY: 5,
         blurX: 80, blurY: 0,
         gradient: null,
       },
@@ -117,11 +125,11 @@ export const ZABUTON_PRESETS = [
     id: "zab_hot_black", category: "激しい・情熱的", label: "黒座布団（70%）",
     apply: {
       zabuton: {
-        // 03_座布団.pdf p0 実測（フォント 30.12px）：座布団の厚み 56.0px = 1.859em
-        //   → paddingY = (1.859 - 1.3) * 28 / 2 = 7.8 → 8
-        // 左右は写真と同系色で縁を拾えず未計測。ギザギザと同じ 21 を暫定で置く
+        // 03_座布団.pdf p0 の図形データを実測（フォント 30.12px）
+        //   座布団 921.3x56.0px  厚み 1.859em / 左右の余白 33.3px = 1.105em
+        //   → paddingY = (1.859 - 1.3) * 28 / 2 = 7.8 → 8   paddingX = 1.105 * 28 = 30.9 → 31
         ...ZABUTON_BASE, shape: "rect", color: "#000000", opacity: 0.7,
-        cornerRadius: 0, paddingX: 21, paddingY: 8,
+        cornerRadius: 0, paddingX: 31, paddingY: 8,
       },
       glow: null, textColor: "#FFFFFF", textStroke: null,
     },
@@ -161,7 +169,10 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: {
         ...ZABUTON_BASE, shape: "rect", color: "#E8E8E8", opacity: 0.95,
-        cornerRadius: 0, paddingX: 14, paddingY: 22,
+        // 04_座布団.pdf p0 の図形データ実測（フォント 31.18px、縦組み）
+        //   柱 1 本 53.7px 幅 = 1.722em（文字の em 箱は 1.0em）
+        //   縦組みは行ボックスが 1.0em なので paddingX = (1.722 - 1.0) * 28 / 2 = 10.1 → 10
+        cornerRadius: 0, paddingX: 10, paddingY: 22,
       },
       glow: null, textColor: "#000000", textStroke: null,
     },
@@ -172,7 +183,9 @@ export const ZABUTON_PRESETS = [
       zabuton: {
         ...ZABUTON_BASE, shape: "rect", mode: "stroke",
         color: "#FFFFFF", opacity: 0.95, cornerRadius: 0, strokeWidth: 2,
-        paddingX: 16, paddingY: 24,
+        // 04_座布団.pdf p1 実測（フォント 28.35px、縦組み）：柱 53.7px = 1.894em
+        //   → paddingX = (1.894 - 1.0) * 28 / 2 = 12.5 → 12
+        paddingX: 12, paddingY: 24,
       },
       glow: null, textColor: "#FFFFFF", textStroke: null,
     },
@@ -195,7 +208,9 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: {
         ...ZABUTON_BASE, shape: "rect", color: "#DDE8F0", opacity: 0.9,
-        cornerRadius: 0, paddingX: 40, paddingY: 12,
+        // 05_座布団.pdf p0 実測（フォント 31.89px）：帯の画像 83.0px = 2.603em
+        //   → paddingY = (2.603 - 1.3) * 28 / 2 = 18.2 → 18。左右は画像の縁がぼけていて未計測
+        cornerRadius: 0, paddingX: 40, paddingY: 18,
         blurX: 12, blurY: 6,
       },
       glow: null, textColor: "#000000", textStroke: null,
@@ -216,7 +231,9 @@ export const ZABUTON_PRESETS = [
         // PDF 実測（x=0.35/0.55/0.65）: #56D4D9 → #C6E9F8 → #59EDDE。
         // 明るいアクア系で、テキストは黒。以前の「紺→アクア→紺・白文字」は誤り。
         ...ZABUTON_BASE, shape: "rect", color: "#56D4D9", opacity: 0.95,
-        cornerRadius: 0, paddingX: 30, paddingY: 10,
+        // 05_座布団.pdf p1 実測（フォント 31.18px）：帯 49.0px = 1.571em
+        //   → paddingY = (1.571 - 1.3) * 28 / 2 = 3.8 → 4
+        cornerRadius: 0, paddingX: 30, paddingY: 4,
         gradient: { enabled: true, angle: 90, colorA: "#56D4D9", colorB: "#C6E9F8", colorC: "#59EDDE" },
       },
       glow: null, textColor: "#000000", textStroke: null,
