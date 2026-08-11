@@ -1,17 +1,17 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=de7ef3a";
-import * as ops from "../core/operations.js?v=de7ef3a";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=de7ef3a";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=de7ef3a";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=de7ef3a";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=de7ef3a";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=de7ef3a";
-import { AE_ENABLED } from "../core/features.js?v=de7ef3a";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=de7ef3a";
-import { escapeHtml } from "../core/html.js?v=de7ef3a";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=de7ef3a";
-import * as songPreview from "./song_preview.js?v=de7ef3a";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=3bae95b";
+import * as ops from "../core/operations.js?v=3bae95b";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=3bae95b";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=3bae95b";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=3bae95b";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=3bae95b";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=3bae95b";
+import { AE_ENABLED } from "../core/features.js?v=3bae95b";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=3bae95b";
+import { escapeHtml } from "../core/html.js?v=3bae95b";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=3bae95b";
+import * as songPreview from "./song_preview.js?v=3bae95b";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -512,7 +512,7 @@ function renderDetail(project, ui) {
         <div id="zabEdgeFields" style="${line.zabuton?.edge?.type === "torn" ? "" : "display:none"}">
           <div class="field">
             <span class="field-label">歯の間隔 / 深さ</span>
-            <input class="field-input" id="fldZabEdgePitch" type="number" min="2" step="1" value="${line.zabuton?.edge?.pitch ?? 14}" style="width:60px">
+            <input class="field-input" id="fldZabEdgePitch" type="number" min="2" step="1" value="${line.zabuton?.edge?.pitch ?? 18}" style="width:60px">
             <input class="field-input" id="fldZabEdgeDepth" type="number" min="0.5" step="0.5" value="${line.zabuton?.edge?.depth ?? 9}" style="width:60px;margin-left:4px">
             <span style="font-size:10px;color:var(--gray-3);margin-left:8px">px（大きいほど粗い）</span>
           </div>
@@ -882,14 +882,14 @@ function renderDetail(project, ui) {
   const setEdge = (partial) => {
     const p = getProject();
     const line2 = p.lines.find(l => l.id === id);
-    const cur = line2?.zabuton?.edge || { type: "torn", pitch: 14, depth: 9, seed: 7 };
+    const cur = line2?.zabuton?.edge || { type: "torn", pitch: 18, depth: 9, seed: 7 };
     setProject(ops.setLineZabuton(p, id, { edge: { ...cur, type: "torn", ...partial } }));
   };
   document.getElementById("fldZabEdgeOn")?.addEventListener("change", (e) => {
     if (e.target.checked) setEdge({});
     else setProject(ops.setLineZabuton(getProject(), id, { edge: null }));
   });
-  document.getElementById("fldZabEdgePitch")?.addEventListener("change", (e) => setEdge({ pitch: Math.max(2, Number(e.target.value) || 14) }));
+  document.getElementById("fldZabEdgePitch")?.addEventListener("change", (e) => setEdge({ pitch: Math.max(2, Number(e.target.value) || 18) }));
   document.getElementById("fldZabEdgeDepth")?.addEventListener("change", (e) => setEdge({ depth: Math.max(0.5, Number(e.target.value) || 9) }));
   attachArrowStep("fldZabEdgePitch", (v) => setEdge({ pitch: Math.max(2, v) }));
   attachArrowStep("fldZabEdgeDepth", (v) => setEdge({ depth: Math.max(0.5, v) }));

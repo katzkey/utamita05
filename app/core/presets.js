@@ -128,12 +128,14 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: {
         // PDF 実測 (216,209,204) を暗い背景(46,17,0)から逆算 → 白 80%（クリームではない）
-        // 歯の大きさは PDF 未計測。手でちぎった紙に見える粗さを既定値に置いてある
+        // 03_座布団.pdf（1920x1080 = AE px と 1:1）の 2 ページ目を実測。
+        //   帯の厚み 59.6px / 縁の振れ幅 p-p 8.2〜8.8px / 平均線をまたぐ回数 25 回（幅 896px）
+        // 同じ測り方で pitch 18 / depth 9 が一致した（交差 25.3 回・振れ幅 8.7px）
         ...ZABUTON_BASE, shape: "rect", color: "#FFFFFF", opacity: 0.80,
         cornerRadius: 0, paddingX: 30, paddingY: 14,
         // 歯の大きさは AE px 指定。行の長さで詰まったり間延びしたりしない。
         // 種は行ごとに混ぜるので、同じ形の切り抜きが並ぶこともない。
-        edge: { type: "torn", pitch: 14, depth: 9, seed: 7 },
+        edge: { type: "torn", pitch: 18, depth: 9, seed: 7 },
       },
       glow: null, textColor: "#000000", textStroke: null,
     },
