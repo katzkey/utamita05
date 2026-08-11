@@ -1,8 +1,8 @@
 // プロジェクトの型と初期値、JSON 変換
 // 純粋関数のみ。
 
-import { now, syncChars, deepClone } from "./utils.js?v=29ba653";
-import { defaultMotion } from "./motion.js?v=29ba653";
+import { now, syncChars, deepClone } from "./utils.js?v=5e8e0f2";
+import { defaultMotion } from "./motion.js?v=5e8e0f2";
 
 // emptyLineTemplate を内部で先行参照するため宣言だけ前置（実体は下で）
 // （JS は関数宣言を巻き上げるので問題なし）
@@ -168,7 +168,10 @@ export function createLine(id, opts = {}) {
     textColor: opts.textColor ?? null,    // テキスト色 (null = 既定 = 白)
     textStroke: opts.textStroke ?? null,  // 文字の縁取り { color, width } / null で無し
     zabuton: opts.zabuton ?? null, // null = 無し / defaultZabuton() 形式のオブジェクト
-    underline: opts.underline ?? null, // 下線装飾。null = 無し / { enabled, color, width(px), offset(px) }
+    // 下線（ライン）。null = 無し
+    // { enabled, style:"solid"|"brackets", color, width(px), offset(px), extend(px),
+    //   texture:"scratchy"|null, pitch(px), wobble(px), rough(0-1), seed }
+    underline: opts.underline ?? null,
     glow: opts.glow ?? null,       // テキストの光彩（グロー）。null = なし / { enabled, color, opacity, blur }
     jitter: opts.jitter ?? null,   // null = 無し / defaultJitter() 形式のオブジェクト
     motion: opts.motion ?? defaultMotion(),  // 出入りの動き（フェード/スライド/スケール）

@@ -1,17 +1,17 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=29ba653";
-import * as ops from "../core/operations.js?v=29ba653";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=29ba653";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=29ba653";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=29ba653";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=29ba653";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=29ba653";
-import { AE_ENABLED } from "../core/features.js?v=29ba653";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=29ba653";
-import { escapeHtml } from "../core/html.js?v=29ba653";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=29ba653";
-import * as songPreview from "./song_preview.js?v=29ba653";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=5e8e0f2";
+import * as ops from "../core/operations.js?v=5e8e0f2";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=5e8e0f2";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=5e8e0f2";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=5e8e0f2";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=5e8e0f2";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=5e8e0f2";
+import { AE_ENABLED } from "../core/features.js?v=5e8e0f2";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=5e8e0f2";
+import { escapeHtml } from "../core/html.js?v=5e8e0f2";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=5e8e0f2";
+import * as songPreview from "./song_preview.js?v=5e8e0f2";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -526,6 +526,53 @@ function renderDetail(project, ui) {
     </div>
 
     <div class="section" data-pane="look">
+      <div class="section-title">ライン（下線）</div>
+      <div class="field">
+        <span class="field-label">有効</span>
+        <label class="lock-toggle"><input type="checkbox" id="fldUlOn" ${line.underline?.enabled ? "checked" : ""}><span>線を引く</span></label>
+      </div>
+      <div id="ulFields" style="${line.underline?.enabled ? "" : "display:none"}">
+        <div class="field">
+          <span class="field-label">引き方</span>
+          <select class="field-select" id="fldUlStyle" style="flex:1">
+            <option value="solid" ${(line.underline?.style || "solid") === "solid" ? "selected" : ""}>1 本（横組み=下 / 縦組み=左）</option>
+            <option value="brackets" ${line.underline?.style === "brackets" ? "selected" : ""}>両脇 2 本（横組み=上下 / 縦組み=左右）</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-label">色 / 太さ</span>
+          <input type="color" id="fldUlColor" value="${line.underline?.color || "#FFFFFF"}" style="width:40px;height:24px;padding:0;border:none">
+          <input class="field-input" id="fldUlWidth" type="number" min="0.5" step="0.5" value="${line.underline?.width ?? 2}" style="width:60px;margin-left:8px">
+          <span style="font-size:10px;color:var(--gray-3);margin-left:8px">px</span>
+        </div>
+        <div class="field">
+          <span class="field-label">文字との距離 / 伸ばし</span>
+          <input class="field-input" id="fldUlOffset" type="number" min="0" step="1" value="${line.underline?.offset ?? 6}" style="width:60px">
+          <input class="field-input" id="fldUlExtend" type="number" min="0" step="1" value="${line.underline?.extend ?? 0}" style="width:60px;margin-left:4px">
+          <span style="font-size:10px;color:var(--gray-3);margin-left:8px">px（伸ばし＝両端をはみ出させる）</span>
+        </div>
+        <div class="field">
+          <span class="field-label">カスレ</span>
+          <label class="lock-toggle"><input type="checkbox" id="fldUlScratchy" ${line.underline?.texture === "scratchy" ? "checked" : ""}><span>手で引いた線にする</span></label>
+        </div>
+        <div id="ulScratchFields" style="${line.underline?.texture === "scratchy" ? "" : "display:none"}">
+          <div class="field">
+            <span class="field-label">粒の間隔 / 蛇行</span>
+            <input class="field-input" id="fldUlPitch" type="number" min="1" step="1" value="${line.underline?.pitch ?? 16}" style="width:60px">
+            <input class="field-input" id="fldUlWobble" type="number" min="0" step="0.2" value="${line.underline?.wobble ?? 1.2}" style="width:60px;margin-left:4px">
+            <span style="font-size:10px;color:var(--gray-3);margin-left:8px">px（蛇行＝線の揺れ幅）</span>
+          </div>
+          <div class="field">
+            <span class="field-label">太さのむら</span>
+            <input class="field-input" id="fldUlRough" type="number" min="0" max="1" step="0.05" value="${line.underline?.rough ?? 0.45}" style="width:60px">
+            <button class="tool-btn" id="btnUlSeed" style="font-size:11px;margin-left:8px">別の形にする</button>
+            <span style="font-size:10px;color:var(--gray-3);margin-left:8px">0=均一, 1=かすれる</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" data-pane="look">
       <div class="section-title">光彩（テキストグロー）</div>
       <div class="field">
         <span class="field-label">有効</span>
@@ -877,6 +924,33 @@ function renderDetail(project, ui) {
   attachArrowStep("fldZabPatSize", (v) => setPat({ size: Math.max(0.5, v) }));
   attachArrowStep("fldZabPatGap", (v) => setPat({ gap: Math.max(0.5, v) }));
   attachArrowStep("fldZabPatAngle", (v) => setPat({ angle: v }));
+
+  // ライン（下線）のハンドラ
+  const setUl = (partial) => {
+    const p = getProject();
+    const cur = p.lines.find(l => l.id === id)?.underline
+             || { enabled: true, style: "solid", color: "#FFFFFF", width: 2, offset: 6, extend: 0 };
+    setProject(ops.setLineUnderline(p, id, { ...cur, enabled: true, ...partial }));
+  };
+  document.getElementById("fldUlOn")?.addEventListener("change", (e) => {
+    if (e.target.checked) setUl({});
+    else setProject(ops.setLineUnderline(getProject(), id, null));
+  });
+  document.getElementById("fldUlStyle")?.addEventListener("change", (e) => setUl({ style: e.target.value }));
+  document.getElementById("fldUlColor")?.addEventListener("change", (e) => setUl({ color: e.target.value }));
+  document.getElementById("fldUlWidth")?.addEventListener("change", (e) => setUl({ width: Math.max(0.5, Number(e.target.value) || 2) }));
+  document.getElementById("fldUlOffset")?.addEventListener("change", (e) => setUl({ offset: Math.max(0, Number(e.target.value) || 0) }));
+  document.getElementById("fldUlExtend")?.addEventListener("change", (e) => setUl({ extend: Math.max(0, Number(e.target.value) || 0) }));
+  document.getElementById("fldUlScratchy")?.addEventListener("change", (e) => setUl({ texture: e.target.checked ? "scratchy" : null }));
+  document.getElementById("fldUlPitch")?.addEventListener("change", (e) => setUl({ pitch: Math.max(1, Number(e.target.value) || 16) }));
+  document.getElementById("fldUlWobble")?.addEventListener("change", (e) => setUl({ wobble: Math.max(0, Number(e.target.value) || 0) }));
+  document.getElementById("fldUlRough")?.addEventListener("change", (e) => setUl({ rough: Math.max(0, Math.min(1, Number(e.target.value) || 0)) }));
+  document.getElementById("btnUlSeed")?.addEventListener("click", () => setUl({ seed: Math.floor(Math.random() * 100000) }));
+  attachArrowStep("fldUlWidth",  (v) => setUl({ width: Math.max(0.5, v) }));
+  attachArrowStep("fldUlOffset", (v) => setUl({ offset: Math.max(0, v) }));
+  attachArrowStep("fldUlExtend", (v) => setUl({ extend: Math.max(0, v) }));
+  attachArrowStep("fldUlPitch",  (v) => setUl({ pitch: Math.max(1, v) }));
+  attachArrowStep("fldUlWobble", (v) => setUl({ wobble: Math.max(0, v) }));
 
   // ギザギザ（破れ縁）のハンドラ
   const setEdge = (partial) => {

@@ -202,9 +202,11 @@ export const ZABUTON_PRESETS = [
         //   縦線 2 本、太さ 1.9px = 0.052em → 28px 換算 1.5
         //   文字の em 箱から線まで 14.5px = 0.393em → 28px 換算 11
         // カスレ：PDF の線はまっすぐで、太さのばらつき σ0.30px・中心のゆらぎ σ0.17px。
-        //   これはアンチエイリアスの範囲で、実質まっすぐ。以前の warp 2.5 は掛けすぎ
+        //   これはアンチエイリアスの範囲で、実質まっすぐ。掛かりは控えめにしてある
         enabled: true, style: "brackets", texture: "scratchy",
-        color: "#FFFFFF", width: 1.5, offset: 11, extend: 8, warp: 0.6,
+        color: "#FFFFFF", width: 1.5, offset: 11, extend: 8,
+        // カスレの粒（AE px）。PDF の線はまっすぐなので控えめに置いてある
+        pitch: 16, wobble: 1.2, rough: 0.45, seed: 3,
       },
     },
   },

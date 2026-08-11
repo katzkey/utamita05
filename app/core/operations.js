@@ -5,15 +5,15 @@ import {
   now, indexOfId, findById,
   insertAt, removeAt, moveItem, replaceAt,
   syncChars, splitChars,
-} from "./utils.js?v=29ba653";
+} from "./utils.js?v=5e8e0f2";
 
 import {
   createLine, createBackground, createTitle, createTemplateRef,
   defaultZabuton, defaultJitter,
   PROJECT_VERSION,
-} from "./project.js?v=29ba653";
-import { normalizeMotion } from "./motion.js?v=29ba653";
-import { getPresetById, getFontPresetById, getZabutonPresetById } from "./presets.js?v=29ba653";
+} from "./project.js?v=5e8e0f2";
+import { normalizeMotion } from "./motion.js?v=5e8e0f2";
+import { getPresetById, getFontPresetById, getZabutonPresetById } from "./presets.js?v=5e8e0f2";
 
 // ──────────────────────────────────────────────────
 // 内部ヘルパー

@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=29ba653";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=29ba653";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=29ba653";
-import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=29ba653";
-import { escapeHtml } from "./html.js?v=29ba653";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=5e8e0f2";
+import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=5e8e0f2";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=5e8e0f2";
+import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=5e8e0f2";
+import { escapeHtml } from "./html.js?v=5e8e0f2";
 
 // フォントごとの「行ボックスの中心」と「文字のインクの中心」のずれ（em、＋で文字が下寄り）。
 //
@@ -59,6 +59,53 @@ function inkCenterOffsetEm(cssFam, italic, lineHeight) {
   }
   inkOffsetCache.set(key, v);
   return v;
+}
+
+/**
+ * 手で引いたような線の形（clip-path の polygon）。
+ *
+ * SVG のフィルタ（feTurbulence）でやると、模様の細かさが「画面上の px」で決まるため、
+ * 小さいプレビューと 1920px の書き出しで別物になる。ギザギザと同じく、
+ * 形そのものを cqw で組み立てて表示倍率から切り離す。
+ *
+ * 出るもの:
+ *   蛇行     … 線の中心がゆっくり左右（上下）に振れる
+ *   太さのむら … ところどころ細くなる
+ *   かすれ    … 細くなりきった所で線が切れる
+ *
+ * @param lenCqw  線の長さ  @param thickCqw 線の太さ  @param wobCqw 蛇行のための余白
+ * @param vertical 線が縦に伸びるか
+ */
+function scratchyClip(lenCqw, thickCqw, wobCqw, toCqw, ul, seed, vertical) {
+  const pitch = Math.max(0.05, toCqw(Math.max(1, Number(ul.pitch) || 16)));
+  const rough = Math.max(0, Math.min(1, Number(ul.rough) ?? 0.45));   // 太さのむら 0..1
+  const n = Math.max(6, Math.min(400, Math.round(lenCqw / pitch)));
+
+  let s = (Number(seed) || 1) % 2147483647; if (s <= 0) s += 2147483646;
+  const rnd = () => { s = (s * 48271) % 2147483647; return s / 2147483647; };
+
+  // 中心は少しずつ動かす（毎回振り直すとギザギザになって手描きに見えない）
+  const cen = [], half = [];
+  let c = 0;
+  for (let i = 0; i <= n; i++) {
+    c = Math.max(-wobCqw, Math.min(wobCqw, c + (rnd() - 0.5) * wobCqw * 0.9));
+    cen.push(c);
+    // 端は細らせない（線の始まりと終わりが欠けて見えるため）
+    const edge = (i === 0 || i === n) ? 0 : rough * rnd();
+    half.push(thickCqw / 2 * (1 - edge));
+  }
+  const at = i => (i / n * 100).toFixed(2) + "%";
+  const pos = v => `${(wobCqw + thickCqw / 2 + v).toFixed(3)}cqw`;
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const v = pos(cen[i] - half[i]);
+    pts.push(vertical ? `${v} ${at(i)}` : `${at(i)} ${v}`);
+  }
+  for (let i = n; i >= 0; i--) {
+    const v = pos(cen[i] + half[i]);
+    pts.push(vertical ? `${v} ${at(i)}` : `${at(i)} ${v}`);
+  }
+  return `polygon(${pts.join(', ')})`;
 }
 
 // プレビューのステージ枠。
@@ -126,16 +173,15 @@ export function renderLinePreviewHtml(line, project) {
   const zab = line.zabuton;
   const perBlockZab = !!(zab && zab.enabled && zab.perBlock);
   const filterId = `zab-blur-${line.id}`;
-  // 座布団の長辺のおおよその長さ（cqw）。
-  // ギザギザの歯を「行の長さに関わらず同じ大きさ」にするために渡す。
-  const zabSpanCqw = (() => {
+  // 本文が読む方向へ伸びる長さ（cqw）。
+  // ギザギザの歯やカスレの粒を「行の長さに関わらず同じ大きさ」にするために要る。
+  const textSpanCqw = (() => {
     const rows = String(text).split(/\\n|\n/);
     const maxChars = Math.max(1, ...rows.map(s => [...s].length));
-    const adv = fontCqw + letterCqw;                 // 1 文字あたりの送り
-    // 縦組みは列の高さが長辺、横組みは行の幅が長辺
-    const pad = toCqw(2 * ((vertical ? zab?.paddingY : zab?.paddingX) ?? 0));
-    return maxChars * adv + pad;
+    return maxChars * (fontCqw + letterCqw);         // 1 文字あたりの送り × 文字数
   })();
+  // 座布団はその外側に余白が付く（縦組みは列の高さ、横組みは行の幅が長辺）
+  const zabSpanCqw = textSpanCqw + toCqw(2 * ((vertical ? zab?.paddingY : zab?.paddingX) ?? 0));
   // 行ごとにちぎれ方を変える（同じ形が並ぶと切り抜きに見えるため）
   const zabSeed = (Number(zab?.edge?.seed) || 1) + (Number(line.id) || 0) * 977;
   // 縦組みは字面が列の中央に来るので補正しない
@@ -147,63 +193,53 @@ export function renderLinePreviewHtml(line, project) {
     ? `${zabResult.svgDef}<div style="${zabResult.css}"></div>`
     : '';
 
-  // 下線（アンダーライン）
+  // 下線（ライン）
   //  style="solid"    : 横組みは text の下 / 縦組みは左（1 本の連続線）
-  //  style="brackets" : 読む方向の両端に線（横=左右、縦=上下）
-  //  texture="scratchy": SVG feTurbulence で線に カスレ 効果
+  //  style="brackets" : 読む方向の両端に線（横=上下、縦=左右）
+  //  texture="scratchy": 手で引いた線のように、蛇行・太さのゆらぎ・かすれを出す
   const ul = line.underline;
   let underlineHtml = '';
-  let underlineSvgDef = '';
   if (ul && ul.enabled) {
     const w = toCqw(Math.max(0.5, Number(ul.width) || 2));
     const off = toCqw(Math.max(0, Number(ul.offset) || 4));
     const ext = toCqw(Math.max(0, Number(ul.extend) || 0));
     const col = ul.color || "#FFFFFF";
     const style = ul.style || "solid";
-    // scratchy filter を必要に応じ差し込む
-    let filterCss = "";
-    if (ul.texture === "scratchy") {
-      const ulFid = `ul-scratchy-${line.id}`;
-      const seed = ((Number(line.id) || 0) * 17 + 3) % 100;
-      // PDF 実測：線は途切れていない。手描きの線が横に微妙に揺れ、
-      // 太さがゆらいで縁がわずかに荒れている＝カスレ。
-      // → 透明度ムラだけでは出ないので feDisplacementMap で線自体を歪ませる。
-      // brackets は「読む方向と平行」なので、縦組み＝線は縦 / 横組み＝線は横。
-      const lineIsVertical = (style === "brackets") ? vertical : !vertical;
-      // 線が伸びる方向のノイズは低周波（＝ゆるやかな蛇行）、
-      // 太さ方向は高周波（＝縁のざらつき）
-      const warpFreq = lineIsVertical ? "0.5 0.035" : "0.035 0.5";
-      const fadeFreq = lineIsVertical ? "0.7 0.09"  : "0.09 0.7";
-      // 細い辺に振れ幅を確保するためフィルタ領域を太さ方向へ大きく広げる
-      const region = lineIsVertical
-        ? `x="-400%" y="-2%" width="900%" height="104%"`
-        : `x="-2%" y="-400%" width="104%" height="900%"`;
-      const warp = Math.max(0.5, Number(ul.warp) || 2.5); // 蛇行の振れ幅(px)
-      // alpha = 0.45(R+G+B) + 0.35 → おおよそ 0.5〜1.0。完全に切れはしない
-      underlineSvgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${ulFid}" ${region}><feTurbulence type="fractalNoise" baseFrequency="${warpFreq}" numOctaves="3" seed="${seed}" result="warp"/><feDisplacementMap in="SourceGraphic" in2="warp" scale="${warp}" xChannelSelector="R" yChannelSelector="G" result="wobbly"/><feTurbulence type="fractalNoise" baseFrequency="${fadeFreq}" numOctaves="1" seed="${(seed + 41) % 100}" result="fade"/><feColorMatrix in="fade" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.45 0.45 0.45 0 0.35" result="mask"/><feComposite in="wobbly" in2="mask" operator="in"/></filter></svg>`;
-      filterCss = `;filter:url(#${ulFid})`;
+    const scratchy = ul.texture === "scratchy";
+    // 線は「読む方向と平行」に伸びる。
+    // brackets は本文の両脇（縦組み＝左右の縦線 / 横組み＝上下の横線）、
+    // solid は横組み＝下の横線 / 縦組み＝左の縦線。どちらも線自体の向きは同じ。
+    const lineIsVertical = vertical;
+    // 線が伸びる長さ（cqw）。かすれの粒を長さに関わらず一定にするために要る
+    const lineSpanCqw = textSpanCqw + 2 * ext;
+    // 蛇行のぶん、線の箱を太さ方向へ広げておく（広げないと振れた分が切れる）
+    const wob = scratchy ? toCqw(Math.max(0, Number(ul.wobble) ?? 1.2)) : 0;
+    const boxW = w + 2 * wob;
+    let clip = "";
+    if (scratchy) {
+      const seed = (Number(ul.seed) || 3) + (Number(line.id) || 0) * 617;
+      clip = `;clip-path: ${scratchyClip(lineSpanCqw, w, wob, toCqw, ul, seed, lineIsVertical)}`;
     }
-    const bgStyle = `background:${col};z-index:0;pointer-events:none${filterCss}`;
+    const bgStyle = `background:${col};z-index:0;pointer-events:none${clip}`;
+    // 太さ方向の位置は、箱を広げたぶん戻す（線の中心は今までと同じ位置）
+    const back = wob.toFixed(3);
+    const thick = boxW.toFixed(3);
     if (style === "brackets") {
-      // 線は「読む方向と平行」にテキストの両脇へ。
-      // 縦組み（上→下に読む）＝左右に縦線 / 横組み（左→右）＝上下に横線
       if (vertical) {
-        const left  = `position:absolute;left:-${off.toFixed(3)}cqw;top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;${bgStyle}`;
-        const right = `position:absolute;right:-${off.toFixed(3)}cqw;top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;${bgStyle}`;
+        const left  = `position:absolute;left:calc(-${off.toFixed(3)}cqw - ${back}cqw);top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;width:${thick}cqw;${bgStyle}`;
+        const right = `position:absolute;right:calc(-${off.toFixed(3)}cqw - ${back}cqw);top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;width:${thick}cqw;${bgStyle}`;
         underlineHtml = `<div style="${left}"></div><div style="${right}"></div>`;
       } else {
-        const top = `position:absolute;top:-${off.toFixed(3)}cqw;left:-${ext.toFixed(3)}cqw;right:-${ext.toFixed(3)}cqw;height:${w.toFixed(3)}cqw;${bgStyle}`;
-        const bot = `position:absolute;bottom:-${off.toFixed(3)}cqw;left:-${ext.toFixed(3)}cqw;right:-${ext.toFixed(3)}cqw;height:${w.toFixed(3)}cqw;${bgStyle}`;
+        const top = `position:absolute;top:calc(-${off.toFixed(3)}cqw - ${back}cqw);left:-${ext.toFixed(3)}cqw;right:-${ext.toFixed(3)}cqw;height:${thick}cqw;${bgStyle}`;
+        const bot = `position:absolute;bottom:calc(-${off.toFixed(3)}cqw - ${back}cqw);left:-${ext.toFixed(3)}cqw;right:-${ext.toFixed(3)}cqw;height:${thick}cqw;${bgStyle}`;
         underlineHtml = `<div style="${top}"></div><div style="${bot}"></div>`;
       }
     } else {
-      // solid（従来）：横組み=下 / 縦組み=左
       const s = vertical
-        ? `position:absolute;top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;left:-${off.toFixed(3)}cqw;width:${w.toFixed(3)}cqw;${bgStyle}`
-        : `position:absolute;left:-${ext.toFixed(3)}cqw;right:-${ext.toFixed(3)}cqw;bottom:-${off.toFixed(3)}cqw;height:${w.toFixed(3)}cqw;${bgStyle}`;
+        ? `position:absolute;top:-${ext.toFixed(3)}cqw;bottom:-${ext.toFixed(3)}cqw;left:calc(-${off.toFixed(3)}cqw - ${back}cqw);width:${thick}cqw;${bgStyle}`
+        : `position:absolute;left:-${ext.toFixed(3)}cqw;right:-${ext.toFixed(3)}cqw;bottom:calc(-${off.toFixed(3)}cqw - ${back}cqw);height:${thick}cqw;${bgStyle}`;
       underlineHtml = `<div style="${s}"></div>`;
     }
-    underlineHtml = underlineSvgDef + underlineHtml;
   }
 
   // 外枠 wrapper: 位置・変形はここに（子は shrink-to-fit で text natural size）
