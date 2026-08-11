@@ -1,8 +1,8 @@
 // プロジェクトの型と初期値、JSON 変換
 // 純粋関数のみ。
 
-import { now, syncChars, deepClone } from "./utils.js?v=db1323d";
-import { defaultMotion } from "./motion.js?v=db1323d";
+import { now, syncChars, deepClone } from "./utils.js?v=0f614f9";
+import { defaultMotion } from "./motion.js?v=0f614f9";
 
 // emptyLineTemplate を内部で先行参照するため宣言だけ前置（実体は下で）
 // （JS は関数宣言を巻き上げるので問題なし）
@@ -55,7 +55,7 @@ export function defaultZabuton() {
     blurY: 0,             // 座布団のエッジぼかし量 Y 方向（AE px）
     gradient: null,       // グラデーション設定 or null。定義時：{ enabled, angle, colorA, colorB, colorC (省略可) }
     pattern: null,        // 斜線等のパターン塗り or null。{ type:"stripe", color, angle, size, gap } 形式
-    edge: null,           // 縁の装飾 or null。{ type:"torn", amp(0-1 高さに対する凹み比), freq(横方向分割数), seed }
+    edge: null,           // 縁の装飾 or null。{ type:"torn", pitch(歯の間隔 AE px), depth(歯の深さ AE px), seed }
   };
 }
 

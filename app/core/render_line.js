@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=db1323d";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=db1323d";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=db1323d";
-import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=db1323d";
-import { escapeHtml } from "./html.js?v=db1323d";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=0f614f9";
+import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=0f614f9";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=0f614f9";
+import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=0f614f9";
+import { escapeHtml } from "./html.js?v=0f614f9";
 
 // プレビューのステージ枠。
 // 「この行」と「曲に合わせて」で枠の見た目・寸法が変わらないよう、一箇所に置く。
@@ -78,8 +78,20 @@ export function renderLinePreviewHtml(line, project) {
   const zab = line.zabuton;
   const perBlockZab = !!(zab && zab.enabled && zab.perBlock);
   const filterId = `zab-blur-${line.id}`;
+  // 座布団の長辺のおおよその長さ（cqw）。
+  // ギザギザの歯を「行の長さに関わらず同じ大きさ」にするために渡す。
+  const zabSpanCqw = (() => {
+    const rows = String(text).split(/\\n|\n/);
+    const maxChars = Math.max(1, ...rows.map(s => [...s].length));
+    const adv = fontCqw + letterCqw;                 // 1 文字あたりの送り
+    // 縦組みは列の高さが長辺、横組みは行の幅が長辺
+    const pad = toCqw(2 * ((vertical ? zab?.paddingY : zab?.paddingX) ?? 0));
+    return maxChars * adv + pad;
+  })();
+  // 行ごとにちぎれ方を変える（同じ形が並ぶと切り抜きに見えるため）
+  const zabSeed = (Number(zab?.edge?.seed) || 1) + (Number(line.id) || 0) * 977;
   const zabResult = (zab && zab.enabled && !perBlockZab)
-    ? buildZabLayerCss(zab, toCqw, vertical, filterId)
+    ? buildZabLayerCss(zab, toCqw, vertical, filterId, zabSpanCqw, zabSeed)
     : { css: "", svgDef: "" };
   const zabLayerHtml = zabResult.css
     ? `${zabResult.svgDef}<div style="${zabResult.css}"></div>`
@@ -263,7 +275,7 @@ const EMPHASIS_COLORS = { 1: "#ffd54a", 2: "#ff8a65", 3: "#ff5252" };
 // 座布団の CSS スタイル配列を返す（外側でも per-block span でも共用）
 // 座布団を absolute layer として描画する用の CSS（text と分離、blur は text に影響しない）。
 // inset で padding 分外側に広げる。
-function buildZabLayerCss(zab, toCqw, isVertical, filterId) {
+function buildZabLayerCss(zab, toCqw, isVertical, filterId, spanCqw = 100, seed = 1) {
   if (!zab || !zab.enabled) return { css: "", svgDef: "" };
   const px = toCqw(zab.paddingX ?? 0);
   const py = toCqw(zab.paddingY ?? 0);
@@ -292,25 +304,35 @@ function buildZabLayerCss(zab, toCqw, isVertical, filterId) {
     `z-index: 0`,
     `pointer-events: none`,
   ];
-  // 破れ縁：不規則な上下エッジを clip-path で表現
+  // 破れ縁（ギザギザ）：紙をちぎったような不規則な縁。
+  //
+  //  - 歯の大きさ（ピッチ・深さ）は AE px で指定する。割合で刻むと、
+  //    短い行では歯が詰まり長い行では間延びして、別物に見えてしまう。
+  //    → 長辺の実寸から歯の数を決め、深さは cqw で置く。
+  //  - 縦組みは読む方向が縦なので、歯は左右の辺に出す（横組みは上下）。
+  //  - 乱数の種に行を混ぜてあるので、行ごとにちぎれ方が変わる。
   const edge = zab.edge;
   if (edge && edge.type === "torn") {
-    const amp = Math.min(0.9, Math.max(0, Number(edge.amp) || 0.3));
-    const freq = Math.max(6, Math.floor(Number(edge.freq) || 20));
-    let s = (Number(edge.seed) || 1) | 0; if (s <= 0) s = 1;
-    const rnd = () => { s = (s * 9301 + 49297) & 0x7fffffff; return (s % 100000) / 100000; };
+    const pitch = toCqw(Math.max(2, Number(edge.pitch) || 6));
+    // 旧データの amp（帯の厚みに対する割合）は実寸へ読み替える
+    const depthPx = Number(edge.depth) || (edge.amp != null ? Number(edge.amp) * 40 : 7);
+    const depth = toCqw(Math.max(0.5, depthPx));
+    const n = Math.max(4, Math.min(400, Math.round(spanCqw / pitch)));
+
+    let s = (Number(seed) || 1) % 2147483647; if (s <= 0) s += 2147483646;
+    const rnd = () => { s = (s * 48271) % 2147483647; return s / 2147483647; };
+    // 端は凹ませない（角が欠けて見えるため）
+    const d = (i) => (i === 0 || i === n) ? "0cqw" : `${(rnd() * depth).toFixed(3)}cqw`;
+    const far = (v) => v === "0cqw" ? "100%" : `calc(100% - ${v})`;
+    const at = (i) => (i / n * 100).toFixed(2) + "%";
+
     const pts = [];
-    // 上辺（左→右）: y は 0..amp*100%（内側に凹む）
-    for (let i = 0; i <= freq; i++) {
-      const x = (i / freq) * 100;
-      const y = (i === 0 || i === freq) ? 0 : rnd() * amp * 100 * 0.5;
-      pts.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
-    }
-    // 下辺（右→左）
-    for (let i = freq; i >= 0; i--) {
-      const x = (i / freq) * 100;
-      const y = (i === 0 || i === freq) ? 100 : 100 - rnd() * amp * 100 * 0.5;
-      pts.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
+    if (isVertical) {
+      for (let i = 0; i <= n; i++) pts.push(`${d(i)} ${at(i)}`);           // 左辺（上→下）
+      for (let i = n; i >= 0; i--) pts.push(`${far(d(i))} ${at(i)}`);      // 右辺（下→上）
+    } else {
+      for (let i = 0; i <= n; i++) pts.push(`${at(i)} ${d(i)}`);           // 上辺（左→右）
+      for (let i = n; i >= 0; i--) pts.push(`${at(i)} ${far(d(i))}`);      // 下辺（右→左）
     }
     styles.push(`clip-path: polygon(${pts.join(', ')})`);
   }

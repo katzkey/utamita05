@@ -8,11 +8,11 @@
 // ヘルパーが無くても、tools/auto_timing.py が出した timing.json を
 // 直接読み込む経路を用意してあるので、そちらだけでも実用できる。
 
-import { getProject, setProject, getUi } from "./state.js?v=db1323d";
-import * as ops from "../core/operations.js?v=db1323d";
-import { escapeHtml } from "../core/html.js?v=db1323d";
+import { getProject, setProject, getUi } from "./state.js?v=0f614f9";
+import * as ops from "../core/operations.js?v=0f614f9";
+import { escapeHtml } from "../core/html.js?v=0f614f9";
 import { pingHelper, startJob, pollJob, fetchResult, cancelJob,
-         helperStatusHtml, helperMissingHtml, stepsHtml, fmtSec } from "./helper_client.js?v=db1323d";
+         helperStatusHtml, helperMissingHtml, stepsHtml, fmtSec } from "./helper_client.js?v=0f614f9";
 
 const POLL_MS = 1500;
 

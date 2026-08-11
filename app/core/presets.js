@@ -131,7 +131,9 @@ export const ZABUTON_PRESETS = [
         // ちぎれ幅は帯高の 4〜5%、ピッチ約 4px の細かいギザ
         ...ZABUTON_BASE, shape: "rect", color: "#FFFFFF", opacity: 0.80,
         cornerRadius: 0, paddingX: 30, paddingY: 14,
-        edge: { type: "torn", amp: 0.18, freq: 100, seed: 7 },
+        // 歯の大きさは AE px 指定。行の長さで詰まったり間延びしたりしない。
+        // 種は行ごとに混ぜるので、同じ形の切り抜きが並ぶこともない。
+        edge: { type: "torn", pitch: 6, depth: 7, seed: 7 },
       },
       glow: null, textColor: "#000000", textStroke: null,
     },
