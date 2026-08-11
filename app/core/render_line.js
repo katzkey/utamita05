@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=ba1092b";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=ba1092b";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=ba1092b";
-import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=ba1092b";
-import { escapeHtml } from "./html.js?v=ba1092b";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=29ba653";
+import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=29ba653";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=29ba653";
+import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=29ba653";
+import { escapeHtml } from "./html.js?v=29ba653";
 
 // フォントごとの「行ボックスの中心」と「文字のインクの中心」のずれ（em、＋で文字が下寄り）。
 //
@@ -28,15 +28,31 @@ function inkCenterOffsetEm(cssFam, italic, lineHeight) {
   if (inkOffsetCache.has(key)) return inkOffsetCache.get(key);
   let v = 0;
   try {
+    const fam = String(cssFam).replace(/'/g, "\\'");
+    const SZ = 100;
+    // ベースラインの位置は、フォントの数値表から計算すると外れることがある
+    //（CSS が使う metrics と canvas の fontBoundingBox が一致しないフォントがある）。
+    // 高さ 0 のインライン要素は下端がベースラインに乗るので、それを物差しにして
+    // ブラウザが実際に置いた位置をそのまま測る。
+    const probe = document.createElement("div");
+    probe.style.cssText = `position:absolute;left:-99999px;top:0;visibility:hidden;`
+      + `font-family:'${fam}', system-ui, sans-serif;font-size:${SZ}px;`
+      + `line-height:${lineHeight};white-space:nowrap;${italic ? "font-style:italic;" : ""}`;
+    probe.innerHTML = `<span style="display:inline-block;width:0;height:0"></span>国`;
+    document.body.appendChild(probe);
+    const baseline = probe.firstElementChild.getBoundingClientRect().bottom
+                   - probe.getBoundingClientRect().top;      // 行ボックス上端からベースラインまで
+    probe.remove();
+
+    // 字面の上下はベースラインからの距離なので canvas で取れる（こちらは信用できる）
     inkCanvas = inkCanvas || document.createElement("canvas");
     const c = inkCanvas.getContext("2d");
-    c.font = `${italic ? "italic " : ""}100px '${String(cssFam).replace(/'/g, "\\'")}', system-ui, sans-serif`;
+    c.font = `${italic ? "italic " : ""}${SZ}px '${fam}', system-ui, sans-serif`;
     const m = c.measureText("国");     // 字面いっぱいの全角字を基準にする
-    const fa = m.fontBoundingBoxAscent / 100, fd = m.fontBoundingBoxDescent / 100;
-    const asc = m.actualBoundingBoxAscent / 100, des = m.actualBoundingBoxDescent / 100;
-    if ([fa, fd, asc, des].every(n => isFinite(n))) {
-      const baseline = (lineHeight - (fa + fd)) / 2 + fa;   // 行ボックス上端からベースラインまで
-      v = (baseline + (des - asc) / 2) - lineHeight / 2;    // インクの中心 − 行ボックスの中心
+    const asc = m.actualBoundingBoxAscent, des = m.actualBoundingBoxDescent;
+    if ([baseline, asc, des].every(n => isFinite(n)) && baseline > 0) {
+      const inkCenter = baseline + (des - asc) / 2;          // 行ボックス上端から字面の中心まで
+      v = (inkCenter - (lineHeight * SZ) / 2) / SZ;          // em に直す
     }
   } catch (e) {
     v = 0;   // 測れない環境では補正しない（今までどおりの位置）
@@ -399,17 +415,25 @@ function buildZabLayerCss(zab, toCqw, isVertical, filterId, spanCqw = 100, seed 
       styles.push(`background: ${bgCss}`);
     }
   }
+  // ぼかし。値は AE px なので、必ずステージ幅基準に直してから使う。
+  // px のまま渡すと、小さいプレビューでは相対的に何倍にもぼけて見える
+  //（1920px 幅で 12px のぼかしが、400px 幅のプレビューでは 58px 相当になる）。
   const bx = Number(zab.blurX) || 0;
   const by = Number(zab.blurY) || 0;
   let svgDef = "";
   if (bx > 0 || by > 0) {
     if (bx === by) {
-      // X=Y のときは CSS blur() が確実
-      styles.push(`filter: blur(${bx}px)`);
+      // X=Y は CSS の blur() が使える。cqw なので表示倍率に追従する
+      styles.push(`filter: blur(${toCqw(bx).toFixed(3)}cqw)`);
     } else {
-      // X!=Y は SVG feGaussianBlur を DOM に埋め込んで参照
-      // filter 領域を大幅に広げて大きな blur でも clip されないよう
-      svgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${filterId}" x="-500%" y="-500%" width="1100%" height="1100%"><feGaussianBlur stdDeviation="${bx} ${by}"/></filter></svg>`;
+      // X!=Y は SVG の feGaussianBlur。stdDeviation は長さの単位を取れないので、
+      // primitiveUnits を objectBoundingBox にして「座布団の何割」で指定する。
+      // こうすると座布団が拡大縮小してもぼけ方が変わらない。
+      const wCqw = Math.max(0.01, spanCqw);
+      const hCqw = Math.max(0.01, (isVertical ? spanCqw : 1.3 * fontCqw + 2 * py));
+      const sx = toCqw(bx) / (isVertical ? Math.max(0.01, 1.0 * fontCqw + 2 * px) : wCqw);
+      const sy = toCqw(by) / hCqw;
+      svgDef = `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0"><filter id="${filterId}" primitiveUnits="objectBoundingBox" x="-500%" y="-500%" width="1100%" height="1100%"><feGaussianBlur stdDeviation="${sx.toFixed(5)} ${sy.toFixed(5)}"/></filter></svg>`;
       styles.push(`filter: url(#${filterId})`);
     }
   }

@@ -159,6 +159,8 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: null, glow: null,
       textColor: "#FFFFFF", textStroke: null,
+      // 03_座布団.pdf p2 実測：太さ 2.00px = 0.064em → 28px 換算 1.8 → 2。
+      // 線はまっすぐで、太さのばらつき σ=0.00・欠け 0%（カスレは無い）
       underline: { enabled: true, style: "solid", color: "#FFFFFF", width: 2, offset: 6 },
     },
   },
@@ -196,8 +198,13 @@ export const ZABUTON_PRESETS = [
       zabuton: null, glow: null,
       textColor: "#FFFFFF", textStroke: null,
       underline: {
+        // 04_座布団.pdf p2 の図形データ実測（フォント 36.85px、縦組み）
+        //   縦線 2 本、太さ 1.9px = 0.052em → 28px 換算 1.5
+        //   文字の em 箱から線まで 14.5px = 0.393em → 28px 換算 11
+        // カスレ：PDF の線はまっすぐで、太さのばらつき σ0.30px・中心のゆらぎ σ0.17px。
+        //   これはアンチエイリアスの範囲で、実質まっすぐ。以前の warp 2.5 は掛けすぎ
         enabled: true, style: "brackets", texture: "scratchy",
-        color: "#FFFFFF", width: 2, offset: 14, extend: 8, warp: 2.5,
+        color: "#FFFFFF", width: 1.5, offset: 11, extend: 8, warp: 0.6,
       },
     },
   },
@@ -211,7 +218,11 @@ export const ZABUTON_PRESETS = [
         // 05_座布団.pdf p0 実測（フォント 31.89px）：帯の画像 83.0px = 2.603em
         //   → paddingY = (2.603 - 1.3) * 28 / 2 = 18.2 → 18。左右は画像の縁がぼけていて未計測
         cornerRadius: 0, paddingX: 40, paddingY: 18,
-        blurX: 12, blurY: 6,
+        // 05_座布団.pdf p0 実測：帯の縁は 10%→90% で 19〜20px かけて変化する。
+        //   ガウスぼかしの σ ≒ 20 / 2.56 = 7.6px（フォント 31.89px）→ 28px 換算で 7
+        // X と Y を同じにしてあるのは、CSS の blur() を使う経路に乗せるため
+        //（そちらは cqw 指定なので、プレビューを縮めてもぼけ方が変わらない）
+        blurX: 7, blurY: 7,
       },
       glow: null, textColor: "#000000", textStroke: null,
     },
@@ -221,7 +232,9 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: null, glow: null,
       textColor: "#FFFFFF", textStroke: null,
-      underline: { enabled: true, style: "solid", color: "#00A0EF", width: 2, offset: 8 },
+      // 05_座布団.pdf p1 実測：太さ 1.50px = 0.048em → 28px 換算 1.35 → 1.5。
+      // PDF では語句ごとに 3 本へ分かれているが、こちらは 1 本の連続線
+      underline: { enabled: true, style: "solid", color: "#00A0EF", width: 1.5, offset: 8 },
     },
   },
   {

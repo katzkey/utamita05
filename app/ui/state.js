@@ -1,8 +1,8 @@
 // 状態管理 + History (Undo/Redo)
 
-import { createEmptyProject } from "../core/project.js?v=ba1092b";
-import { saveFileToStore, loadFileFromStore } from "../core/file_store.js?v=ba1092b";
-import { putBlob, getBlobUrl, getBlobFile, hasBlob, clearBlobs } from "../core/blob_registry.js?v=ba1092b";
+import { createEmptyProject } from "../core/project.js?v=29ba653";
+import { saveFileToStore, loadFileFromStore } from "../core/file_store.js?v=29ba653";
+import { putBlob, getBlobUrl, getBlobFile, hasBlob, clearBlobs } from "../core/blob_registry.js?v=29ba653";
 
 // ---- 表示設定の永続化 ----
 // プロジェクトの中身ではなく「どう表示していたか」を次回起動まで覚えておく。
