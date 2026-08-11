@@ -117,8 +117,11 @@ export const ZABUTON_PRESETS = [
     id: "zab_hot_black", category: "激しい・情熱的", label: "黒座布団（70%）",
     apply: {
       zabuton: {
+        // 03_座布団.pdf p0 実測（フォント 30.12px）：座布団の厚み 56.0px = 1.859em
+        //   → paddingY = (1.859 - 1.3) * 28 / 2 = 7.8 → 8
+        // 左右は写真と同系色で縁を拾えず未計測。ギザギザと同じ 21 を暫定で置く
         ...ZABUTON_BASE, shape: "rect", color: "#000000", opacity: 0.7,
-        cornerRadius: 0, paddingX: 30, paddingY: 10,
+        cornerRadius: 0, paddingX: 21, paddingY: 8,
       },
       glow: null, textColor: "#FFFFFF", textStroke: null,
     },
@@ -128,11 +131,14 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: {
         // PDF 実測 (216,209,204) を暗い背景(46,17,0)から逆算 → 白 80%（クリームではない）
-        // 03_座布団.pdf（1920x1080 = AE px と 1:1）の 2 ページ目を実測。
-        //   帯の厚み 59.6px / 縁の振れ幅 p-p 8.2〜8.8px / 平均線をまたぐ回数 25 回（幅 896px）
-        // 同じ測り方で pitch 18 / depth 9 が一致した（交差 25.3 回・振れ幅 8.7px）
+        // 03_座布団.pdf p1（1920x1080 = AE px と 1:1）実測。フォント 30.12px。
+        //   座布団の厚み 59.0px = 1.959em  ／ 左右の余白 平均 22.3px = 0.740em
+        //   縁の振れ幅 p-p 8.2〜8.8px、平均線をまたぐ回数 25 回（幅 896px）
+        // こちらは余白を「行ボックス（1.3em）」の外側に付けるので、
+        //   paddingY = (1.959 - 1.3) * 28 / 2 = 9.2 → 9
+        //   paddingX = 0.740 * 28 = 20.7 → 21   （プリセットのフォントは 28px）
         ...ZABUTON_BASE, shape: "rect", color: "#FFFFFF", opacity: 0.80,
-        cornerRadius: 0, paddingX: 30, paddingY: 14,
+        cornerRadius: 0, paddingX: 21, paddingY: 9,
         // 歯の大きさは AE px 指定。行の長さで詰まったり間延びしたりしない。
         // 種は行ごとに混ぜるので、同じ形の切り抜きが並ぶこともない。
         edge: { type: "torn", pitch: 18, depth: 9, seed: 7 },

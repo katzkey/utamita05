@@ -1,17 +1,17 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=db39581";
-import * as ops from "../core/operations.js?v=db39581";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=db39581";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=db39581";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=db39581";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=db39581";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=db39581";
-import { AE_ENABLED } from "../core/features.js?v=db39581";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=db39581";
-import { escapeHtml } from "../core/html.js?v=db39581";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=db39581";
-import * as songPreview from "./song_preview.js?v=db39581";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=e9df6f9";
+import * as ops from "../core/operations.js?v=e9df6f9";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=e9df6f9";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=e9df6f9";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=e9df6f9";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=e9df6f9";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=e9df6f9";
+import { AE_ENABLED } from "../core/features.js?v=e9df6f9";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=e9df6f9";
+import { escapeHtml } from "../core/html.js?v=e9df6f9";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=e9df6f9";
+import * as songPreview from "./song_preview.js?v=e9df6f9";
 
 let detailPaneEl;
 let lyricRowsEl;
