@@ -8,7 +8,7 @@
 // ビルトインの ZABUTON_PRESETS と同じ形（{ id, category, label, apply }）で持つ。
 // category は固定で CUSTOM_CATEGORY。id は "custom_zab_<epoch>_<rand>"。
 
-import { setCustomZabutonPresets, getCustomZabutonPresets } from "./presets.js?v=5e8e0f2";
+import { setCustomZabutonPresets, getCustomZabutonPresets } from "./presets.js?v=72bb313";
 
 const STORAGE_KEY = "utamita05.customPresets.v1";
 export const CUSTOM_CATEGORY = "カスタム";
@@ -47,22 +47,28 @@ export function initCustomPresets() {
 
 // ---- 妥当性チェック（壊れた JSON を読んでも落ちないように） ----
 
+// カスタムに入れる項目。動きは入れない（見た目と動きは別々に選べるようにするため）。
+//   文字 … フォント種類 / サイズ / イタリック / 字間 / カーニング
+//   配置 … レイアウト / 位置の微調整
+//   装飾 … 座布団 / 光彩 / 文字色 / 縁取り / 下線 / ずらし
+const APPLY_KEYS = [
+  "fontOverride", "tracking", "interTypeGap", "autoKerning",
+  "layout", "pos",
+  "zabuton", "glow", "textColor", "textStroke", "underline", "jitter",
+  "fontPresetId", "zabutonPresetId",   // 元にしたプリセットを覚えておく（プルダウンの表示用）
+];
+
 function sanitizeList(list) {
   if (!Array.isArray(list)) return [];
   return list
     .filter(p => p && typeof p.id === "string" && typeof p.label === "string" && p.apply)
-    .map(p => ({
-      id: p.id,
-      category: CUSTOM_CATEGORY,
-      label: p.label,
-      apply: {
-        zabuton: p.apply.zabuton ?? null,
-        glow: p.apply.glow ?? null,
-        textColor: p.apply.textColor ?? null,
-        textStroke: p.apply.textStroke ?? null,
-        underline: p.apply.underline ?? null,
-      },
-    }));
+    .map(p => {
+      const apply = {};
+      // 保存されていない項目は「触らない」。undefined と null を区別する
+      //（null は「無しにする」、undefined は「そのまま」）
+      for (const k of APPLY_KEYS) if (k in p.apply) apply[k] = p.apply[k];
+      return { id: p.id, category: CUSTOM_CATEGORY, label: p.label, apply };
+    });
 }
 
 function newId() {
@@ -71,21 +77,36 @@ function newId() {
 
 // ---- CRUD ----
 
-// 行の現在の見た目（座布団・光彩・文字色・縁取り・下線）をプリセットとして保存
+// 行の現在の見た目（文字・配置・装飾）をまるごとプリセットとして保存する。
+// 動き（イン / アウト）は入れない。
 export function saveLineAsCustomPreset(line, label) {
   const name = String(label || "").trim();
   if (!name) return { ok: false, error: "名前を入力してください" };
 
+  const clone = (v) => (v == null ? null : JSON.parse(JSON.stringify(v)));
   const preset = {
     id: newId(),
     category: CUSTOM_CATEGORY,
     label: name,
     apply: {
-      zabuton: line.zabuton ? JSON.parse(JSON.stringify(line.zabuton)) : null,
-      glow: line.glow ? JSON.parse(JSON.stringify(line.glow)) : null,
+      // 文字
+      fontOverride: clone(line.fontOverride),
+      tracking: line.tracking ?? 0,
+      interTypeGap: line.interTypeGap ?? 0,
+      autoKerning: !!line.autoKerning,
+      // 配置
+      layout: line.layout ?? null,
+      pos: clone(line.pos) || { dx: 0, dy: 0, scale: 1.0, rot: 0 },
+      // 装飾
+      zabuton: clone(line.zabuton),
+      glow: clone(line.glow),
       textColor: line.textColor ?? null,
-      textStroke: line.textStroke ? JSON.parse(JSON.stringify(line.textStroke)) : null,
-      underline: line.underline ? JSON.parse(JSON.stringify(line.underline)) : null,
+      textStroke: clone(line.textStroke),
+      underline: clone(line.underline),
+      jitter: clone(line.jitter),
+      // 元にしたプリセット（上のプルダウンの表示を合わせるため）
+      fontPresetId: line.fontPresetId ?? null,
+      zabutonPresetId: line.zabutonPresetId ?? null,
     },
   };
 

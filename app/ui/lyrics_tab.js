@@ -1,17 +1,17 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=5e8e0f2";
-import * as ops from "../core/operations.js?v=5e8e0f2";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=5e8e0f2";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=5e8e0f2";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=5e8e0f2";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById } from "../core/presets.js?v=5e8e0f2";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=5e8e0f2";
-import { AE_ENABLED } from "../core/features.js?v=5e8e0f2";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=5e8e0f2";
-import { escapeHtml } from "../core/html.js?v=5e8e0f2";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=5e8e0f2";
-import * as songPreview from "./song_preview.js?v=5e8e0f2";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=72bb313";
+import * as ops from "../core/operations.js?v=72bb313";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=72bb313";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=72bb313";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=72bb313";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=72bb313";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=72bb313";
+import { AE_ENABLED } from "../core/features.js?v=72bb313";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=72bb313";
+import { escapeHtml } from "../core/html.js?v=72bb313";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=72bb313";
+import * as songPreview from "./song_preview.js?v=72bb313";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -277,15 +277,25 @@ function renderDetail(project, ui) {
           })()}
         </select>
       </div>
+      <div class="field">
+        <span class="field-label">カスタム</span>
+        <select class="field-select" id="fldCustomPreset" style="flex:1">
+          <option value="">— 未適用 —</option>
+          ${getCustomZabutonPresets().map(p =>
+            `<option value="${p.id}" ${line.customPresetId === p.id ? "selected" : ""}>${escapeHtml(p.label)}</option>`
+          ).join("")}
+        </select>
+      </div>
       <div style="display:flex;gap:6px;margin-top:6px">
         <button class="tool-btn" id="btnSaveCustomPreset" style="font-size:11px">現在の設定を保存…</button>
-        ${isCustomPresetId(line.zabutonPresetId)
+        ${isCustomPresetId(line.customPresetId)
           ? `<button class="tool-btn tool-btn-danger" id="btnDeleteCustomPreset" style="font-size:11px">このカスタムを削除</button>`
           : ``}
       </div>
       <div style="font-size:10px;color:var(--gray-3);margin-top:4px">
-        フォント／座布団は独立して選択できます（適用後も個別編集可）。<br>
-        保存すると座布団・光彩・文字色・縁取り・下線がカスタムプリセットになります（この PC に保存）
+        <b>フォント</b>と<b>座布団</b>は独立して選べます（適用後も個別編集可）。<br>
+        <b>カスタム</b>は自分で保存したもの。<b>文字・配置・装飾をまとめて</b>載せます
+        （動きは含みません）。保存先はこの PC です。
       </div>
     </div>
 
@@ -698,28 +708,35 @@ function renderDetail(project, ui) {
     setProject(ops.applyZabutonPresetToLine(getProject(), id, v));
   });
 
+  document.getElementById("fldCustomPreset")?.addEventListener("change", (e) => {
+    const v = e.target.value;
+    if (!v) { setProject(ops.setLineCustomPresetId(getProject(), id, null)); return; }
+    setProject(ops.applyCustomPresetToLine(getProject(), id, v));
+  });
+
   // カスタムプリセットの保存 / 削除
   document.getElementById("btnSaveCustomPreset")?.addEventListener("click", () => {
     const p = getProject();
     const line2 = p.lines.find(l => l.id === id);
     if (!line2) return;
-    const name = prompt("カスタムプリセット名（同じ名前で保存すると上書きします）", "");
+    const name = prompt("カスタムプリセット名（同じ名前で保存すると上書きします）\n"
+      + "フォント・配置・装飾をまとめて保存します（動きは含みません）", "");
     if (name === null) return;
     const r = saveLineAsCustomPreset(line2, name);
     if (!r.ok) { alert(r.error); return; }
-    // 保存したプリセットを選択状態にして再描画
-    setProject(ops.applyZabutonPresetToLine(getProject(), id, r.preset.id));
+    // 保存したものを選択状態にして再描画（見た目は今のままなので参照だけ差す）
+    setProject(ops.setLineCustomPresetId(getProject(), id, r.preset.id));
   });
   const delBtn = document.getElementById("btnDeleteCustomPreset");
   if (delBtn) delBtn.addEventListener("click", () => {
     const p = getProject();
     const line2 = p.lines.find(l => l.id === id);
-    const pid = line2?.zabutonPresetId;
+    const pid = line2?.customPresetId;
     if (!pid || !isCustomPresetId(pid)) return;
     if (!confirm("このカスタムプリセットを削除します。よろしいですか？\n（すでに適用済みの行の見た目はそのまま残ります）")) return;
     deleteCustomPreset(pid);
     // 参照だけ外す（見た目は保持）
-    setProject(ops.setLineZabutonPresetId(getProject(), id, null));
+    setProject(ops.setLineCustomPresetId(getProject(), id, null));
   });
 
   const onTextChange = () => {

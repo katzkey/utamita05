@@ -5,15 +5,15 @@ import {
   now, indexOfId, findById,
   insertAt, removeAt, moveItem, replaceAt,
   syncChars, splitChars,
-} from "./utils.js?v=5e8e0f2";
+} from "./utils.js?v=72bb313";
 
 import {
   createLine, createBackground, createTitle, createTemplateRef,
   defaultZabuton, defaultJitter,
   PROJECT_VERSION,
-} from "./project.js?v=5e8e0f2";
-import { normalizeMotion } from "./motion.js?v=5e8e0f2";
-import { getPresetById, getFontPresetById, getZabutonPresetById } from "./presets.js?v=5e8e0f2";
+} from "./project.js?v=72bb313";
+import { normalizeMotion } from "./motion.js?v=72bb313";
+import { getPresetById, getFontPresetById, getZabutonPresetById, getCustomPresetById } from "./presets.js?v=72bb313";
 
 // ──────────────────────────────────────────────────
 // 内部ヘルパー
@@ -193,6 +193,7 @@ function extractLook(line) {
     template: { ...line.template },
     fontPresetId: line.fontPresetId ?? null,
     zabutonPresetId: line.zabutonPresetId ?? null,
+    customPresetId: line.customPresetId ?? null,
   };
 }
 
@@ -218,6 +219,7 @@ function applyLook(line, look) {
     template: { ...look.template },
     fontPresetId: look.fontPresetId,
     zabutonPresetId: look.zabutonPresetId,
+    customPresetId: look.customPresetId,
   };
 }
 
@@ -318,6 +320,32 @@ export function applyZabutonPresetToLine(project, id, presetId) {
       : null;
     return next;
   });
+}
+
+// カスタムプリセット：文字・配置・装飾をまとめて載せる。
+// 動きは含めないので、行の動きの設定はそのまま残る。
+// 保存されていない項目は触らない（古いカスタムは装飾しか持っていないため）。
+export function applyCustomPresetToLine(project, id, presetId) {
+  const preset = getCustomPresetById(presetId);
+  if (!preset) return project;
+  const has = (k) => Object.prototype.hasOwnProperty.call(preset.apply, k);
+  const take = (k) => clone(preset.apply[k]);
+  return updateLine(project, id, (line) => {
+    const next = { ...line, customPresetId: presetId };
+    for (const k of ["fontOverride", "pos", "zabuton", "glow", "textStroke", "underline", "jitter"]) {
+      if (has(k)) next[k] = take(k);
+    }
+    for (const k of ["tracking", "interTypeGap", "autoKerning", "layout", "textColor",
+                     "fontPresetId", "zabutonPresetId"]) {
+      if (has(k)) next[k] = preset.apply[k];
+    }
+    return next;
+  });
+}
+
+// カスタムプリセットの参照だけ差し替える（見た目は変えない）
+export function setLineCustomPresetId(project, id, presetId) {
+  return updateLine(project, id, (line) => ({ ...line, customPresetId: presetId ?? null }));
 }
 
 // 座布団プリセットの参照だけ差し替える（見た目は変えない）

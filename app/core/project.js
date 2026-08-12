@@ -1,8 +1,8 @@
 // プロジェクトの型と初期値、JSON 変換
 // 純粋関数のみ。
 
-import { now, syncChars, deepClone } from "./utils.js?v=5e8e0f2";
-import { defaultMotion } from "./motion.js?v=5e8e0f2";
+import { now, syncChars, deepClone } from "./utils.js?v=72bb313";
+import { defaultMotion } from "./motion.js?v=72bb313";
 
 // emptyLineTemplate を内部で先行参照するため宣言だけ前置（実体は下で）
 // （JS は関数宣言を巻き上げるので問題なし）
@@ -159,6 +159,7 @@ export function createLine(id, opts = {}) {
     presetId: opts.presetId ?? null,             // 旧 API 互換
     fontPresetId: opts.fontPresetId ?? null,     // フォントプリセット ID
     zabutonPresetId: opts.zabutonPresetId ?? null, // 座布団プリセット ID
+    customPresetId: opts.customPresetId ?? null,   // カスタムプリセット ID（文字＋配置＋装飾）
     emphasis: opts.emphasis || [],
     groups: opts.groups || [],
     stagger: opts.stagger ?? 0,  // 文字ごとの開始ずらし秒数（0 = 同時）
