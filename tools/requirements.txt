@@ -1,0 +1,14 @@
+# うたみた05 ローカルヘルパーが使う外部パッケージ
+#
+#   faster-whisper … 歌声の書き起こし
+#   demucs         … 曲からボーカルだけを取り出す（torch を連れてくるので 1〜2GB あります）
+#   pykakasi       … 漢字かな交じりの歌詞をかなに直す
+#   numpy          … 音量の波形処理
+#
+# 入れ方：  python -m pip install -r requirements.txt
+# ffmpeg は pip では入りません。setup_helper.bat が面倒を見ます。
+
+faster-whisper>=1.0
+demucs>=4.0
+pykakasi>=2.2
+numpy>=1.24

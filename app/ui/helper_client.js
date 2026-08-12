@@ -4,7 +4,7 @@
 // 以前はポート番号・接続確認・進捗ポーリング・工程表示が
 // 2 ファイルに重複していて、片方だけ直すと不整合になる状態だった。
 
-import { escapeHtml } from "../core/html.js?v=72bb313";
+import { escapeHtml } from "../core/html.js?v=1b1c3c3";
 
 // ポート番号はここだけ。ヘルパー側の UTAMITA_HELPER_PORT と合わせる。
 export const HELPER_BASE = "http://127.0.0.1:8777";
@@ -120,11 +120,23 @@ export function helperStatusHtml(state) {
 
 /** ヘルパーが無いときの案内 */
 export function helperMissingHtml(extra = "") {
+  // セットアップ用の .bat は同じ GitHub Pages から配っているので download 属性が効く。
+  // 別サイト（raw.githubusercontent など）に置くと、保存ではなく表示になってしまう。
   return `<div class="at-note">
-    <code>tools</code> フォルダの <code>start_helper.bat</code> をダブルクリックしてから、
-    もう一度開いてください。<br>
-    毎回起動するのが面倒な場合は <code>install_autostart.bat</code> を一度実行すると、
-    PC 起動時に自動で立ち上がります（ウィンドウは出ません）。${extra}
+    <b>はじめての方</b><br>
+    下のボタンで <code>setup_helper.bat</code> を保存し、<b>ダブルクリック</b>してください。
+    必要なもの（Python の確認・ffmpeg・音声処理のライブラリ）を一式そろえ、
+    PC 起動時に自動で立ち上がるところまで設定します。<br>
+    途中で <b>1〜2GB のダウンロード</b>があり、10〜30 分かかります。
+    <div class="at-actions" style="margin:8px 0 6px">
+      <a class="tool-btn at-primary" href="../tools/setup_helper.bat" download="setup_helper.bat"
+         style="text-decoration:none">セットアップを保存する</a>
+    </div>
+    「発行元を確認できません」と出たら <b>詳細情報 → 実行</b> を選んでください。<br>
+    <br>
+    <b>すでに入れてある方</b><br>
+    ヘルパーが止まっているだけです。<code>tools</code> フォルダの
+    <code>start_helper.bat</code> をダブルクリックしてから、もう一度開いてください。${extra}
   </div>`;
 }
 
