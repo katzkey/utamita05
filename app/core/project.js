@@ -1,8 +1,8 @@
 // プロジェクトの型と初期値、JSON 変換
 // 純粋関数のみ。
 
-import { now, syncChars, deepClone } from "./utils.js?v=1b1c3c3";
-import { defaultMotion } from "./motion.js?v=1b1c3c3";
+import { now, syncChars, deepClone } from "./utils.js?v=90b2bb6";
+import { defaultMotion } from "./motion.js?v=90b2bb6";
 
 // emptyLineTemplate を内部で先行参照するため宣言だけ前置（実体は下で）
 // （JS は関数宣言を巻き上げるので問題なし）

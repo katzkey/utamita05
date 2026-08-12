@@ -4,7 +4,7 @@
 // 以前はポート番号・接続確認・進捗ポーリング・工程表示が
 // 2 ファイルに重複していて、片方だけ直すと不整合になる状態だった。
 
-import { escapeHtml } from "../core/html.js?v=1b1c3c3";
+import { escapeHtml } from "../core/html.js?v=90b2bb6";
 
 // ポート番号はここだけ。ヘルパー側の UTAMITA_HELPER_PORT と合わせる。
 export const HELPER_BASE = "http://127.0.0.1:8777";
@@ -125,14 +125,15 @@ export function helperMissingHtml(extra = "") {
   return `<div class="at-note">
     <b>はじめての方</b><br>
     下のボタンで <code>setup_helper.bat</code> を保存し、<b>ダブルクリック</b>してください。
-    必要なもの（Python の確認・ffmpeg・音声処理のライブラリ）を一式そろえ、
-    PC 起動時に自動で立ち上がるところまで設定します。<br>
-    途中で <b>1〜2GB のダウンロード</b>があり、10〜30 分かかります。
+    <b>この PC に音声処理のソフトを入れます</b>（ffmpeg と Python 用の部品。
+    合わせて <b>1〜2GB</b>、10〜30 分）。入れ終わると、次回からは PC の起動時に
+    自動で立ち上がります。
     <div class="at-actions" style="margin:8px 0 6px">
       <a class="tool-btn at-primary" href="../tools/setup_helper.bat" download="setup_helper.bat"
          style="text-decoration:none">セットアップを保存する</a>
     </div>
-    「発行元を確認できません」と出たら <b>詳細情報 → 実行</b> を選んでください。<br>
+    ソフトを入れる操作なので、Windows が<b>「発行元を確認できません」と必ず警告します</b>。
+    <b>詳細情報 → 実行</b> を選んでください。<br>
     <br>
     <b>すでに入れてある方</b><br>
     ヘルパーが止まっているだけです。<code>tools</code> フォルダの
