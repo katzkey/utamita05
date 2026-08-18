@@ -1,8 +1,8 @@
 // 下部の再生バー：再生制御、TC表示、マーキング
 
-import { getProject, getUi, setProject, setUi } from "./state.js?v=bc7195b";
-import * as ops from "../core/operations.js?v=bc7195b";
-import { secondsToTC } from "./tc.js?v=bc7195b";
+import { getProject, getUi, setProject, setUi } from "./state.js?v=6641588";
+import * as ops from "../core/operations.js?v=6641588";
+import { secondsToTC } from "./tc.js?v=6641588";
 
 let player, playBtn, loopBtn, markingBtn, markInBtn, markOutBtn;
 let currentTCEl, totalTCEl, progressFill, progressMarker, progressBar;

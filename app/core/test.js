@@ -3,10 +3,10 @@
 
 import {
   createEmptyProject, fromJSON, toJSON, defaultTemplate,
-} from "./project.js?v=bc7195b";
-import * as ops from "./operations.js?v=bc7195b";
-import { validate } from "./validate.js?v=bc7195b";
-import { splitChars } from "./utils.js?v=bc7195b";
+} from "./project.js?v=6641588";
+import * as ops from "./operations.js?v=6641588";
+import { validate } from "./validate.js?v=6641588";
+import { splitChars } from "./utils.js?v=6641588";
 
 const tests = [];
 function test(name, fn) { tests.push({ name, fn }); }
