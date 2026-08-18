@@ -4,7 +4,7 @@
 // 以前はポート番号・接続確認・進捗ポーリング・工程表示が
 // 2 ファイルに重複していて、片方だけ直すと不整合になる状態だった。
 
-import { escapeHtml } from "../core/html.js?v=93ab377";
+import { escapeHtml } from "../core/html.js?v=fb28877";
 
 // ポート番号はここだけ。ヘルパー側の UTAMITA_HELPER_PORT と合わせる。
 export const HELPER_BASE = "http://127.0.0.1:8777";
@@ -157,16 +157,22 @@ export function helperMissingHtml(extra = "") {
     ${mac ? macHtml : win}<br>
     <br>
     <b>すでに入れてある方</b><br>
-    ヘルパーが止まっているだけです。${mac
-      ? `ターミナルに次の 1 行を貼り付けてください。<br>
+    ヘルパーは<b>起動（ログイン）すると自動で立ち上がります</b>。ここに出ているのは、
+    何かの拍子に止まっているか、セットアップの最後でつまずいた場合です。<br>
+    <b>まず、いったんログインし直して</b>この画面を開き直してください。それで直ります。<br>
+    <br>
+    それでも出るときだけ、手で起こしてください。${mac
+      ? `ターミナルに次を貼り付けます。<br>
          <code style="user-select:all">bash "$HOME/Library/Application Support/utamita05/tools/start_helper.sh"</code><br>
-         ログインし直しても立ち上がります。自動起動に戻すときは<br>
+         自動起動に戻すときは<br>
          <code style="user-select:all">launchctl load ~/Library/LaunchAgents/com.utamita05.helper.plist</code>`
-      : `エクスプローラの<b>アドレス欄</b>に次を貼り付けて Enter を押し、<br>
-         出てきた <code>start_helper.bat</code> をダブルクリックしてください。<br>
+      : `エクスプローラの<b>アドレス欄</b>に次を貼り付けて Enter を押し、
+         出てきた <code>start_helper.bat</code> をダブルクリックします。<br>
          <code style="user-select:all">%LOCALAPPDATA%\utamita05\tools</code><br>
          <b>探しても見つからないのは AppData が隠しフォルダだからです。</b>
-         上の貼り付けなら開けます。`}${extra}
+         上の貼り付けなら開けます。`}<br>
+    <b>そのフォルダ自体が無いなら、セットアップが終わっていません。</b>
+    上の「はじめての方」からやり直してください。${extra}
   </div>`;
 }
 
