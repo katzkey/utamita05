@@ -81,6 +81,8 @@ SRC="$(find "$TMP/ex" -maxdepth 2 -type d -name tools | head -1)"
 [ -n "$SRC" ] || die "tools フォルダが見つかりませんでした"
 mkdir -p "$DEST/tools"
 cp -R "$SRC/." "$DEST/tools/"
+# ZIP 経由だと実行権限が落ちるので付け直す
+chmod +x "$DEST/tools/"*.sh 2>/dev/null || true
 echo "      OK"
 echo
 
