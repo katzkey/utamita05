@@ -4,7 +4,7 @@
 // 以前はポート番号・接続確認・進捗ポーリング・工程表示が
 // 2 ファイルに重複していて、片方だけ直すと不整合になる状態だった。
 
-import { escapeHtml } from "../core/html.js?v=3629349";
+import { escapeHtml } from "../core/html.js?v=bc7195b";
 
 // ポート番号はここだけ。ヘルパー側の UTAMITA_HELPER_PORT と合わせる。
 export const HELPER_BASE = "http://127.0.0.1:8777";
@@ -127,6 +127,11 @@ export function helperStatusHtml(state) {
  * Safari は http への要求を混在コンテンツとして遮断するため、
  * どれだけ正しく入れても繋がらない。入れ直させても無駄なので先に伝える。
  */
+// Windows でヘルパーを入れる先。\u で始まる並びをテンプレート文字列に
+// 直接書くと不正なエスケープと見なされ、ファイル全体が読めなくなるので、
+// ここで組み立ててから差し込む。
+const WIN_TOOLS_PATH = ['%LOCALAPPDATA%', 'utamita05', 'tools'].join(String.fromCharCode(92));
+
 export function isSafari() {
   const ua = navigator.userAgent || "";
   return /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR/.test(ua);
@@ -195,7 +200,7 @@ export function helperMissingHtml(extra = "") {
          <code style="user-select:all">launchctl load ~/Library/LaunchAgents/com.utamita05.helper.plist</code>`
       : `エクスプローラの<b>アドレス欄</b>に次を貼り付けて Enter を押し、
          出てきた <code>start_helper.bat</code> をダブルクリックします。<br>
-         <code style="user-select:all">%LOCALAPPDATA%\utamita05\tools</code><br>
+         <code style="user-select:all">${WIN_TOOLS_PATH}</code><br>
          <b>探しても見つからないのは AppData が隠しフォルダだからです。</b>
          上の貼り付けなら開けます。`}<br>
     <b>そのフォルダ自体が無いなら、セットアップが終わっていません。</b>
