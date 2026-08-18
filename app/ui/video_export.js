@@ -5,12 +5,12 @@
 //   重ね合わせ・フェード・エンコード・音声の多重化は ffmpeg（ローカルヘルパー）に任せる。
 //   ブラウザで全部やるより速く、音声と背景動画がそのまま扱えるため。
 
-import { getProject, getUi, getFileBlob } from "./state.js?v=90b2bb6";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=90b2bb6";
-import { renderLineLayer } from "../core/render_layer.js?v=90b2bb6";
-import { escapeHtml } from "../core/html.js?v=90b2bb6";
+import { getProject, getUi, getFileBlob } from "./state.js?v=ff7bff3";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=ff7bff3";
+import { renderLineLayer } from "../core/render_layer.js?v=ff7bff3";
+import { escapeHtml } from "../core/html.js?v=ff7bff3";
 import { pingHelper, startJob, pollJob, downloadUrl,
-         helperStatusHtml, helperMissingHtml, stepsHtml, fmtSec } from "./helper_client.js?v=90b2bb6";
+         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=ff7bff3";
 
 const POLL_MS = 1000;
 
@@ -125,6 +125,7 @@ function renderIdle(helper = "checking") {
 
 async function checkHelper() {
   renderIdle(await pingHelper());
+  bindHelperMissing(body());
 }
 
 // ────────────────────────────── 実行

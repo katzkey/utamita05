@@ -4,7 +4,7 @@
 // 以前はポート番号・接続確認・進捗ポーリング・工程表示が
 // 2 ファイルに重複していて、片方だけ直すと不整合になる状態だった。
 
-import { escapeHtml } from "../core/html.js?v=90b2bb6";
+import { escapeHtml } from "../core/html.js?v=ff7bff3";
 
 // ポート番号はここだけ。ヘルパー側の UTAMITA_HELPER_PORT と合わせる。
 export const HELPER_BASE = "http://127.0.0.1:8777";
@@ -118,27 +118,72 @@ export function helperStatusHtml(state) {
   return `<div class="at-status"><span class="at-dot ${dot}"></span> ${msg}</div>`;
 }
 
-/** ヘルパーが無いときの案内 */
+/** ヘルパーが無いときの案内。Windows と Mac で入れ方が違うので出し分ける */
 export function helperMissingHtml(extra = "") {
-  // セットアップ用の .bat は同じ GitHub Pages から配っているので download 属性が効く。
-  // 別サイト（raw.githubusercontent など）に置くと、保存ではなく表示になってしまう。
-  return `<div class="at-note">
-    <b>はじめての方</b><br>
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
+  const intro = `<b>この PC に音声処理のソフトを入れます</b>`
+    + `（ffmpeg と Python 用の部品。合わせて <b>1〜2GB</b>、10〜30 分）。`
+    + `入れ終わると、次回からは起動時に自動で立ち上がります。`;
+
+  // Windows：.bat を保存してダブルクリック。
+  //   同じ GitHub Pages から配るので download 属性が効く
+  //   （別サイトに置くと保存ではなく表示になってしまう）。
+  const win = `
     下のボタンで <code>setup_helper.bat</code> を保存し、<b>ダブルクリック</b>してください。
-    <b>この PC に音声処理のソフトを入れます</b>（ffmpeg と Python 用の部品。
-    合わせて <b>1〜2GB</b>、10〜30 分）。入れ終わると、次回からは PC の起動時に
-    自動で立ち上がります。
+    ${intro}
     <div class="at-actions" style="margin:8px 0 6px">
       <a class="tool-btn at-primary" href="../tools/setup_helper.bat" download="setup_helper.bat"
          style="text-decoration:none">セットアップを保存する</a>
     </div>
     ソフトを入れる操作なので、Windows が<b>「発行元を確認できません」と必ず警告します</b>。
-    <b>詳細情報 → 実行</b> を選んでください。<br>
+    <b>詳細情報 → 実行</b> を選んでください。`;
+
+  // Mac：ダウンロードしたファイルには実行権限が付かず Gatekeeper にも止められるため、
+  //   ファイルを配らずターミナルの 1 行で済ませる。
+  const macHtml = `
+    <b>ターミナル</b>を開いて、下の 1 行を貼り付けて Enter を押してください。
+    ${intro}
+    <div style="margin:8px 0 6px">
+      <code id="hxCmd" style="display:block;padding:8px;background:var(--gray-1);border-radius:4px;
+        font-size:11px;word-break:break-all;user-select:all">curl -fsSL https://katzkey.github.io/utamita05/tools/setup_helper.sh | bash</code>
+      <button class="tool-btn" id="hxCopy" style="margin-top:6px;font-size:11px">この 1 行をコピー</button>
+    </div>
+    ターミナルは <b>アプリケーション → ユーティリティ</b> にあります。
+    Launchpad で「ターミナル」と打っても出ます。<br>
+    <b>.bat のファイルは Mac では使えません</b>（Windows 用です）。`;
+
+  return `<div class="at-note">
+    <b>はじめての方</b><br>
+    ${mac ? macHtml : win}<br>
     <br>
     <b>すでに入れてある方</b><br>
-    ヘルパーが止まっているだけです。<code>tools</code> フォルダの
-    <code>start_helper.bat</code> をダブルクリックしてから、もう一度開いてください。${extra}
+    ヘルパーが止まっているだけです。${mac
+      ? `ターミナルで <code>launchctl load ~/Library/LaunchAgents/com.utamita05.helper.plist</code> を実行するか、`
+        + `いったんログインし直してから、もう一度開いてください。`
+      : `<code>tools</code> フォルダの <code>start_helper.bat</code> をダブルクリックしてから、`
+        + `もう一度開いてください。`}${extra}
   </div>`;
+}
+
+/** 案内の中のコピーボタンを動かす（描画のあとに呼ぶ） */
+export function bindHelperMissing(root) {
+  const btn = root?.querySelector("#hxCopy");
+  const cmd = root?.querySelector("#hxCmd");
+  if (!btn || !cmd) return;
+  btn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(cmd.textContent.trim());
+      btn.textContent = "コピーしました";
+      setTimeout(() => { btn.textContent = "この 1 行をコピー"; }, 1500);
+    } catch {
+      // クリップボードが使えない環境では、選択させるだけにする
+      const r = document.createRange();
+      r.selectNodeContents(cmd);
+      getSelection().removeAllRanges();
+      getSelection().addRange(r);
+      btn.textContent = "手でコピーしてください";
+    }
+  });
 }
 
 /** 工程を箇条書きにして、それぞれに % を出す */

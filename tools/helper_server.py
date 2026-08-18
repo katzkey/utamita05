@@ -37,7 +37,7 @@ ES_SYSTEM_REQUIRED = 0x00000001
 
 
 def _set_awake(on):
-    """戻り値: 成功したか。Windows 以外や失敗時は False。"""
+    """戻り値: 成功したか。効かない環境や失敗時は False。"""
     if os.name != "nt":
         return False
     try:
@@ -50,14 +50,30 @@ def _set_awake(on):
 
 
 class KeepAwake:
-    """with で囲んだ間だけ、このスレッドがスリープを抑止する。"""
+    """with で囲んだ間だけスリープを抑止する。
+
+    Windows は SetThreadExecutionState、macOS は caffeinate を使う。
+    どちらも使えなければ何もしない（抑止できなくても処理は続けたい）。
+    """
     def __enter__(self):
         self.ok = _set_awake(True)
+        self.proc = None
+        if not self.ok and sys.platform == "darwin":
+            try:
+                # -i: アイドルによるスリープを抑止。この with を抜けたら止める
+                self.proc = subprocess.Popen(["caffeinate", "-i"])
+            except Exception:
+                self.proc = None
         return self
 
     def __exit__(self, *a):
         if self.ok:
             _set_awake(False)
+        if self.proc:
+            try:
+                self.proc.terminate()
+            except Exception:
+                pass
         return False
 
 
