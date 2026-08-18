@@ -54,10 +54,18 @@ echo
 
 # ---------- 2. ffmpeg ----------
 echo "[2/5] ffmpeg を確認しています..."
+# Homebrew は入っていても PATH に無いことがある（特に Apple Silicon の
+# /opt/homebrew/bin）。決め打ちの場所も見てから判断する。
+BREW=""
+for b in "$(command -v brew 2>/dev/null)" /opt/homebrew/bin/brew /usr/local/bin/brew; do
+  [ -n "$b" ] && [ -x "$b" ] && { BREW="$b"; break; }
+done
+[ -n "$BREW" ] && eval "$("$BREW" shellenv)" 2>/dev/null || true
+
 if ! command -v ffmpeg >/dev/null 2>&1; then
-  if command -v brew >/dev/null 2>&1; then
+  if [ -n "$BREW" ]; then
     echo "      見つからないので Homebrew で入れます..."
-    brew install ffmpeg || die "ffmpeg を入れられませんでした"
+    "$BREW" install ffmpeg || die "ffmpeg を入れられませんでした"
   else
     echo
     echo "  ffmpeg が無く、Homebrew も入っていません。"
@@ -123,8 +131,10 @@ if [ "$(uname)" = "Darwin" ]; then
 </dict>
 </plist>
 PLISTEOF
+  # 新しい macOS は bootstrap、古いものは load。両方試す
+  launchctl bootout "gui/$(id -u)/com.utamita05.helper" 2>/dev/null || true
   launchctl unload "$PLIST" 2>/dev/null || true
-  launchctl load "$PLIST" || die "自動起動の登録に失敗しました"
+  launchctl bootstrap "gui/$(id -u)" "$PLIST" 2>/dev/null     || launchctl load "$PLIST"     || die "自動起動の登録に失敗しました"
 else
   echo "      macOS 以外なので登録は省略します。"
   echo "      手で動かすとき： \"$DEST/venv/bin/python\" \"$DEST/tools/helper_server.py\""

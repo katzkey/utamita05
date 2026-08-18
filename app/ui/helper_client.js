@@ -4,7 +4,7 @@
 // 以前はポート番号・接続確認・進捗ポーリング・工程表示が
 // 2 ファイルに重複していて、片方だけ直すと不整合になる状態だった。
 
-import { escapeHtml } from "../core/html.js?v=fb28877";
+import { escapeHtml } from "../core/html.js?v=3629349";
 
 // ポート番号はここだけ。ヘルパー側の UTAMITA_HELPER_PORT と合わせる。
 export const HELPER_BASE = "http://127.0.0.1:8777";
@@ -118,6 +118,20 @@ export function helperStatusHtml(state) {
   return `<div class="at-status"><span class="at-dot ${dot}"></span> ${msg}</div>`;
 }
 
+/**
+ * Safari かどうか。
+ *
+ * このアプリは https で配信され、ヘルパーは http://127.0.0.1 で待つ。
+ * Chrome / Edge は相手が localhost なら（ヘルパーが返す
+ * Access-Control-Allow-Private-Network を見て）通してくれるが、
+ * Safari は http への要求を混在コンテンツとして遮断するため、
+ * どれだけ正しく入れても繋がらない。入れ直させても無駄なので先に伝える。
+ */
+export function isSafari() {
+  const ua = navigator.userAgent || "";
+  return /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR/.test(ua);
+}
+
 /** ヘルパーが無いときの案内。Windows と Mac で入れ方が違うので出し分ける */
 export function helperMissingHtml(extra = "") {
   const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
@@ -152,6 +166,19 @@ export function helperMissingHtml(extra = "") {
     Launchpad で「ターミナル」と打っても出ます。<br>
     <b>.bat のファイルは Mac では使えません</b>（Windows 用です）。`;
 
+  // Safari は入れ直しても繋がらないので、案内より先に出す
+  if (isSafari()) {
+    return `<div class="at-warn">
+      <b>Safari ではヘルパーに繋がりません。</b><br>
+      <b>Chrome</b> か <b>Edge</b> で開き直してください。同じ URL でそのまま使えます。<br>
+      <code style="user-select:all">https://katzkey.github.io/utamita05/app/</code><br>
+      <br>
+      Safari は、https のページから手元のプログラム（http）へ問い合わせることを
+      許していません。セットアップをやり直しても直りません。<br>
+      なお<b>編集そのものは Safari でもできます</b>。繋がらないのは
+      タイミング自動検出と動画書き出しだけです。${extra}
+    </div>`;
+  }
   return `<div class="at-note">
     <b>はじめての方</b><br>
     ${mac ? macHtml : win}<br>
