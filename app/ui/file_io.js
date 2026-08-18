@@ -1,9 +1,9 @@
 // プロジェクト保存・読込、歌詞ファイル取込、楽曲読込
 
-import { getProject, getUi, replaceProject, setUi, markSaved, setProject, registerFileBlob, restoreProjectFiles, getFileBlobUrl } from "./state.js?v=6b7427f";
-import { fromJSON, toJSON } from "../core/project.js?v=6b7427f";
-import { getTemplatesRegistry } from "../core/templates_loader.js?v=6b7427f";
-import * as ops from "../core/operations.js?v=6b7427f";
+import { getProject, getUi, replaceProject, setUi, markSaved, setProject, registerFileBlob, restoreProjectFiles, getFileBlobUrl } from "./state.js?v=5eec7ff";
+import { fromJSON, toJSON } from "../core/project.js?v=5eec7ff";
+import { getTemplatesRegistry } from "../core/templates_loader.js?v=5eec7ff";
+import * as ops from "../core/operations.js?v=5eec7ff";
 
 // project.templates をレジストリで上書きして返す（新規・開く時の共通処理）
 function withRegistryTemplates(project) {
