@@ -1,17 +1,17 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=ff7bff3";
-import * as ops from "../core/operations.js?v=ff7bff3";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=ff7bff3";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=ff7bff3";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor } from "../core/fonts_loader.js?v=ff7bff3";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=ff7bff3";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=ff7bff3";
-import { AE_ENABLED } from "../core/features.js?v=ff7bff3";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=ff7bff3";
-import { escapeHtml } from "../core/html.js?v=ff7bff3";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=ff7bff3";
-import * as songPreview from "./song_preview.js?v=ff7bff3";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=8bd5bff";
+import * as ops from "../core/operations.js?v=8bd5bff";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=8bd5bff";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=8bd5bff";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=8bd5bff";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=8bd5bff";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=8bd5bff";
+import { AE_ENABLED } from "../core/features.js?v=8bd5bff";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=8bd5bff";
+import { escapeHtml } from "../core/html.js?v=8bd5bff";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=8bd5bff";
+import * as songPreview from "./song_preview.js?v=8bd5bff";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -80,7 +80,10 @@ function fontFamilyOptionsForLine(currentValue, projectDefault) {
   for (const e of entries) {
     const sel = e.value === currentValue ? "selected" : "";
     const style = `font-family: '${(e.cssFamily || "").replace(/'/g, "\\'")}', system-ui, sans-serif`;
-    options.push(`<option value="${escapeHtml(e.value)}" style="${style}" ${sel}>${escapeHtml(e.label)}</option>`);
+    // 一覧はデザイナーの AE 機のものなので、この PC に無いフォントも並ぶ。
+    // 選ぶと黙って別の書体で描かれてしまうため、選ぶ前に分かるようにする。
+    const miss = isFontAvailable(e.cssFamily || e.value) ? "" : "⚠ ";
+    options.push(`<option value="${escapeHtml(e.value)}" style="${style}" ${sel}>${miss}${escapeHtml(e.label)}</option>`);
   }
   return options.join("");
 }
@@ -251,7 +254,8 @@ function renderDetail(project, ui) {
               html += `<optgroup label="${escapeHtml(cat)}">`;
               for (const p of list) {
                 const sel = line.fontPresetId === p.id ? "selected" : "";
-                html += `<option value="${p.id}" ${sel}>${escapeHtml(p.label)}</option>`;
+                const miss = isFontValueAvailable(p.apply?.fontOverride?.family) ? "" : "⚠ ";
+                html += `<option value="${p.id}" ${sel}>${miss}${escapeHtml(p.label)}</option>`;
               }
               html += "</optgroup>";
             }
@@ -356,6 +360,17 @@ function renderDetail(project, ui) {
           ${fontFamilyOptionsForLine(line.fontOverride?.family || "", project.font.family)}
         </select>
       </div>
+      ${(() => {
+        // 実際に使われるフォントが、この PC に入っているか。
+        // 入っていなければブラウザが黙って別の書体で描くので、ここで知らせる。
+        const used = line.fontOverride?.family || project.font.family || "";
+        if (!used || isFontValueAvailable(used)) return "";
+        return `<div class="at-warn" style="margin:4px 0">
+          <b>${escapeHtml(labelFor(used) || used)}</b> はこの PC に入っていません。<br>
+          いま見えているのは<b>別の書体</b>です。書き出しても同じものが出ます。<br>
+          このまま進めるなら、⚠ の付いていないフォントから選び直してください。
+        </div>`;
+      })()}
       <div class="field">
         <span class="field-label">size</span>
         <input class="field-input" id="fldFontSize" type="number" min="1" max="1000" step="1" placeholder="${project.font.size || 48}" value="${line.fontOverride?.size ?? ""}" style="width:80px">

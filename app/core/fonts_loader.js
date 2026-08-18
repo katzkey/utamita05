@@ -89,3 +89,45 @@ export function labelFor(value) {
 export function getCachedFonts() {
   return getFontEntries().map(e => e.value);
 }
+
+// ---- その PC にフォントが入っているか ----
+//
+// 一覧はデザイナーの AE 機から書き出したものなので、全員に同じ 599 件が出る。
+// 「一覧にある＝自分の PC に入っている」ではない。入っていないフォントを選んでも
+// ブラウザは黙って別の書体で描くので、気づかないまま作り込むことになる。
+//
+// document.fonts.check() は Web フォントの読み込み判定なので、ここでは使えない
+// （入っていない名前でも true を返す）。実際に描いた幅を、土台のフォントだけの
+// 幅と比べて、変われば「入っている」と見なす。
+const fontAvailCache = new Map();
+let availCanvas = null;
+
+export function isFontAvailable(cssFamily) {
+  const fam = String(cssFamily || "").trim();
+  if (!fam) return true;                       // 「継承」などは判定しない
+  if (fontAvailCache.has(fam)) return fontAvailCache.get(fam);
+
+  let ok = false;
+  try {
+    availCanvas = availCanvas || document.createElement("canvas");
+    const c = availCanvas.getContext("2d");
+    const probe = "あアA国永0";                 // 和欧混在。どれかで差が出る
+    const q = fam.replace(/'/g, "\'");
+    // 土台を 3 つ試す。指定が効いていれば、どれか 1 つでも幅が変わる
+    for (const base of ["serif", "sans-serif", "monospace"]) {
+      c.font = `72px ${base}`;
+      const w0 = c.measureText(probe).width;
+      c.font = `72px '${q}', ${base}`;
+      if (Math.abs(c.measureText(probe).width - w0) > 0.5) { ok = true; break; }
+    }
+  } catch (e) {
+    ok = true;   // 判定できない環境では邪魔をしない（今までどおり）
+  }
+  fontAvailCache.set(fam, ok);
+  return ok;
+}
+
+/** 保存値（postScriptName 等）で判定する */
+export function isFontValueAvailable(value) {
+  return isFontAvailable(cssFamilyFor(value));
+}
