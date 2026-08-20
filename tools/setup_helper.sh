@@ -102,6 +102,34 @@ echo "[4/5] 必要なライブラリを入れています（ここが長いで�
 VPY="$DEST/venv/bin/python"
 "$VPY" -m pip install --upgrade pip >/dev/null || true
 "$VPY" -m pip install -r "$DEST/tools/requirements.txt" || die "ライブラリのインストールに失敗しました"
+
+# 入っただけでは動くとは限らない。実際に読み込んで確かめる。
+# 版が古くて中身が違う（demucs.api が無い等）ことがあるため。
+echo "      確認しています..."
+CHECK="$("$VPY" - <<'EOF'
+miss = []
+for name in ("faster_whisper", "demucs", "pykakasi", "numpy"):
+    try:
+        __import__(name)
+    except Exception as e:
+        miss.append(name + " -> " + str(e))
+try:
+    import demucs.api
+except Exception:
+    try:
+        import demucs
+        v = getattr(demucs, "__version__", "?")
+    except Exception:
+        v = "?"
+    print("note: demucs " + str(v) + " には api が無いので、コマンド版を使います")
+if miss:
+    print("MISSING")
+    for m in miss:
+        print("  " + m)
+EOF
+)"
+[ -n "$CHECK" ] && echo "$CHECK" | sed "s/^/      /"
+echo "$CHECK" | grep -q "^MISSING$" && die "必要なものが読み込めませんでした（上の行を担当者へ送ってください）"
 echo "      OK"
 echo
 

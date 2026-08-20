@@ -20,7 +20,7 @@
   {"type":"done","result":{...}}
 """
 
-import argparse, json, os, subprocess, sys, tempfile, time, wave
+import argparse, json, os, re, subprocess, sys, tempfile, time, wave
 import numpy as np
 
 # 工程の一覧。UI 側はこれをそのまま箇条書きにして、それぞれに % を出す。
@@ -88,6 +88,57 @@ def extract_audio(song, workdir, rep):
 # ---------------------------------------------------------------- 2. 分離
 
 def separate_vocals(wav44, workdir, rep, device="cpu"):
+    """曲からボーカルだけを取り出す。
+
+    demucs.api は 4.0 から入ったもの。古い demucs が入っている環境では
+    使えないので、その場合はコマンド版（python -m demucs）に落とす。
+    結果は同じ。版を揃えさせるより、動く方を選ぶ。
+    """
+    try:
+        import demucs.api            # noqa: F401
+    except ImportError:
+        print("[info] demucs.api が無いのでコマンド版を使います", flush=True)
+        return _separate_vocals_cli(wav44, workdir, rep, device)
+    return _separate_vocals_api(wav44, workdir, rep, device)
+
+
+def _separate_vocals_cli(wav44, workdir, rep, device="cpu"):
+    out = os.path.join(workdir, "demucs_out")
+    cmd = [sys.executable, "-m", "demucs", "--two-stems", "vocals",
+           "-n", "htdemucs", "-d", device, "-o", out, wav44]
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                         text=True, encoding="utf-8", errors="replace")
+    tail = []
+    for line in p.stdout:
+        line = line.rstrip()
+        if line:
+            tail.append(line)
+            del tail[:-20]
+        # 進捗は  34%|███  のような形で出る
+        m = re.search(r"(\d{1,3})%", line)
+        if m:
+            rep.step("separate", min(99.0, float(m.group(1))))
+    p.wait()
+    if p.returncode != 0:
+        raise RuntimeError("ボーカル分離に失敗しました\n" + "\n".join(tail))
+
+    # demucs_out/<モデル名>/<曲名>/vocals.wav に出る
+    found = None
+    for root, _dirs, files in os.walk(out):
+        for f in files:
+            if f.startswith("vocals"):
+                found = os.path.join(root, f)
+    if not found:
+        raise RuntimeError("分離結果 vocals.wav が見つかりませんでした")
+
+    voc16 = os.path.join(workdir, "vocals16k.wav")
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", found, "-ac", "1", "-ar", "16000", voc16],
+                   check=True)
+    rep.step("separate", 100)
+    return voc16
+
+
+def _separate_vocals_api(wav44, workdir, rep, device="cpu"):
     import demucs.api
     state = {"models": 1}
 
