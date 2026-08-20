@@ -198,7 +198,7 @@ def new_job(steps=None):
         "stepdefs": steps,
         "status": "running",           # running | done | error | canceled
         "steps": {k: 0.0 for k, _ in steps},
-        "result": None, "error": None,
+        "result": None, "error": None, "tail": [],
         "startedAt": time.time(), "elapsed": 0.0,
         "proc": None, "workdir": None, "outfile": None,
         "dirs": [],          # 終了後に消す一時フォルダ
@@ -223,6 +223,11 @@ def run_render_job(job_id, workdir, spec_path, out_path):
             for line in p.stdout:
                 line = line.strip()
                 if not line.startswith("{"):
+                    # JSON 以外＝スクリプトのエラー本文。捨てると「code 1」しか
+                    # 残らず原因が分からなくなるので、末尾だけ取っておく。
+                    if line:
+                        job["tail"].append(line)
+                        del job["tail"][:-40]
                     continue
                 try:
                     d = json.loads(line)
@@ -241,7 +246,8 @@ def run_render_job(job_id, workdir, spec_path, out_path):
                 return
             if p.returncode != 0 or not os.path.exists(out_path):
                 job["status"] = "error"
-                job["error"] = job["error"] or "書き出しに失敗しました"
+                job["error"] = job["error"] or ("書き出しに失敗しました"
+                    + f"（code {p.returncode}）" + _tail_text(job))
                 return
             job["outfile"] = out_path
             job["status"] = "done"
@@ -251,6 +257,15 @@ def run_render_job(job_id, workdir, spec_path, out_path):
         job["error"] = str(e)
     finally:
         job["finishedAt"] = time.time()
+
+
+def _tail_text(job, keep=12):
+    """異常終了したとき、スクリプトが最後に吐いた行を添える。
+    これが無いと画面には「code 1」しか出ず、何が起きたのか分からない。"""
+    lines = [l for l in job.get("tail", []) if l][-keep:]
+    if not lines:
+        return ""
+    return "\n\n----- 最後の出力 -----\n" + "\n".join(lines)
 
 
 def run_job(job_id, song_path, lines, model):
@@ -276,6 +291,11 @@ def run_job(job_id, song_path, lines, model):
             for line in p.stdout:
                 line = line.strip()
                 if not line or not line.startswith("{"):
+                    # JSON 以外＝スクリプトのエラー本文。捨てると「code 1」しか
+                    # 残らず原因が分からなくなるので、末尾だけ取っておく。
+                    if line:
+                        job["tail"].append(line)
+                        del job["tail"][:-40]
                     continue
                 try:
                     d = json.loads(line)
@@ -292,7 +312,8 @@ def run_job(job_id, song_path, lines, model):
                 return
             if p.returncode != 0:
                 job["status"] = "error"
-                job["error"] = job["error"] or f"処理が異常終了しました (code {p.returncode})"
+                job["error"] = job["error"] or (
+                    f"処理が異常終了しました (code {p.returncode})" + _tail_text(job))
                 return
             with io.open(out_path, encoding="utf-8") as f:
                 job["result"] = json.load(f)

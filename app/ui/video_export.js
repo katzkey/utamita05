@@ -5,12 +5,12 @@
 //   重ね合わせ・フェード・エンコード・音声の多重化は ffmpeg（ローカルヘルパー）に任せる。
 //   ブラウザで全部やるより速く、音声と背景動画がそのまま扱えるため。
 
-import { getProject, getUi, getFileBlob } from "./state.js?v=6641588";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=6641588";
-import { renderLineLayer } from "../core/render_layer.js?v=6641588";
-import { escapeHtml } from "../core/html.js?v=6641588";
+import { getProject, getUi, getFileBlob } from "./state.js?v=4e538c6";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=4e538c6";
+import { renderLineLayer } from "../core/render_layer.js?v=4e538c6";
+import { escapeHtml } from "../core/html.js?v=4e538c6";
 import { pingHelper, startJob, pollJob, downloadUrl,
-         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=6641588";
+         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=4e538c6";
 
 const POLL_MS = 1000;
 
@@ -252,7 +252,7 @@ function renderDone(d) {
 
 function renderError(msg) {
   const el = body(); if (!el) return;
-  el.innerHTML = `<div class="at-warn">${escapeHtml(msg)}</div>
+  el.innerHTML = `<div class="at-warn" style="white-space:pre-wrap;font-family:inherit;max-height:40vh;overflow:auto">${escapeHtml(msg)}</div>
     <div class="at-actions"><button class="tool-btn" id="veBack2">戻る</button></div>`;
   el.querySelector("#veBack2").addEventListener("click", () => { currentJob = null; renderIdle(); checkHelper(); });
 }
