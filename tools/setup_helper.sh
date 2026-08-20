@@ -101,18 +101,32 @@ echo "[4/5] 必要なライブラリを入れています（ここが長いで�
 "$PY" -m venv "$DEST/venv" || die "venv を作れませんでした"
 VPY="$DEST/venv/bin/python"
 "$VPY" -m pip install --upgrade pip >/dev/null || true
-"$VPY" -m pip install -r "$DEST/tools/requirements.txt" || die "ライブラリのインストールに失敗しました"
+# --upgrade を付けないと、古い版が入ったままになる。
+# 実際に demucs 4.0 系のまま残って、保存の段で落ちた例がある。
+"$VPY" -m pip install --upgrade -r "$DEST/tools/requirements.txt" || die "ライブラリのインストールに失敗しました"
 
 # 入っただけでは動くとは限らない。実際に読み込んで確かめる。
 # 版が古くて中身が違う（demucs.api が無い等）ことがあるため。
 echo "      確認しています..."
 CHECK="$("$VPY" - <<'EOF'
 miss = []
-for name in ("faster_whisper", "demucs", "pykakasi", "numpy"):
+for name in ("faster_whisper", "demucs", "pykakasi", "numpy", "soundfile"):
     try:
         __import__(name)
     except Exception as e:
         miss.append(name + " -> " + str(e))
+# torchaudio は新しい demucs では使わないので必須にしない。
+# 入っているのに書き出す部品が無い場合だけ知らせる。
+try:
+    import torchaudio
+    if not torchaudio.list_audio_backends():
+        print("note: torchaudio に書き出す部品がありません（soundfile を入れてあります）")
+except Exception:
+    pass
+import demucs
+dv = getattr(demucs, "__version__", "0")
+if tuple(int(x) for x in str(dv).split(".")[:2] if x.isdigit()) < (4, 1):
+    miss.append("demucs " + str(dv) + " は古すぎます。4.1.0 以上が要ります")
 try:
     import demucs.api
 except Exception:

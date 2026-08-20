@@ -2,14 +2,18 @@
 #
 #   faster-whisper … 歌声の書き起こし
 #   demucs         … 曲からボーカルだけを取り出す（torch を連れてくるので 1〜2GB あります）
-#                    4.0 未満だと demucs.api が無い。その場合はコマンド版に落ちる
+#                    4.1.0 で確認済み。それ未満は保存に torchaudio を使い、
+#                    書き出す部品が無いと落ちる（soundfile はその保険）
 #   pykakasi       … 漢字かな交じりの歌詞をかなに直す
 #   numpy          … 音量の波形処理
+#   soundfile      … torchaudio が音声を書き出すときの部品。これが無いと
+#                    分離の結果を保存できず Couldn't find appropriate backend で落ちる
 #
 # 入れ方：  python -m pip install -r requirements.txt
 # ffmpeg は pip では入りません。setup_helper.bat が面倒を見ます。
 
 faster-whisper>=1.0
-demucs>=4.0.1
+demucs>=4.1.0
 pykakasi>=2.2
 numpy>=1.24
+soundfile>=0.12
