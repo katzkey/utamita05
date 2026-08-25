@@ -1,18 +1,18 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=b9b478b";
-import * as ops from "../core/operations.js?v=b9b478b";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=b9b478b";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=b9b478b";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=b9b478b";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=b9b478b";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=b9b478b";
-import { AE_ENABLED } from "../core/features.js?v=b9b478b";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=b9b478b";
-import { KERN_TYPES } from "../core/char_type.js?v=b9b478b";
-import { escapeHtml } from "../core/html.js?v=b9b478b";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=b9b478b";
-import * as songPreview from "./song_preview.js?v=b9b478b";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=a2aac36";
+import * as ops from "../core/operations.js?v=a2aac36";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=a2aac36";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=a2aac36";
+import { loadFonts, getFontEntries, cssFamilyFor, fontStackFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=a2aac36";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=a2aac36";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=a2aac36";
+import { AE_ENABLED } from "../core/features.js?v=a2aac36";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=a2aac36";
+import { KERN_TYPES } from "../core/char_type.js?v=a2aac36";
+import { escapeHtml } from "../core/html.js?v=a2aac36";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=a2aac36";
+import * as songPreview from "./song_preview.js?v=a2aac36";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -125,7 +125,7 @@ function fontFamilyOptionsForLine(currentValue, projectDefault) {
   const options = [`<option value="" ${!currentValue ? "selected" : ""}>${escapeHtml(inhLabel)}</option>`];
   for (const e of entries) {
     const sel = e.value === currentValue ? "selected" : "";
-    const style = `font-family: '${(e.cssFamily || "").replace(/'/g, "\\'")}', system-ui, sans-serif`;
+    const style = `font-family: ${fontStackFor(e.value)}`;
     // 一覧はデザイナーの AE 機のものなので、この PC に無いフォントも並ぶ。
     // 選ぶと黙って別の書体で描かれてしまうため、選ぶ前に分かるようにする。
     const miss = isFontValueAvailable(e.value) ? "" : "⚠ ";

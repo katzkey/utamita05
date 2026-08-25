@@ -1,11 +1,11 @@
 // 全体設定タブ
 
-import { getProject, setProject } from "./state.js?v=b9b478b";
-import * as ops from "../core/operations.js?v=b9b478b";
-import { loadFonts, getFontEntries, isFontValueAvailable } from "../core/fonts_loader.js?v=b9b478b";
-import { getCustomZabutonPresets } from "../core/presets.js?v=b9b478b";
-import { exportCustomPresetsJson, importCustomPresetsJson } from "../core/custom_presets.js?v=b9b478b";
-import { escapeHtml } from "../core/html.js?v=b9b478b";
+import { getProject, setProject } from "./state.js?v=a2aac36";
+import * as ops from "../core/operations.js?v=a2aac36";
+import { loadFonts, getFontEntries, fontStackFor, isFontValueAvailable } from "../core/fonts_loader.js?v=a2aac36";
+import { getCustomZabutonPresets } from "../core/presets.js?v=a2aac36";
+import { exportCustomPresetsJson, importCustomPresetsJson } from "../core/custom_presets.js?v=a2aac36";
+import { escapeHtml } from "../core/html.js?v=a2aac36";
 
 let pane;
 
@@ -188,7 +188,7 @@ function fontFamilyOptions(current) {
   }
   return entries.map(e => {
     const sel = e.value === current ? "selected" : "";
-    const style = `font-family: '${(e.cssFamily || "").replace(/'/g, "\\'")}', system-ui, sans-serif`;
+    const style = `font-family: ${fontStackFor(e.value)}`;
     // この PC に入っていないフォントには印を付ける（詳細ペインと同じ）
     const miss = isFontValueAvailable(e.value) ? "" : "⚠ ";
     return `<option value="${escapeHtml(e.value)}" style="${style}" ${sel}>${miss}${escapeHtml(e.label)}</option>`;

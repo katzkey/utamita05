@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=b9b478b";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=b9b478b";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=b9b478b";
-import { SMALL_KANA, classifyChar, autoKerningEm, typeKerningEm } from "./char_type.js?v=b9b478b";
-import { escapeHtml } from "./html.js?v=b9b478b";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=a2aac36";
+import { cssFamilyFor, fontStackFor, labelFor } from "./fonts_loader.js?v=a2aac36";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=a2aac36";
+import { SMALL_KANA, classifyChar, autoKerningEm, typeKerningEm } from "./char_type.js?v=a2aac36";
+import { escapeHtml } from "./html.js?v=a2aac36";
 
 // フォントごとの「行ボックスの中心」と「文字のインクの中心」のずれ（em、＋で文字が下寄り）。
 //
@@ -270,7 +270,7 @@ export function renderLinePreviewHtml(line, project) {
   const textStyle = [
     `position: relative`,
     `z-index: 1`,
-    `font-family: '${(cssFam || "").replace(/'/g, "\\'")}', system-ui, sans-serif`,
+    `font-family: ${fontStackFor(familyValue)}`,
     `font-size: ${fontCqw.toFixed(3)}cqw`,
     `letter-spacing: ${letterCqw.toFixed(3)}cqw`,
     // letter-spacing は最後の 1 文字の後ろにも入る。そのままだと行の箱が

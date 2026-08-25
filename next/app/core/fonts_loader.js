@@ -169,3 +169,26 @@ export function isFontValueAvailable(value) {
 export function isFontAvailable(cssFamily) {
   return isFontValueAvailable(cssFamily);
 }
+
+/**
+ * CSS の font-family に入れる並び。
+ *
+ * 名前を 1 つだけ渡していたため、その名前が OS の持つ名前と食い違うと
+ * まったく効かなかった。読み込めた face 名を先頭に、AE 由来の別名を
+ * 全部後ろに並べる。どれか 1 つでも合えば正しい書体で出る。
+ */
+export function fontStackFor(value) {
+  if (!value) return "system-ui, sans-serif";
+  const names = [];
+  const st = faceState.get(value);
+  if (st && st.ok) names.push(st.alias);
+  const hit = aeFonts && aeFonts.find(f => f.postScriptName === value);
+  if (hit) {
+    for (const n of [hit.nativeFamilyName, hit.familyName, hit.nativeFullName, hit.fullName]) {
+      if (n && !names.includes(n)) names.push(n);
+    }
+  }
+  if (!names.includes(value)) names.push(value);
+  return names.map(n => "'" + String(n).replace(/'/g, "") + "'").join(", ")
+       + ", system-ui, sans-serif";
+}
