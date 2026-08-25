@@ -1,17 +1,17 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=6ce69f9";
-import * as ops from "../core/operations.js?v=6ce69f9";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=6ce69f9";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=6ce69f9";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=6ce69f9";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=6ce69f9";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=6ce69f9";
-import { AE_ENABLED } from "../core/features.js?v=6ce69f9";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=6ce69f9";
-import { escapeHtml } from "../core/html.js?v=6ce69f9";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=6ce69f9";
-import * as songPreview from "./song_preview.js?v=6ce69f9";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=764201a";
+import * as ops from "../core/operations.js?v=764201a";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=764201a";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=764201a";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=764201a";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=764201a";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=764201a";
+import { AE_ENABLED } from "../core/features.js?v=764201a";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=764201a";
+import { escapeHtml } from "../core/html.js?v=764201a";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=764201a";
+import * as songPreview from "./song_preview.js?v=764201a";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -127,7 +127,7 @@ function fontFamilyOptionsForLine(currentValue, projectDefault) {
     const style = `font-family: '${(e.cssFamily || "").replace(/'/g, "\\'")}', system-ui, sans-serif`;
     // 一覧はデザイナーの AE 機のものなので、この PC に無いフォントも並ぶ。
     // 選ぶと黙って別の書体で描かれてしまうため、選ぶ前に分かるようにする。
-    const miss = isFontAvailable(e.cssFamily || e.value) ? "" : "⚠ ";
+    const miss = isFontValueAvailable(e.value) ? "" : "⚠ ";
     options.push(`<option value="${escapeHtml(e.value)}" style="${style}" ${sel}>${miss}${escapeHtml(e.label)}</option>`);
   }
   return options.join("");

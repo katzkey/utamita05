@@ -68,6 +68,10 @@ export function getFontEntries() {
 // 保存値（PS名 or 名前）→ CSS 用 family 名
 export function cssFamilyFor(value) {
   if (!value) return "";
+  // 読み込めたものは、その face 名で描く。
+  // 和文名を渡すとウェイトが落ちる（Heavy を選んでも Regular になる）ため。
+  const st = faceState.get(value);
+  if (st && st.ok) return st.alias;
   if (aeFonts) {
     const hit = aeFonts.find(f => f.postScriptName === value);
     if (hit) return hit.nativeFamilyName || hit.familyName || value;
@@ -92,42 +96,76 @@ export function getCachedFonts() {
 
 // ---- その PC にフォントが入っているか ----
 //
-// 一覧はデザイナーの AE 機から書き出したものなので、全員に同じ 599 件が出る。
-// 「一覧にある＝自分の PC に入っている」ではない。入っていないフォントを選んでも
-// ブラウザは黙って別の書体で描くので、気づかないまま作り込むことになる。
+// 一覧はデザイナーの AE 機から書き出したもの。全員に同じものが出るので、
+// 「一覧にある＝自分の PC に入っている」ではない。入っていないフォントを
+// 選んでもブラウザは黙って別の書体で描くため、必ず確かめる。
 //
-// document.fonts.check() は Web フォントの読み込み判定なので、ここでは使えない
-// （入っていない名前でも true を返す）。実際に描いた幅を、土台のフォントだけの
-// 幅と比べて、変われば「入っている」と見なす。
-const fontAvailCache = new Map();
-let availCanvas = null;
+// 幅を比べる方法は当てにならなかった。CSS に渡していたのが和文名
+//（例：しっぽり明朝）で、OS が持つ名前と食い違うと、入っていても
+// 「無い」と出てしまう。実際に誤検出が出た。
+//
+// そこで PostScript 名で face を作り、実際に読み込ませて確かめる。
+//   - 読み込めた  → 入っている。以降その face 名で描く
+//   - 失敗した    → 入っていない
+// 利点は 2 つ。名前の食い違いが起きないことと、
+// ウェイトまで正しく選べること（従来は Heavy を選んでも Regular で描かれていた）。
+// 許可を求める画面も出ず、Mac でも同じように動く。
 
-export function isFontAvailable(cssFamily) {
-  const fam = String(cssFamily || "").trim();
-  if (!fam) return true;                       // 「継承」などは判定しない
-  if (fontAvailCache.has(fam)) return fontAvailCache.get(fam);
+const faceState = new Map();   // 保存値 -> { alias, ok }
+let probing = null;
 
-  let ok = false;
-  try {
-    availCanvas = availCanvas || document.createElement("canvas");
-    const c = availCanvas.getContext("2d");
-    const probe = "あアA国永0";                 // 和欧混在。どれかで差が出る
-    const q = fam.replace(/'/g, "\'");
-    // 土台を 3 つ試す。指定が効いていれば、どれか 1 つでも幅が変わる
-    for (const base of ["serif", "sans-serif", "monospace"]) {
-      c.font = `72px ${base}`;
-      const w0 = c.measureText(probe).width;
-      c.font = `72px '${q}', ${base}`;
-      if (Math.abs(c.measureText(probe).width - w0) > 0.5) { ok = true; break; }
-    }
-  } catch (e) {
-    ok = true;   // 判定できない環境では邪魔をしない（今までどおり）
-  }
-  fontAvailCache.set(fam, ok);
-  return ok;
+function aliasOf(value) {
+  return "u05_" + String(value).replace(/[^A-Za-z0-9_-]/g, "_");
 }
 
-/** 保存値（postScriptName 等）で判定する */
+/** その 1 つを調べて登録する。戻り値は入っているか */
+async function probeOne(value) {
+  if (faceState.has(value)) return faceState.get(value).ok;
+  const alias = aliasOf(value);
+  // PostScript 名で見つからないフォントもあるので、別名も順に試す
+  const names = [value];
+  const hit = aeFonts && aeFonts.find(f => f.postScriptName === value);
+  if (hit) {
+    for (const n of [hit.fullName, hit.nativeFullName, hit.familyName, hit.nativeFamilyName]) {
+      if (n && !names.includes(n)) names.push(n);
+    }
+  }
+  for (const n of names) {
+    try {
+      const face = new FontFace(alias, 'local("' + String(n).replace(/"/g, '') + '")');
+      await face.load();
+      document.fonts.add(face);
+      faceState.set(value, { alias, ok: true });
+      return true;
+    } catch (e) { /* 次の名前で試す */ }
+  }
+  faceState.set(value, { alias, ok: false });
+  return false;
+}
+
+/**
+ * まとめて調べる。起動時に、プリセットが使うものと
+ * プロジェクトで使っているものを渡す。
+ */
+export async function probeFonts(values) {
+  const list = [...new Set((values || []).filter(Boolean))];
+  probing = Promise.all(list.map(probeOne));
+  await probing;
+  return list.filter(v => faceState.get(v)?.ok).length;
+}
+
+/** 調べ終わっているか（まだなら判定を出さない） */
+export function isFontProbed(value) {
+  return faceState.has(value);
+}
+
 export function isFontValueAvailable(value) {
-  return isFontAvailable(cssFamilyFor(value));
+  if (!value) return true;
+  const st = faceState.get(value);
+  return st ? st.ok : true;   // 未確認のものは邪魔しない
+}
+
+// 旧 API（cssFamily を直接渡す形）。今は保存値で引くので薄い包み。
+export function isFontAvailable(cssFamily) {
+  return isFontValueAvailable(cssFamily);
 }

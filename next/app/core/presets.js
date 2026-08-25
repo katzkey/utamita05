@@ -203,7 +203,9 @@ export const ZABUTON_PRESETS = [
         //   文字の em 箱から線まで 14.5px = 0.393em → 28px 換算 11
         // カスレ：PDF の線はまっすぐで、太さのばらつき σ0.30px・中心のゆらぎ σ0.17px。
         //   これはアンチエイリアスの範囲で、実質まっすぐ。掛かりは控えめにしてある
-        enabled: true, style: "brackets", texture: "scratchy",
+        // PDF のラインは 3 種とも完全にまっすぐ（太さのばらつき σ0.00・欠け 0%）。
+        // カスレは付けない。機能は残してあるので、要るときは画面から入れられる。
+        enabled: true, style: "brackets", texture: null,
         color: "#FFFFFF", width: 1.5, offset: 11, extend: 8,
         // カスレの粒（AE px）。PDF の線はまっすぐなので控えめに置いてある
         pitch: 16, wobble: 1.2, rough: 0.45, seed: 3,

@@ -1,11 +1,11 @@
 // 全体設定タブ
 
-import { getProject, setProject } from "./state.js?v=6ce69f9";
-import * as ops from "../core/operations.js?v=6ce69f9";
-import { loadFonts, getFontEntries, isFontAvailable } from "../core/fonts_loader.js?v=6ce69f9";
-import { getCustomZabutonPresets } from "../core/presets.js?v=6ce69f9";
-import { exportCustomPresetsJson, importCustomPresetsJson } from "../core/custom_presets.js?v=6ce69f9";
-import { escapeHtml } from "../core/html.js?v=6ce69f9";
+import { getProject, setProject } from "./state.js?v=764201a";
+import * as ops from "../core/operations.js?v=764201a";
+import { loadFonts, getFontEntries, isFontValueAvailable } from "../core/fonts_loader.js?v=764201a";
+import { getCustomZabutonPresets } from "../core/presets.js?v=764201a";
+import { exportCustomPresetsJson, importCustomPresetsJson } from "../core/custom_presets.js?v=764201a";
+import { escapeHtml } from "../core/html.js?v=764201a";
 
 let pane;
 
@@ -190,7 +190,7 @@ function fontFamilyOptions(current) {
     const sel = e.value === current ? "selected" : "";
     const style = `font-family: '${(e.cssFamily || "").replace(/'/g, "\\'")}', system-ui, sans-serif`;
     // この PC に入っていないフォントには印を付ける（詳細ペインと同じ）
-    const miss = isFontAvailable(e.cssFamily || e.value) ? "" : "⚠ ";
+    const miss = isFontValueAvailable(e.value) ? "" : "⚠ ";
     return `<option value="${escapeHtml(e.value)}" style="${style}" ${sel}>${miss}${escapeHtml(e.label)}</option>`;
   }).join("");
 }

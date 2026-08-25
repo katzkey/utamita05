@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=6ce69f9";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=6ce69f9";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=6ce69f9";
-import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=6ce69f9";
-import { escapeHtml } from "./html.js?v=6ce69f9";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=764201a";
+import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=764201a";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=764201a";
+import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=764201a";
+import { escapeHtml } from "./html.js?v=764201a";
 
 // フォントごとの「行ボックスの中心」と「文字のインクの中心」のずれ（em、＋で文字が下寄り）。
 //
@@ -133,8 +133,9 @@ export function renderLinePreviewHtml(line, project) {
   // AE 実寸 → ステージ幅基準の cqw 換算（1cqw = ステージ幅の1%）
   const toCqw = (px) => (px / resW * 100);
   const fontCqw = toCqw(rawSize);
-  // char モードの文字送りは ratio = 1.10 + tracking → 余白分 = (0.10 + tracking) * fontSize
-  const letterCqw = toCqw((0.10 + tracking) * rawSize);
+  // 和文の送り。PDF 実測は 1.050em（03_座布団.pdf：送り 31.62px / フォント 30.12px）。
+  // 以前は 1.10em で、PDF より 5% 広かった。余白分 = (0.05 + tracking) * fontSize
+  const letterCqw = toCqw((0.05 + tracking) * rawSize);
 
   const layout = String(line.layout || "h_bottom");
   const vertical = /^v[lrc]_/.test(layout);

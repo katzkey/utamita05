@@ -1,20 +1,20 @@
 // うたみた05 — メインエントリ
 // 全体のレンダー調整、タブ切替、ショートカットキー
 
-import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=6ce69f9";
-import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=6ce69f9";
-import { initCustomPresets } from "./core/custom_presets.js?v=6ce69f9";
-import { applyFeatureFlags } from "./core/features.js?v=6ce69f9";
-import * as lyrics from "./ui/lyrics_tab.js?v=6ce69f9";
-import * as bgTab from "./ui/background_tab.js?v=6ce69f9";
-import * as titlesTab from "./ui/titles_tab.js?v=6ce69f9";
-import * as tmplTab from "./ui/templates_tab.js?v=6ce69f9";
-import * as settings from "./ui/settings_tab.js?v=6ce69f9";
-import * as playbar from "./ui/playbar.js?v=6ce69f9";
-import * as fileio from "./ui/file_io.js?v=6ce69f9";
-import * as autoTiming from "./ui/auto_timing.js?v=6ce69f9";
-import * as videoExport from "./ui/video_export.js?v=6ce69f9";
-import * as jobs from "./ui/job_status.js?v=6ce69f9";
+import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=764201a";
+import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=764201a";
+import { initCustomPresets } from "./core/custom_presets.js?v=764201a";
+import { applyFeatureFlags } from "./core/features.js?v=764201a";
+import * as lyrics from "./ui/lyrics_tab.js?v=764201a";
+import * as bgTab from "./ui/background_tab.js?v=764201a";
+import * as titlesTab from "./ui/titles_tab.js?v=764201a";
+import * as tmplTab from "./ui/templates_tab.js?v=764201a";
+import * as settings from "./ui/settings_tab.js?v=764201a";
+import * as playbar from "./ui/playbar.js?v=764201a";
+import * as fileio from "./ui/file_io.js?v=764201a";
+import * as autoTiming from "./ui/auto_timing.js?v=764201a";
+import * as videoExport from "./ui/video_export.js?v=764201a";
+import * as jobs from "./ui/job_status.js?v=764201a";
 
 let projectNameEl;
 let dirtyStatusEl;
@@ -44,6 +44,7 @@ async function init() {
   autoTiming.init();
   videoExport.init();
   jobs.init();          // 処理中の見張り（隅の表示・通知）
+  probeUsedFonts();     // この PC にどのフォントが入っているか調べる
 
   // タブ切替
   document.querySelectorAll(".tab").forEach(tab => {
@@ -86,6 +87,26 @@ function syncProjectTemplatesFromRegistry() {
   const project = getProject();
   const next = { ...project, templates: reg.templates };
   replaceProject(next);
+}
+
+// 立ち上げ時に、使う可能性のあるフォントが入っているか調べる。
+// プリセットが使うものと、開いているプロジェクトで指定されているもの。
+// 全部（AE の一覧は 599 件）を調べる必要はないので、要るものだけにする。
+async function probeUsedFonts() {
+  try {
+    const { probeFonts } = await import("./core/fonts_loader.js");
+    const { FONT_PRESETS } = await import("./core/presets.js");
+    const p = getProject();
+    const values = [
+      ...FONT_PRESETS.map(x => x.apply?.fontOverride?.family),
+      p.font?.family,
+      ...p.lines.map(l => l.fontOverride?.family),
+    ];
+    await probeFonts(values);
+    renderAll();          // ⚠ の有無と、描き方（ウェイト）を反映し直す
+  } catch (e) {
+    // 調べられなくても、今までどおり描ける
+  }
 }
 
 function renderAll() {
