@@ -122,8 +122,12 @@ function aliasOf(value) {
 async function probeOne(value) {
   if (faceState.has(value)) return faceState.get(value).ok;
   const alias = aliasOf(value);
-  // PostScript 名で見つからないフォントもあるので、別名も順に試す
-  const names = [value];
+  // PostScript 名で見つからないフォントもあるので、別名も順に試す。
+  // 読み替えが設定されていれば、それを最優先で使う。
+  const names = [];
+  const repl = loadAliasMap()[value];
+  if (repl) names.push(repl);
+  names.push(value);
   const hit = aeFonts && aeFonts.find(f => f.postScriptName === value);
   if (hit) {
     for (const n of [hit.fullName, hit.nativeFullName, hit.familyName, hit.nativeFamilyName]) {
@@ -134,7 +138,7 @@ async function probeOne(value) {
   // PostScript 名やフルネームは 1 つの書体を指すが、ファミリ名だと
   // そのファミリの標準ウェイトに解決されることがある。
   // それを先頭に置くと、どのプリセットでも同じ見た目になってしまう。
-  const exactNames = new Set([value, hit && hit.fullName, hit && hit.nativeFullName].filter(Boolean));
+  const exactNames = new Set([repl, value, hit && hit.fullName, hit && hit.nativeFullName].filter(Boolean));
   for (const n of names) {
     try {
       const face = new FontFace(alias, 'local("' + String(n).replace(/"/g, '') + '")');
@@ -189,6 +193,8 @@ export function fontStackFor(value) {
   // 書体を一意に特定できたときだけ先頭に置く（ウェイトまで正しく出る）。
   // ファミリ名で当たっただけのものは、後ろに回す。
   if (st && st.ok && st.exact) names.push(st.alias);
+  const repl = loadAliasMap()[value];
+  if (repl && !names.includes(repl)) names.push(repl);
   const hit = aeFonts && aeFonts.find(f => f.postScriptName === value);
   if (hit) {
     for (const n of [hit.nativeFamilyName, hit.familyName, hit.nativeFullName, hit.fullName]) {
@@ -208,4 +214,105 @@ export function fontProbeReport() {
     rows.push({ value, 入っている: st.ok, 一意に特定: !!st.exact, 当たった名前: st.via || null });
   }
   return rows;
+}
+
+// ---- 読み替え表 ----
+//
+// AE の一覧にある名前と、その PC に実際に入っている名前が食い違うことがある。
+// （AE 側の書き出しが古い、別の版が入っている、名前が違う 等）
+// その場合に「このプリセットのフォントは、実際にはこれ」と対応を持たせる。
+// PC ごとの事情なので localStorage に置く。プロジェクトには入れない。
+
+const ALIAS_KEY = "utamita05.fontAlias.v1";
+let aliasMap = null;
+
+function loadAliasMap() {
+  if (aliasMap) return aliasMap;
+  try {
+    aliasMap = JSON.parse(localStorage.getItem(ALIAS_KEY) || "{}") || {};
+  } catch (e) {
+    aliasMap = {};
+  }
+  return aliasMap;
+}
+
+export function getFontAliases() { return { ...loadAliasMap() }; }
+
+/** 読み替えを 1 つ設定する。replacement を空にすると解除 */
+export function setFontAlias(value, replacement) {
+  const m = loadAliasMap();
+  if (replacement) m[value] = replacement; else delete m[value];
+  try { localStorage.setItem(ALIAS_KEY, JSON.stringify(m)); } catch (e) { /* 保存できなくても続く */ }
+  faceState.delete(value);      // 判定し直す
+  return { ...m };
+}
+
+/** 読み替え後の実名（無ければそのまま） */
+export function resolveFontValue(value) {
+  return loadAliasMap()[value] || value;
+}
+
+// ---- この PC のフォント一覧 ----
+//
+// Chrome / Edge には、入っているフォントを教えてもらう仕組みがある。
+// 一度だけ許可を求める画面が出る。Safari と Firefox には無いので、
+// その場合はこれまでどおり AE の一覧を使う。
+
+let localFonts = null;
+
+export function hasLocalFontAccess() {
+  return typeof window !== "undefined" && typeof window.queryLocalFonts === "function";
+}
+
+export function getLocalFonts() { return localFonts; }
+
+export async function loadLocalFonts() {
+  if (!hasLocalFontAccess()) return null;
+  try {
+    const list = await window.queryLocalFonts();
+    localFonts = list.map(f => ({
+      postscriptName: f.postscriptName, fullName: f.fullName,
+      family: f.family, style: f.style,
+    }));
+    return localFonts;
+  } catch (e) {
+    return null;   // 断られた場合も、今までどおり動く
+  }
+}
+
+/**
+ * AE の名前に一番近い、実際に入っているフォントを探す。
+ * 完全一致 → フルネーム一致 → ファミリ一致 の順。
+ */
+export function guessLocalFont(value) {
+  if (!localFonts) return null;
+  const hit = aeFonts && aeFonts.find(f => f.postScriptName === value);
+  const norm = (x) => String(x || "").toLowerCase().replace(/[\s_-]/g, "");
+  const want = [value, hit && hit.fullName, hit && hit.nativeFullName].filter(Boolean).map(norm);
+  const fam = [hit && hit.familyName, hit && hit.nativeFamilyName].filter(Boolean).map(norm);
+
+  let byName = localFonts.find(f => want.includes(norm(f.postscriptName)))
+            || localFonts.find(f => want.includes(norm(f.fullName)));
+  if (byName) return byName;
+  if (!fam.length) return null;
+  const sameFam = localFonts.filter(f => fam.includes(norm(f.family)));
+  if (!sameFam.length) return null;
+  // 同じファミリなら、スタイル名が近いものを選ぶ
+  const style = norm(hit && hit.styleName);
+  return sameFam.find(f => norm(f.style) === style) || sameFam[0];
+}
+
+/** 見つからないものを、この PC のフォントで自動的に埋める。戻り値は埋めた数 */
+export function autoAliasMissing(values) {
+  let n = 0;
+  for (const v of new Set((values || []).filter(Boolean))) {
+    if (loadAliasMap()[v]) continue;
+    if (faceState.get(v)?.ok) continue;      // そのままで見つかっている
+    const g = guessLocalFont(v);
+    if (g && g.postscriptName && g.postscriptName !== v) {
+      setFontAlias(v, g.postscriptName);
+      n++;
+    }
+  }
+  return n;
 }

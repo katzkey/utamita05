@@ -1,22 +1,22 @@
 // うたみた05 — メインエントリ
 // 全体のレンダー調整、タブ切替、ショートカットキー
 
-import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=d17cb28";
-import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=d17cb28";
-import { initCustomPresets } from "./core/custom_presets.js?v=d17cb28";
-import { applyFeatureFlags } from "./core/features.js?v=d17cb28";
-import * as lyrics from "./ui/lyrics_tab.js?v=d17cb28";
-import * as bgTab from "./ui/background_tab.js?v=d17cb28";
-import * as titlesTab from "./ui/titles_tab.js?v=d17cb28";
-import * as tmplTab from "./ui/templates_tab.js?v=d17cb28";
-import * as settings from "./ui/settings_tab.js?v=d17cb28";
-import * as playbar from "./ui/playbar.js?v=d17cb28";
-import * as fileio from "./ui/file_io.js?v=d17cb28";
-import * as autoTiming from "./ui/auto_timing.js?v=d17cb28";
-import * as videoExport from "./ui/video_export.js?v=d17cb28";
-import * as jobs from "./ui/job_status.js?v=d17cb28";
-import { probeFonts } from "./core/fonts_loader.js?v=d17cb28";
-import { FONT_PRESETS } from "./core/presets.js?v=d17cb28";
+import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=4763f1e";
+import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=4763f1e";
+import { initCustomPresets } from "./core/custom_presets.js?v=4763f1e";
+import { applyFeatureFlags } from "./core/features.js?v=4763f1e";
+import * as lyrics from "./ui/lyrics_tab.js?v=4763f1e";
+import * as bgTab from "./ui/background_tab.js?v=4763f1e";
+import * as titlesTab from "./ui/titles_tab.js?v=4763f1e";
+import * as tmplTab from "./ui/templates_tab.js?v=4763f1e";
+import * as settings from "./ui/settings_tab.js?v=4763f1e";
+import * as playbar from "./ui/playbar.js?v=4763f1e";
+import * as fileio from "./ui/file_io.js?v=4763f1e";
+import * as autoTiming from "./ui/auto_timing.js?v=4763f1e";
+import * as videoExport from "./ui/video_export.js?v=4763f1e";
+import * as jobs from "./ui/job_status.js?v=4763f1e";
+import { probeFonts, loadLocalFonts, autoAliasMissing, hasLocalFontAccess, isFontValueAvailable } from "./core/fonts_loader.js?v=4763f1e";
+import { FONT_PRESETS } from "./core/presets.js?v=4763f1e";
 
 let projectNameEl;
 let dirtyStatusEl;
@@ -103,6 +103,17 @@ async function probeUsedFonts() {
       ...p.lines.map(l => l.fontOverride?.family),
     ];
     await probeFonts(values);
+    // 見つからないものがあり、この PC のフォントを既に読み込む許可があるなら、
+    // 実物へ自動で割り当てる（名前が食い違っていても当たるように）。
+    if (hasLocalFontAccess() && values.some(v => v && !isFontValueAvailable(v))) {
+      let granted = false;
+      try {
+        granted = (await navigator.permissions.query({ name: "local-fonts" })).state === "granted";
+      } catch (e) { /* 照会できない環境では何もしない */ }
+      if (granted && await loadLocalFonts()) {
+        if (autoAliasMissing(values)) await probeFonts(values);
+      }
+    }
     renderAll();          // ⚠ の有無と、描き方（ウェイト）を反映し直す
   } catch (e) {
     // 調べられなくても、今までどおり描ける

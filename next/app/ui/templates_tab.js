@@ -1,8 +1,8 @@
 // テンプレタブ：登録済みテンプレ一覧表示
 
-import { getProject } from "./state.js?v=d17cb28";
-import { getTemplatesMeta } from "../core/templates_loader.js?v=d17cb28";
-import { escapeHtml } from "../core/html.js?v=d17cb28";
+import { getProject } from "./state.js?v=4763f1e";
+import { getTemplatesMeta } from "../core/templates_loader.js?v=4763f1e";
+import { escapeHtml } from "../core/html.js?v=4763f1e";
 
 let pane;
 
