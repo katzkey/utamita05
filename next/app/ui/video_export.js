@@ -5,14 +5,14 @@
 //   重ね合わせ・フェード・エンコード・音声の多重化は ffmpeg（ローカルヘルパー）に任せる。
 //   ブラウザで全部やるより速く、音声と背景動画がそのまま扱えるため。
 
-import { getProject, getUi, getFileBlob } from "./state.js?v=731777d";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=731777d";
-import { renderLineLayer } from "../core/render_layer.js?v=731777d";
-import { escapeHtml } from "../core/html.js?v=731777d";
+import { getProject, getUi, getFileBlob } from "./state.js?v=74cee50";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=74cee50";
+import { renderLineLayer } from "../core/render_layer.js?v=74cee50";
+import { escapeHtml } from "../core/html.js?v=74cee50";
 import { pingHelper, startJob, downloadUrl,
-         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=731777d";
+         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=74cee50";
 
-import * as jobs from "./job_status.js?v=731777d";
+import * as jobs from "./job_status.js?v=74cee50";
 
 // 進捗の見張りは job_status に任せる。パネルを閉じても続くようにするため。
 
@@ -39,7 +39,7 @@ function open() {
   overlayEl.querySelector("#veClose").addEventListener("click", close);
   overlayEl.addEventListener("click", (e) => { if (e.target === overlayEl) close(); });
   if (jobs.isRunning("export")) {
-    renderProgress(withDrawStep(jobs.current().steps), jobs.current().elapsed);
+    renderSteps(withDrawStep(jobs.current().steps), jobs.current().elapsed);
     watch();
   } else if (jobs.pending("export")) {
     showFinished();
@@ -54,7 +54,7 @@ function watch() {
   unwatch?.();
   unwatch = jobs.subscribe((j) => {
     if (!overlayEl || !j || j.kind !== "export") return;
-    if (j.status === "running") renderProgress(withDrawStep(j.steps), j.elapsed);
+    if (j.status === "running") renderSteps(withDrawStep(j.steps), j.elapsed);
     else showFinished();
   });
 }
