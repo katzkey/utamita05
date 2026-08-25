@@ -1,18 +1,18 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=4763f1e";
-import * as ops from "../core/operations.js?v=4763f1e";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=4763f1e";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=4763f1e";
-import { loadFonts, getFontEntries, cssFamilyFor, fontStackFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=4763f1e";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=4763f1e";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=4763f1e";
-import { AE_ENABLED } from "../core/features.js?v=4763f1e";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=4763f1e";
-import { KERN_TYPES } from "../core/char_type.js?v=4763f1e";
-import { escapeHtml } from "../core/html.js?v=4763f1e";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=4763f1e";
-import * as songPreview from "./song_preview.js?v=4763f1e";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=4cbc73e";
+import * as ops from "../core/operations.js?v=4cbc73e";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=4cbc73e";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=4cbc73e";
+import { loadFonts, getFontEntries, cssFamilyFor, fontStackFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=4cbc73e";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=4cbc73e";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=4cbc73e";
+import { AE_ENABLED } from "../core/features.js?v=4cbc73e";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=4cbc73e";
+import { KERN_TYPES } from "../core/char_type.js?v=4cbc73e";
+import { escapeHtml } from "../core/html.js?v=4cbc73e";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=4cbc73e";
+import * as songPreview from "./song_preview.js?v=4cbc73e";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -301,8 +301,11 @@ function renderDetail(project, ui) {
               html += `<optgroup label="${escapeHtml(cat)}">`;
               for (const p of list) {
                 const sel = line.fontPresetId === p.id ? "selected" : "";
-                const miss = isFontValueAvailable(p.apply?.fontOverride?.family) ? "" : "⚠ ";
-                html += `<option value="${p.id}" ${sel}>${miss}${escapeHtml(p.label)}</option>`;
+                const fam = p.apply?.fontOverride?.family;
+                const miss = isFontValueAvailable(fam) ? "" : "⚠ ";
+                // 見本としてそのフォントで表示する（行のフォント一覧と同じ扱い）
+                const style = fam ? ` style="font-family: ${fontStackFor(fam)}"` : "";
+                html += `<option value="${p.id}"${style} ${sel}>${miss}${escapeHtml(p.label)}</option>`;
               }
               html += "</optgroup>";
             }

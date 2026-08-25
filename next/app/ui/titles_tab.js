@@ -1,9 +1,9 @@
 // タイトルタブ：歌詞動画のタイトル/サブタイトル管理
 
-import { getProject, setProject, registerFileBlob } from "./state.js?v=4763f1e";
-import * as ops from "../core/operations.js?v=4763f1e";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=4763f1e";
-import { escapeHtml } from "../core/html.js?v=4763f1e";
+import { getProject, setProject, registerFileBlob } from "./state.js?v=4cbc73e";
+import * as ops from "../core/operations.js?v=4cbc73e";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=4cbc73e";
+import { escapeHtml } from "../core/html.js?v=4cbc73e";
 
 let rowsEl, countEl;
 let pickingFile = false;
