@@ -11,7 +11,9 @@ GitHub Pages はキャッシュが効くため、push しても古い JS が動�
 import io, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-APP = os.path.join(ROOT, "app")
+# 対象を指定できる：開発用の写し（next/app）にも打てるようにするため
+#   python tools/stamp_version.py next/app
+APP = os.path.join(ROOT, sys.argv[1] if len(sys.argv) > 1 else "app")
 
 
 def main():
