@@ -70,3 +70,43 @@ export function isSmallKana(c) {
 export function isRotateInVertical(c) {
   return ROTATE_IN_VERTICAL.has(c);
 }
+
+// ---- 文字種ごとのアキ ----
+//
+// 自動カーニングは「和文と欧文の境界だけ四分アキ」という 1 本の規則。
+// それとは別に、種類ごとに自分で値を持てるようにする。
+// 値はその文字の前後に入るアキ（em）。隣り合う 2 文字では
+// 「両側の値の平均」を入れる。片方だけ広げたときに、その文字の周りだけが
+// 均等に広がるようにするため。
+//
+//   カタカナ 0.10 のとき
+//     カタカナ ↔ カタカナ  0.10
+//     カタカナ ↔ ひらがな  0.05
+export const KERN_TYPES = [
+  { key: "latin",    label: "英語・数字", match: ["ascii", "digit"] },
+  { key: "hiragana", label: "ひらがな",   match: ["hiragana", "small_kana"] },
+  { key: "katakana", label: "カタカナ",   match: ["katakana"] },
+  { key: "kanji",    label: "漢字",       match: ["kanji"] },
+  { key: "other",    label: "その他",     match: ["punct", "other"] },
+];
+
+const TYPE_TO_KEY = {};
+for (const t of KERN_TYPES) for (const m of t.match) TYPE_TO_KEY[m] = t.key;
+
+export function kernKeyOf(charType) {
+  return TYPE_TO_KEY[charType] || "other";
+}
+
+export function defaultKerning() {
+  const o = {};
+  for (const t of KERN_TYPES) o[t.key] = 0;
+  return o;
+}
+
+/** 隣り合う 2 文字の間に入れるアキ（em） */
+export function typeKerningEm(prevType, curType, kerning) {
+  if (!kerning || !prevType || !curType) return 0;
+  const a = Number(kerning[kernKeyOf(prevType)]) || 0;
+  const b = Number(kerning[kernKeyOf(curType)]) || 0;
+  return (a + b) / 2;
+}

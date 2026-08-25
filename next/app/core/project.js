@@ -1,8 +1,8 @@
 // プロジェクトの型と初期値、JSON 変換
 // 純粋関数のみ。
 
-import { now, syncChars, deepClone } from "./utils.js?v=c337e0d";
-import { defaultMotion } from "./motion.js?v=c337e0d";
+import { now, syncChars, deepClone } from "./utils.js?v=b9b478b";
+import { defaultMotion } from "./motion.js?v=b9b478b";
 
 // emptyLineTemplate を内部で先行参照するため宣言だけ前置（実体は下で）
 // （JS は関数宣言を巻き上げるので問題なし）
@@ -165,7 +165,10 @@ export function createLine(id, opts = {}) {
     stagger: opts.stagger ?? 0,  // 文字ごとの開始ずらし秒数（0 = 同時）
     tracking: opts.tracking ?? 0, // カーニング調整（負で詰め、正で開く）
     interTypeGap: opts.interTypeGap ?? 0, // 文字種別ギャップ（em）手動時のみ使用
-    autoKerning: opts.autoKerning ?? false, // true で組版ルールによる自動カーニング（和文↔欧文のみ 0.25em）
+    autoKerning: opts.autoKerning ?? false,
+    // 文字種ごとのアキ（em）。{ latin, hiragana, katakana, kanji, other }
+    // 自動カーニングとは別建てで、その上に足される
+    kerning: opts.kerning ?? null, // true で組版ルールによる自動カーニング（和文↔欧文のみ 0.25em）
     textColor: opts.textColor ?? null,    // テキスト色 (null = 既定 = 白)
     textStroke: opts.textStroke ?? null,  // 文字の縁取り { color, width } / null で無し
     zabuton: opts.zabuton ?? null, // null = 無し / defaultZabuton() 形式のオブジェクト

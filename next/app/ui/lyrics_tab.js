@@ -1,17 +1,18 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=c337e0d";
-import * as ops from "../core/operations.js?v=c337e0d";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=c337e0d";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=c337e0d";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=c337e0d";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=c337e0d";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=c337e0d";
-import { AE_ENABLED } from "../core/features.js?v=c337e0d";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=c337e0d";
-import { escapeHtml } from "../core/html.js?v=c337e0d";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=c337e0d";
-import * as songPreview from "./song_preview.js?v=c337e0d";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=b9b478b";
+import * as ops from "../core/operations.js?v=b9b478b";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=b9b478b";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=b9b478b";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=b9b478b";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=b9b478b";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=b9b478b";
+import { AE_ENABLED } from "../core/features.js?v=b9b478b";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=b9b478b";
+import { KERN_TYPES } from "../core/char_type.js?v=b9b478b";
+import { escapeHtml } from "../core/html.js?v=b9b478b";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=b9b478b";
+import * as songPreview from "./song_preview.js?v=b9b478b";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -436,10 +437,24 @@ function renderDetail(project, ui) {
         <input class="field-input" id="fldInterTypeGap" type="number" step="0.02" min="0" value="${line.interTypeGap ?? 0}" style="width:80px">
         <span style="font-size:10px;color:var(--gray-3);margin-left:8px">em（種類が変わる所に一律で空き）</span>
       </div>
+      <div class="field">
+        <span class="field-label">文字種ごとのアキ</span>
+        <span style="font-size:10px;color:var(--gray-3)">em。負で詰め、正で開く</span>
+      </div>
+      <div class="field" style="flex-wrap:wrap;gap:4px">
+        ${KERN_TYPES.map(t => `
+          <label style="display:flex;align-items:center;gap:3px;font-size:11px">
+            <span style="color:var(--gray-4);width:62px">${escapeHtml(t.label)}</span>
+            <input class="field-input" id="fldKern_${t.key}" type="number" step="0.02"
+              value="${line.kerning?.[t.key] ?? 0}" style="width:62px">
+          </label>`).join("")}
+      </div>
       <div style="font-size:10px;color:var(--gray-3);margin:-4px 0 8px">
+        隣り合う 2 文字には<b>両側の値の平均</b>が入ります。<br>
+        （カタカナ 0.10 なら カタカナ同士 0.10、カタカナとひらがな 0.05）<br>
         ${line.autoKerning
-          ? "和文と英数字の境界だけ四分アキ(0.25em)。かな・カタカナ・漢字どうしはベタ組み（PDF 実測に準拠）"
-          : "手動：種類が変わる所すべてに同じ幅を入れます"}
+          ? "オートカーニング：和文と英数字の境界だけ四分アキ(0.25em)。上の値はそこへ足されます"
+          : "オート OFF：上の値だけが効きます"}
       </div>
       <div class="field">
         <span class="field-label">italic</span>
@@ -883,6 +898,15 @@ function renderDetail(project, ui) {
     const line2 = p.lines.find(l => l.id === id);
     if (line2) setProject({ ...p, lines: p.lines.map(l => l.id === id ? { ...l, interTypeGap: v } : l) });
   });
+  // 文字種ごとのアキ
+  for (const t of KERN_TYPES) {
+    document.getElementById("fldKern_" + t.key)?.addEventListener("change", (e) => {
+      setProject(ops.setLineKerning(getProject(), id, { [t.key]: Number(e.target.value) || 0 }));
+    });
+    attachArrowStep("fldKern_" + t.key, (v) =>
+      setProject(ops.setLineKerning(getProject(), id, { [t.key]: v })));
+  }
+
   document.getElementById("fldAutoKerning")?.addEventListener("change", (e) => {
     const p = getProject();
     const on = e.target.checked;

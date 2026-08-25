@@ -8,7 +8,7 @@
 // ビルトインの ZABUTON_PRESETS と同じ形（{ id, category, label, apply }）で持つ。
 // category は固定で CUSTOM_CATEGORY。id は "custom_zab_<epoch>_<rand>"。
 
-import { setCustomZabutonPresets, getCustomZabutonPresets } from "./presets.js?v=c337e0d";
+import { setCustomZabutonPresets, getCustomZabutonPresets } from "./presets.js?v=b9b478b";
 
 const STORAGE_KEY = "utamita05.customPresets.v1";
 export const CUSTOM_CATEGORY = "カスタム";
@@ -52,7 +52,7 @@ export function initCustomPresets() {
 //   配置 … レイアウト / 位置の微調整
 //   装飾 … 座布団 / 光彩 / 文字色 / 縁取り / 下線 / ずらし
 const APPLY_KEYS = [
-  "fontOverride", "tracking", "interTypeGap", "autoKerning",
+  "fontOverride", "tracking", "interTypeGap", "autoKerning", "kerning",
   "layout", "pos",
   "zabuton", "glow", "textColor", "textStroke", "underline", "jitter",
   "fontPresetId", "zabutonPresetId",   // 元にしたプリセットを覚えておく（プルダウンの表示用）
@@ -94,6 +94,7 @@ export function saveLineAsCustomPreset(line, label) {
       tracking: line.tracking ?? 0,
       interTypeGap: line.interTypeGap ?? 0,
       autoKerning: !!line.autoKerning,
+      kerning: clone(line.kerning),
       // 配置
       layout: line.layout ?? null,
       pos: clone(line.pos) || { dx: 0, dy: 0, scale: 1.0, rot: 0 },

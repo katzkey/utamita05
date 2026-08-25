@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=c337e0d";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=c337e0d";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=c337e0d";
-import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=c337e0d";
-import { escapeHtml } from "./html.js?v=c337e0d";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=b9b478b";
+import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=b9b478b";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=b9b478b";
+import { SMALL_KANA, classifyChar, autoKerningEm, typeKerningEm } from "./char_type.js?v=b9b478b";
+import { escapeHtml } from "./html.js?v=b9b478b";
 
 // フォントごとの「行ボックスの中心」と「文字のインクの中心」のずれ（em、＋で文字が下寄り）。
 //
@@ -701,10 +701,13 @@ function buildLineInnerHtml(line, opts) {
       const curType = classifyChar(t.ch);
       // オートカーニング ON なら組版ルール（和文↔欧文だけ空ける）、
       // OFF なら従来どおり「種類が変わったら一律 interTypeGap」
-      const gap = autoKerning
+      // 自動カーニング（和文↔欧文の四分アキ）に、文字種ごとの値を足す。
+      // 自動を切っていても、種類ごとの値だけで詰めたり空けたりできる。
+      const auto = autoKerning
         ? autoKerningEm(prevType, curType)
         : ((interTypeGap > 0 && prevType && curType && prevType !== curType) ? interTypeGap : 0);
-      if (gap > 0) {
+      const gap = auto + typeKerningEm(prevType, curType, line.kerning);
+      if (gap !== 0) {
         chHtml = `<span style="padding-inline-start:${gap}em">${chHtml}</span>`;
       }
       prevType = curType;
