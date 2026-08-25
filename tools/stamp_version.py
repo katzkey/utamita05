@@ -34,8 +34,13 @@ def main():
                 continue
             fp = os.path.join(base, f)
             s = io.open(fp, encoding="utf-8").read()
-            s2 = re.sub(r'(from\s+"(?:\./|\.\./)[^"]+?\.js)(\?v=[^"]*)?"',
-                        lambda m: f'{m.group(1)}?v={ver}"', s)
+            # 相対 import に版を付ける。from ... と、動的な import( ... ) の両方。
+            # 動的の方に付け忘れると、版違いの別モジュールとして読み込まれ、
+            # 状態が二重になる（実際に起きた。調べた結果が使われない側に入っていた）。
+            s2 = s
+            for pat in (r'(from\s+"(?:\./|\.\./)[^"]+?\.js)(\?v=[^"]*)?"',
+                        r'(import\(\s*"(?:\./|\.\./)[^"]+?\.js)(\?v=[^"]*)?"'):
+                s2 = re.sub(pat, lambda m: m.group(1) + f'?v={ver}"', s2)
             if s2 != s:
                 io.open(fp, "w", encoding="utf-8", newline="").write(s2); n += 1
     print(f"版 {ver} を {n} ファイルに反映")

@@ -1,20 +1,22 @@
 // うたみた05 — メインエントリ
 // 全体のレンダー調整、タブ切替、ショートカットキー
 
-import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=8ceb86c";
-import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=8ceb86c";
-import { initCustomPresets } from "./core/custom_presets.js?v=8ceb86c";
-import { applyFeatureFlags } from "./core/features.js?v=8ceb86c";
-import * as lyrics from "./ui/lyrics_tab.js?v=8ceb86c";
-import * as bgTab from "./ui/background_tab.js?v=8ceb86c";
-import * as titlesTab from "./ui/titles_tab.js?v=8ceb86c";
-import * as tmplTab from "./ui/templates_tab.js?v=8ceb86c";
-import * as settings from "./ui/settings_tab.js?v=8ceb86c";
-import * as playbar from "./ui/playbar.js?v=8ceb86c";
-import * as fileio from "./ui/file_io.js?v=8ceb86c";
-import * as autoTiming from "./ui/auto_timing.js?v=8ceb86c";
-import * as videoExport from "./ui/video_export.js?v=8ceb86c";
-import * as jobs from "./ui/job_status.js?v=8ceb86c";
+import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=d17cb28";
+import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=d17cb28";
+import { initCustomPresets } from "./core/custom_presets.js?v=d17cb28";
+import { applyFeatureFlags } from "./core/features.js?v=d17cb28";
+import * as lyrics from "./ui/lyrics_tab.js?v=d17cb28";
+import * as bgTab from "./ui/background_tab.js?v=d17cb28";
+import * as titlesTab from "./ui/titles_tab.js?v=d17cb28";
+import * as tmplTab from "./ui/templates_tab.js?v=d17cb28";
+import * as settings from "./ui/settings_tab.js?v=d17cb28";
+import * as playbar from "./ui/playbar.js?v=d17cb28";
+import * as fileio from "./ui/file_io.js?v=d17cb28";
+import * as autoTiming from "./ui/auto_timing.js?v=d17cb28";
+import * as videoExport from "./ui/video_export.js?v=d17cb28";
+import * as jobs from "./ui/job_status.js?v=d17cb28";
+import { probeFonts } from "./core/fonts_loader.js?v=d17cb28";
+import { FONT_PRESETS } from "./core/presets.js?v=d17cb28";
 
 let projectNameEl;
 let dirtyStatusEl;
@@ -94,8 +96,6 @@ function syncProjectTemplatesFromRegistry() {
 // 全部（AE の一覧は 599 件）を調べる必要はないので、要るものだけにする。
 async function probeUsedFonts() {
   try {
-    const { probeFonts } = await import("./core/fonts_loader.js");
-    const { FONT_PRESETS } = await import("./core/presets.js");
     const p = getProject();
     const values = [
       ...FONT_PRESETS.map(x => x.apply?.fontOverride?.family),
