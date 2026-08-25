@@ -1,17 +1,17 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=74cee50";
-import * as ops from "../core/operations.js?v=74cee50";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=74cee50";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=74cee50";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=74cee50";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=74cee50";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=74cee50";
-import { AE_ENABLED } from "../core/features.js?v=74cee50";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=74cee50";
-import { escapeHtml } from "../core/html.js?v=74cee50";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=74cee50";
-import * as songPreview from "./song_preview.js?v=74cee50";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=60b30cb";
+import * as ops from "../core/operations.js?v=60b30cb";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=60b30cb";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=60b30cb";
+import { loadFonts, getFontEntries, cssFamilyFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=60b30cb";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=60b30cb";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=60b30cb";
+import { AE_ENABLED } from "../core/features.js?v=60b30cb";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=60b30cb";
+import { escapeHtml } from "../core/html.js?v=60b30cb";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=60b30cb";
+import * as songPreview from "./song_preview.js?v=60b30cb";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -21,6 +21,11 @@ let lineCountEl;
 // 詳細ペインは毎回作り直されるので、描き直すたびに止めて張り直す。
 let previewMotionTimer = null;
 let previewMotionStart = 0;
+// 曲が鳴っている間は、プレビューを本当の TC に合わせる。
+// 行をクリックして聞くとき、作り込み用のループが回っていると
+// 「この曲のこの位置で本当にこう出入りするか」が確かめられないため。
+let previewFollowing = false;
+let previewFollowOff = null;
 
 function stopPreviewMotion() {
   if (previewMotionTimer) { clearInterval(previewMotionTimer); previewMotionTimer = null; }
@@ -48,6 +53,46 @@ function startPreviewMotion(line) {
   };
   tick();
   previewMotionTimer = setInterval(tick, 1000 / 60);
+}
+
+function stopPreviewFollow() {
+  previewFollowOff?.(); previewFollowOff = null;
+  previewFollowing = false;
+}
+
+function startPreviewFollow(line) {
+  stopPreviewFollow();
+  const player = document.getElementById("player");
+  if (!player) return;
+
+  const apply = () => {
+    const host = detailPaneEl.querySelector("#previewHost");
+    if (!host) return;
+    const playing = !!player.src && !player.paused;
+    if (playing === previewFollowing) return;
+    previewFollowing = playing;
+    if (playing) {
+      // 曲に合わせた表示に切り替える。背景も動画もその時刻のものが出る
+      stopPreviewMotion();
+      songPreview.start(host);
+      host.insertAdjacentHTML("afterbegin",
+        '<div class="preview-follow">曲に合わせて表示中</div>');
+    } else {
+      songPreview.stop();
+      host.innerHTML = renderLinePreviewHtml(line, getProject());
+      startPreviewMotion(line);
+    }
+  };
+
+  player.addEventListener("play", apply);
+  player.addEventListener("pause", apply);
+  player.addEventListener("ended", apply);
+  previewFollowOff = () => {
+    player.removeEventListener("play", apply);
+    player.removeEventListener("pause", apply);
+    player.removeEventListener("ended", apply);
+  };
+  apply();   // 既に鳴っている状態で行を選び直した場合
 }
 
 export function init() {
@@ -122,6 +167,7 @@ function renderRows(project, ui) {
 
 function renderDetail(project, ui) {
   stopPreviewMotion();
+  stopPreviewFollow();
   songPreview.stop();
   const selected = [...ui.selectedLineIds];
   if (selected.length === 0) {
@@ -703,6 +749,7 @@ function renderDetail(project, ui) {
     songPreview.start(detailPaneEl.querySelector("#previewHost"));
   } else {
     startPreviewMotion(line);
+    startPreviewFollow(line);   // 曲が鳴っている間は本当の TC に合わせる
   }
 
   // サブタブ：セクションの DOM 並び順は変えず、data-active-tab で CSS 出し分け

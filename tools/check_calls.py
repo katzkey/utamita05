@@ -26,6 +26,10 @@ def check(root):
             s = io.open(p, encoding="utf-8").read()
             defined = set(re.findall(r"function\s+([A-Za-z_$][\w$]*)", s))
             defined |= set(re.findall(r"(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=", s))
+            # 引数名も定義扱い（updater(...) のような受け取った関数を呼ぶ形）
+            for m in re.finditer(r"\(([^()]*)\)\s*(?:=>|\{)", s):
+                for n in re.findall(r"[A-Za-z_$][\w$]*", m.group(1)):
+                    defined.add(n)
             for m in re.finditer(r"import\s*\{([^}]*)\}", s):
                 for n in m.group(1).split(","):
                     n = n.strip().split(" as ")[-1].strip()
