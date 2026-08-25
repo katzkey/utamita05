@@ -5,12 +5,12 @@
 //   重ね合わせ・フェード・エンコード・音声の多重化は ffmpeg（ローカルヘルパー）に任せる。
 //   ブラウザで全部やるより速く、音声と背景動画がそのまま扱えるため。
 
-import { getProject, getUi, getFileBlob } from "./state.js?v=4e538c6";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=4e538c6";
-import { renderLineLayer } from "../core/render_layer.js?v=4e538c6";
-import { escapeHtml } from "../core/html.js?v=4e538c6";
+import { getProject, getUi, getFileBlob } from "./state.js?v=093a47e";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=093a47e";
+import { renderLineLayer } from "../core/render_layer.js?v=093a47e";
+import { escapeHtml } from "../core/html.js?v=093a47e";
 import { pingHelper, startJob, pollJob, downloadUrl,
-         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=4e538c6";
+         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=093a47e";
 
 const POLL_MS = 1000;
 
@@ -212,7 +212,7 @@ async function run() {
     currentJob = await startJob("/render", fd);
     stopPoll = pollJob(currentJob, {
       intervalMs: POLL_MS,
-      onProgress: (steps, elapsed) => renderProgress(withDrawStep(steps), elapsed),
+      onProgress: (steps, elapsed) => renderSteps(withDrawStep(steps), elapsed),
       onDone: (d) => renderDone(d),
       onError: (msg) => renderError(msg),
     });
