@@ -1,0 +1,395 @@
+{
+  "version": "1",
+  "name": "新規プロジェクト",
+  "createdAt": 1782982256,
+  "updatedAt": 1782982284,
+  "fps": 30,
+  "resolution": {
+    "w": 1920,
+    "h": 1080
+  },
+  "music": {
+    "file": "C:\\Users\\surface\\Desktop\\claude\\projects\\うたみた05\\input\\song.mp4",
+    "duration": 241.714966
+  },
+  "font": {
+    "family": "Yu Mincho Demibold",
+    "fallback": [
+      "Hiragino Mincho ProN",
+      "Source Han Serif"
+    ],
+    "size": 48
+  },
+  "lines": [
+    {
+      "id": 0,
+      "text": "諦めることも悪いことじゃないって",
+      "tIn": 0,
+      "tOut": 3,
+      "template": {
+        "entry": null,
+        "hold": null,
+        "exit": null,
+        "design": null
+      },
+      "chars": [
+        {
+          "ch": "諦"
+        },
+        {
+          "ch": "め"
+        },
+        {
+          "ch": "る"
+        },
+        {
+          "ch": "こ"
+        },
+        {
+          "ch": "と"
+        },
+        {
+          "ch": "も"
+        },
+        {
+          "ch": "悪"
+        },
+        {
+          "ch": "い"
+        },
+        {
+          "ch": "こ"
+        },
+        {
+          "ch": "と"
+        },
+        {
+          "ch": "じ"
+        },
+        {
+          "ch": "ゃ"
+        },
+        {
+          "ch": "な"
+        },
+        {
+          "ch": "い"
+        },
+        {
+          "ch": "っ"
+        },
+        {
+          "ch": "て"
+        }
+      ],
+      "layout": "h_bottom",
+      "layerMode": null,
+      "pos": {
+        "dx": 0,
+        "dy": 0,
+        "scale": 1,
+        "rot": 0
+      },
+      "emphasis": [],
+      "groups": [],
+      "stagger": 0,
+      "skip": false,
+      "note": ""
+    },
+    {
+      "id": 1,
+      "text": "あなたはいつも笑って言うけど",
+      "tIn": 3,
+      "tOut": 6,
+      "template": {
+        "entry": null,
+        "hold": null,
+        "exit": null,
+        "design": null
+      },
+      "chars": [
+        {
+          "ch": "あ"
+        },
+        {
+          "ch": "な"
+        },
+        {
+          "ch": "た"
+        },
+        {
+          "ch": "は"
+        },
+        {
+          "ch": "い"
+        },
+        {
+          "ch": "つ"
+        },
+        {
+          "ch": "も"
+        },
+        {
+          "ch": "笑"
+        },
+        {
+          "ch": "っ"
+        },
+        {
+          "ch": "て"
+        },
+        {
+          "ch": "言"
+        },
+        {
+          "ch": "う"
+        },
+        {
+          "ch": "け"
+        },
+        {
+          "ch": "ど"
+        }
+      ],
+      "layout": "h_bottom",
+      "layerMode": null,
+      "pos": {
+        "dx": 0,
+        "dy": 0,
+        "scale": 1,
+        "rot": 0
+      },
+      "emphasis": [],
+      "groups": [],
+      "stagger": 0,
+      "skip": false,
+      "note": ""
+    },
+    {
+      "id": 2,
+      "text": "手を伸ばせば届くなら",
+      "tIn": 6,
+      "tOut": 9,
+      "template": {
+        "entry": null,
+        "hold": null,
+        "exit": null,
+        "design": null
+      },
+      "chars": [
+        {
+          "ch": "手"
+        },
+        {
+          "ch": "を"
+        },
+        {
+          "ch": "伸"
+        },
+        {
+          "ch": "ば"
+        },
+        {
+          "ch": "せ"
+        },
+        {
+          "ch": "ば"
+        },
+        {
+          "ch": "届"
+        },
+        {
+          "ch": "く"
+        },
+        {
+          "ch": "な"
+        },
+        {
+          "ch": "ら"
+        }
+      ],
+      "layout": "h_bottom",
+      "layerMode": null,
+      "pos": {
+        "dx": 0,
+        "dy": 0,
+        "scale": 1,
+        "rot": 0
+      },
+      "emphasis": [],
+      "groups": [],
+      "stagger": 0,
+      "skip": false,
+      "note": ""
+    },
+    {
+      "id": 3,
+      "text": "紡いだ今までを無駄にするわけにはいかない",
+      "tIn": 9,
+      "tOut": 12,
+      "template": {
+        "entry": null,
+        "hold": null,
+        "exit": null,
+        "design": null
+      },
+      "chars": [
+        {
+          "ch": "紡"
+        },
+        {
+          "ch": "い"
+        },
+        {
+          "ch": "だ"
+        },
+        {
+          "ch": "今"
+        },
+        {
+          "ch": "ま"
+        },
+        {
+          "ch": "で"
+        },
+        {
+          "ch": "を"
+        },
+        {
+          "ch": "無"
+        },
+        {
+          "ch": "駄"
+        },
+        {
+          "ch": "に"
+        },
+        {
+          "ch": "す"
+        },
+        {
+          "ch": "る"
+        },
+        {
+          "ch": "わ"
+        },
+        {
+          "ch": "け"
+        },
+        {
+          "ch": "に"
+        },
+        {
+          "ch": "は"
+        },
+        {
+          "ch": "い"
+        },
+        {
+          "ch": "か"
+        },
+        {
+          "ch": "な"
+        },
+        {
+          "ch": "い"
+        }
+      ],
+      "layout": "h_bottom",
+      "layerMode": null,
+      "pos": {
+        "dx": 0,
+        "dy": 0,
+        "scale": 1,
+        "rot": 0
+      },
+      "emphasis": [],
+      "groups": [],
+      "stagger": 0,
+      "skip": false,
+      "note": ""
+    }
+  ],
+  "nextLineId": 4,
+  "backgrounds": [],
+  "nextBgId": 0,
+  "titles": [],
+  "nextTitleId": 0,
+  "templates": [
+    {
+      "name": "_design_white_mincho",
+      "slot": "design",
+      "displayName": "_design_white_mincho",
+      "duration": 5,
+      "tags": [],
+      "emphasisLayers": [
+        "lv0",
+        "lv1",
+        "lv2",
+        "lv3"
+      ]
+    },
+    {
+      "name": "_entry_fade_in",
+      "slot": "entry",
+      "displayName": "_entry_fade_in",
+      "duration": 1.333,
+      "tags": []
+    },
+    {
+      "name": "_entry_テスト",
+      "slot": "entry",
+      "displayName": "_entry_テスト",
+      "duration": 1.333,
+      "tags": []
+    },
+    {
+      "name": "_exit_fade_out",
+      "slot": "exit",
+      "displayName": "_exit_fade_out",
+      "duration": 0.667,
+      "tags": []
+    },
+    {
+      "name": "_hold_static",
+      "slot": "hold",
+      "displayName": "_hold_static",
+      "duration": 5,
+      "tags": []
+    },
+    {
+      "name": "_title_testTitle",
+      "slot": "title",
+      "displayName": "_title_testTitle",
+      "duration": 7,
+      "tags": [],
+      "hasTarget": true
+    },
+    {
+      "name": "_title_testTitle02",
+      "slot": "title",
+      "displayName": "_title_testTitle02",
+      "duration": 7,
+      "tags": [],
+      "hasTarget": true
+    },
+    {
+      "name": "_title_testTitle_t2",
+      "slot": "title",
+      "displayName": "_title_testTitle_t2",
+      "duration": 7,
+      "tags": [],
+      "hasTarget": false
+    }
+  ],
+  "defaults": {
+    "template": {
+      "entry": "_entry_fade_in",
+      "hold": "_hold_static",
+      "exit": "_exit_fade_out",
+      "design": "_design_white_mincho"
+    },
+    "layout": "h_bottom",
+    "layerMode": "char"
+  }
+}

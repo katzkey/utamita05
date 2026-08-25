@@ -1,0 +1,416 @@
+{
+  "version": "1",
+  "name": "新規プロジェクト",
+  "createdAt": 1781761521,
+  "updatedAt": 1781762116,
+  "fps": 30,
+  "resolution": {
+    "w": 1920,
+    "h": 1080
+  },
+  "music": {
+    "file": "song.mp4",
+    "duration": 241.714966
+  },
+  "font": {
+    "family": "Yu Mincho Demibold",
+    "fallback": [
+      "Hiragino Mincho ProN",
+      "Source Han Serif"
+    ],
+    "size": 48
+  },
+  "lines": [
+    {
+      "id": 0,
+      "text": "諦めることも悪いことじゃないって",
+      "tIn": 20.6,
+      "tOut": 26.915482,
+      "template": {
+        "entry": null,
+        "hold": null,
+        "exit": null,
+        "design": null
+      },
+      "chars": [
+        {
+          "ch": "諦"
+        },
+        {
+          "ch": "め"
+        },
+        {
+          "ch": "る"
+        },
+        {
+          "ch": "こ"
+        },
+        {
+          "ch": "と"
+        },
+        {
+          "ch": "も"
+        },
+        {
+          "ch": "悪"
+        },
+        {
+          "ch": "い"
+        },
+        {
+          "ch": "こ"
+        },
+        {
+          "ch": "と"
+        },
+        {
+          "ch": "じ"
+        },
+        {
+          "ch": "ゃ"
+        },
+        {
+          "ch": "な"
+        },
+        {
+          "ch": "い"
+        },
+        {
+          "ch": "っ"
+        },
+        {
+          "ch": "て"
+        }
+      ],
+      "layout": "h_bottom",
+      "layerMode": null,
+      "pos": {
+        "dx": 0,
+        "dy": 0,
+        "scale": 1,
+        "rot": 0
+      },
+      "emphasis": [],
+      "groups": [],
+      "stagger": 0,
+      "skip": false,
+      "note": ""
+    },
+    {
+      "id": 1,
+      "text": "あなたはいつも笑って言うけど",
+      "tIn": 27.624421,
+      "tOut": 31.70404,
+      "template": {
+        "entry": null,
+        "hold": null,
+        "exit": null,
+        "design": null
+      },
+      "chars": [
+        {
+          "ch": "あ"
+        },
+        {
+          "ch": "な"
+        },
+        {
+          "ch": "た"
+        },
+        {
+          "ch": "は"
+        },
+        {
+          "ch": "い"
+        },
+        {
+          "ch": "つ"
+        },
+        {
+          "ch": "も"
+        },
+        {
+          "ch": "笑"
+        },
+        {
+          "ch": "っ"
+        },
+        {
+          "ch": "て"
+        },
+        {
+          "ch": "言"
+        },
+        {
+          "ch": "う"
+        },
+        {
+          "ch": "け"
+        },
+        {
+          "ch": "ど"
+        }
+      ],
+      "layout": "h_bottom",
+      "layerMode": null,
+      "pos": {
+        "dx": 0,
+        "dy": 0,
+        "scale": 1,
+        "rot": 0
+      },
+      "emphasis": [],
+      "groups": [],
+      "stagger": 0,
+      "skip": false,
+      "note": ""
+    },
+    {
+      "id": 2,
+      "text": "手を伸ばせば届くなら",
+      "tIn": 33.466659,
+      "tOut": 36.440542,
+      "template": {
+        "entry": null,
+        "hold": null,
+        "exit": null,
+        "design": null
+      },
+      "chars": [
+        {
+          "ch": "手"
+        },
+        {
+          "ch": "を"
+        },
+        {
+          "ch": "伸"
+        },
+        {
+          "ch": "ば"
+        },
+        {
+          "ch": "せ"
+        },
+        {
+          "ch": "ば"
+        },
+        {
+          "ch": "届"
+        },
+        {
+          "ch": "く"
+        },
+        {
+          "ch": "な"
+        },
+        {
+          "ch": "ら"
+        }
+      ],
+      "layout": "h_bottom",
+      "layerMode": null,
+      "pos": {
+        "dx": 0,
+        "dy": 0,
+        "scale": 1,
+        "rot": 0
+      },
+      "emphasis": [],
+      "groups": [],
+      "stagger": 0,
+      "skip": false,
+      "note": ""
+    },
+    {
+      "id": 3,
+      "text": "紡いだ今までを無駄にするわけにはいかない",
+      "tIn": 36.642164,
+      "tOut": 42.984989,
+      "template": {
+        "entry": null,
+        "hold": null,
+        "exit": null,
+        "design": null
+      },
+      "chars": [
+        {
+          "ch": "紡"
+        },
+        {
+          "ch": "い"
+        },
+        {
+          "ch": "だ"
+        },
+        {
+          "ch": "今"
+        },
+        {
+          "ch": "ま"
+        },
+        {
+          "ch": "で"
+        },
+        {
+          "ch": "を"
+        },
+        {
+          "ch": "無"
+        },
+        {
+          "ch": "駄"
+        },
+        {
+          "ch": "に"
+        },
+        {
+          "ch": "す"
+        },
+        {
+          "ch": "る"
+        },
+        {
+          "ch": "わ"
+        },
+        {
+          "ch": "け"
+        },
+        {
+          "ch": "に"
+        },
+        {
+          "ch": "は"
+        },
+        {
+          "ch": "い"
+        },
+        {
+          "ch": "か"
+        },
+        {
+          "ch": "な"
+        },
+        {
+          "ch": "い"
+        }
+      ],
+      "layout": "h_bottom",
+      "layerMode": null,
+      "pos": {
+        "dx": 0,
+        "dy": 0,
+        "scale": 1,
+        "rot": 0
+      },
+      "emphasis": [],
+      "groups": [],
+      "stagger": 0,
+      "skip": false,
+      "note": ""
+    }
+  ],
+  "nextLineId": 4,
+  "backgrounds": [
+    {
+      "id": 0,
+      "file": "",
+      "solidColor": "#000000",
+      "tIn": 0,
+      "tOut": 7,
+      "fadeIn": 0,
+      "fadeOut": 2,
+      "fit": "cover",
+      "opacity": 1,
+      "blend": "normal",
+      "note": ""
+    },
+    {
+      "id": 1,
+      "file": "C:\\Users\\surface\\Desktop\\claude\\projects\\うたみた02\\素材\\スクリーンショット 2026-05-21 17.43.20.png",
+      "solidColor": null,
+      "tIn": 5,
+      "tOut": 241.714966,
+      "fadeIn": 0,
+      "fadeOut": 0,
+      "fit": "cover",
+      "opacity": 1,
+      "blend": "normal",
+      "note": ""
+    }
+  ],
+  "nextBgId": 2,
+  "titles": [
+    {
+      "id": 0,
+      "text": "タイトル-テスト",
+      "subtext": "",
+      "tIn": 3.2,
+      "tOut": 8.4,
+      "fadeIn": 0.5,
+      "fadeOut": 0.5,
+      "font": {
+        "family": "Yu Mincho Demibold",
+        "size": 96,
+        "subSize": 36
+      },
+      "layout": "h_center",
+      "color": "#FFFFFF",
+      "subColor": "#CADCFC",
+      "note": ""
+    }
+  ],
+  "nextTitleId": 2,
+  "templates": [
+    {
+      "name": "_design_white_mincho",
+      "slot": "design",
+      "displayName": "_design_white_mincho",
+      "duration": 5,
+      "tags": [],
+      "emphasisLayers": [
+        "lv0",
+        "lv2",
+        "lv3"
+      ]
+    },
+    {
+      "name": "_entry_fade_in",
+      "slot": "entry",
+      "displayName": "_entry_fade_in",
+      "duration": 1.333,
+      "tags": []
+    },
+    {
+      "name": "_entry_テスト",
+      "slot": "entry",
+      "displayName": "_entry_テスト",
+      "duration": 1.333,
+      "tags": []
+    },
+    {
+      "name": "_exit_fade_out",
+      "slot": "exit",
+      "displayName": "_exit_fade_out",
+      "duration": 0.667,
+      "tags": []
+    },
+    {
+      "name": "_hold_static",
+      "slot": "hold",
+      "displayName": "_hold_static",
+      "duration": 5,
+      "tags": []
+    }
+  ],
+  "defaults": {
+    "template": {
+      "entry": "_entry_fade_in",
+      "hold": "_hold_static",
+      "exit": "_exit_fade_out",
+      "design": "_design_white_mincho"
+    },
+    "layout": "h_bottom",
+    "layerMode": "char"
+  }
+}

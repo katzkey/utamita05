@@ -1,0 +1,22 @@
+{
+  "_comment": "アプリで選ぶ表示名 → AE の PostScript 名 or familyName。ここに追記すれば build_project.jsx がロード時に自動反映。inspector.jsx で目的フォントを1回選んで実行すると、PostScript 名が出ます。",
+  "aliases": {
+    "游ゴシック":         "YuGothic-Regular",
+    "游ゴシック Light":   "YuGothic-Light",
+    "游ゴシック Medium":  "YuGothic-Medium",
+    "游ゴシック Bold":    "YuGothic-Bold",
+    "游明朝":             "YuMincho-Regular",
+    "游明朝 Light":       "YuMincho-Light",
+    "游明朝 Demibold":    "YuMincho-Demibold",
+    "メイリオ":           "Meiryo",
+    "ＭＳ ゴシック":       "MS-Gothic",
+    "ＭＳ Ｐゴシック":      "MS-PGothic",
+    "ＭＳ 明朝":           "MS-Mincho",
+    "ＭＳ Ｐ明朝":          "MS-PMincho",
+    "AH白洲真楷書体W12": "AH-Hakushu-School-PRSW12",
+    "AH白洲真楷書体W1":  "AH-Hakushu-School-PRSW1",
+    "AH白洲真楷書体W3":  "AH-Hakushu-School-PRSW3",
+    "AH白洲真楷書体W6":  "AH-Hakushu-School-PRSW6",
+    "AH白洲真楷書体W9":  "AH-Hakushu-School-PRSW9"
+  }
+}

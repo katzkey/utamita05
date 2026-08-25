@@ -1,0 +1,41 @@
+=== app.fonts API ===
+app.version: 26.3x87
+app.fonts exists: true
+getFontsByFamilyNameAndStyleName: function
+getFontsByPostScriptName: function
+getFontsByFamilyName: undefined
+
+=== lookup tests ===
+--- 'Yu Gothic' ---
+  byFam+Regular: typeof=object len=1 | [0]: ps='YuGothic-Regular' fam='Yu Gothic' sty='Regular'
+  byPostScript: typeof=object len=0
+--- '游ゴシック' ---
+  byFam+Regular: typeof=object len=0
+  byPostScript: typeof=object len=0
+--- 'Arial' ---
+  byFam+Regular: typeof=object len=1 | [0]: ps='ArialMT' fam='Arial' sty='Regular'
+  byPostScript: typeof=object len=0
+--- 'Yu Mincho' ---
+  byFam+Regular: typeof=object len=1 | [0]: ps='YuMincho-Regular' fam='Yu Mincho' sty='Regular'
+  byPostScript: typeof=object len=0
+--- '游明朝' ---
+  byFam+Regular: typeof=object len=0
+  byPostScript: typeof=object len=0
+
+=== set font test ===
+初期 font: HGSSoeiKakugothicUB
+初期 fontFamily: HGSSoeiKakugothicUB
+初期 fontStyle: Regular
+--- set 'Yu Gothic' ---
+  [A fontFamily] ERR: After Effects エラー: 「fontFamily」を設定できません。これは「読み取り専用」の属性です。
+  [B resolve] ps='YuGothic-Regular'
+    → readback font='YuGothic-Regular'
+--- set '游ゴシック' ---
+  [A fontFamily] ERR: After Effects エラー: 「fontFamily」を設定できません。これは「読み取り専用」の属性です。
+  [B resolve] ps='undefined'
+--- set 'Arial' ---
+  [A fontFamily] ERR: After Effects エラー: 「fontFamily」を設定できません。これは「読み取り専用」の属性です。
+  [B resolve] ps='ArialMT'
+    → readback font='YuGothic-Regular'
+
+=== 完了 ===

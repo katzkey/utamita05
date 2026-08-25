@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "scannedAt": "2026-07-22T21:16:21Z",
+  "sourceFile": "templates.aep",
+  "templates": [
+    {
+      "name": "_design_white_mincho",
+      "slot": "design",
+      "displayName": "_design_white_mincho",
+      "duration": 5,
+      "tags": [],
+      "emphasisLayers": [
+        "lv0",
+        "lv1",
+        "lv2",
+        "lv3"
+      ]
+    },
+    {
+      "name": "_entry_fade_in",
+      "slot": "entry",
+      "displayName": "_entry_fade_in",
+      "duration": 1.333,
+      "tags": []
+    },
+    {
+      "name": "_entry_テスト",
+      "slot": "entry",
+      "displayName": "_entry_テスト",
+      "duration": 1.333,
+      "tags": []
+    },
+    {
+      "name": "_exit_fade_out",
+      "slot": "exit",
+      "displayName": "_exit_fade_out",
+      "duration": 0.667,
+      "tags": []
+    },
+    {
+      "name": "_hold_static",
+      "slot": "hold",
+      "displayName": "_hold_static",
+      "duration": 5,
+      "tags": []
+    },
+    {
+      "name": "_title_testTitle",
+      "slot": "title",
+      "displayName": "_title_testTitle",
+      "duration": 7,
+      "tags": [],
+      "hasTarget": true
+    },
+    {
+      "name": "_title_testTitle02",
+      "slot": "title",
+      "displayName": "_title_testTitle02",
+      "duration": 7,
+      "tags": [],
+      "hasTarget": true
+    }
+  ]
+}

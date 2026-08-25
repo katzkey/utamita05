@@ -1,0 +1,11 @@
+=== 選択テキストレイヤーのフォント情報 ===
+font (PostScript): AH-Hakushu-School-PRSW12
+fontFamily: AH Hakushu School PRSW12
+fontStyle: Regular
+text: ま
+
+=== app.fonts DB から逆引き ===
+  familyName: AH Hakushu School PRSW12
+  styleName: Regular
+  postScriptName: AH-Hakushu-School-PRSW12
+  technology: 12413
