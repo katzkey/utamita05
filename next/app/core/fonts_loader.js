@@ -130,16 +130,21 @@ async function probeOne(value) {
       if (n && !names.includes(n)) names.push(n);
     }
   }
+  // どの名前で当たったかを覚えておく。
+  // PostScript 名やフルネームは 1 つの書体を指すが、ファミリ名だと
+  // そのファミリの標準ウェイトに解決されることがある。
+  // それを先頭に置くと、どのプリセットでも同じ見た目になってしまう。
+  const exactNames = new Set([value, hit && hit.fullName, hit && hit.nativeFullName].filter(Boolean));
   for (const n of names) {
     try {
       const face = new FontFace(alias, 'local("' + String(n).replace(/"/g, '') + '")');
       await face.load();
       document.fonts.add(face);
-      faceState.set(value, { alias, ok: true });
+      faceState.set(value, { alias, ok: true, exact: exactNames.has(n), via: n });
       return true;
     } catch (e) { /* 次の名前で試す */ }
   }
-  faceState.set(value, { alias, ok: false });
+  faceState.set(value, { alias, ok: false, exact: false, via: null });
   return false;
 }
 
@@ -181,7 +186,9 @@ export function fontStackFor(value) {
   if (!value) return "system-ui, sans-serif";
   const names = [];
   const st = faceState.get(value);
-  if (st && st.ok) names.push(st.alias);
+  // 書体を一意に特定できたときだけ先頭に置く（ウェイトまで正しく出る）。
+  // ファミリ名で当たっただけのものは、後ろに回す。
+  if (st && st.ok && st.exact) names.push(st.alias);
   const hit = aeFonts && aeFonts.find(f => f.postScriptName === value);
   if (hit) {
     for (const n of [hit.nativeFamilyName, hit.familyName, hit.nativeFullName, hit.fullName]) {
@@ -189,6 +196,16 @@ export function fontStackFor(value) {
     }
   }
   if (!names.includes(value)) names.push(value);
+  if (st && st.ok && !st.exact && !names.includes(st.alias)) names.push(st.alias);
   return names.map(n => "'" + String(n).replace(/'/g, "") + "'").join(", ")
        + ", system-ui, sans-serif";
+}
+
+/** 何がどう判定されたかを見るための一覧（原因切り分け用） */
+export function fontProbeReport() {
+  const rows = [];
+  for (const [value, st] of faceState) {
+    rows.push({ value, 入っている: st.ok, 一意に特定: !!st.exact, 当たった名前: st.via || null });
+  }
+  return rows;
 }

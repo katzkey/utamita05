@@ -8,13 +8,13 @@
 // ヘルパーが無くても、tools/auto_timing.py が出した timing.json を
 // 直接読み込む経路を用意してあるので、そちらだけでも実用できる。
 
-import { getProject, setProject, getUi } from "./state.js?v=a2aac36";
-import * as ops from "../core/operations.js?v=a2aac36";
-import { escapeHtml } from "../core/html.js?v=a2aac36";
+import { getProject, setProject, getUi } from "./state.js?v=8ceb86c";
+import * as ops from "../core/operations.js?v=8ceb86c";
+import { escapeHtml } from "../core/html.js?v=8ceb86c";
 import { pingHelper, startJob, fetchResult, cancelJob,
-         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=a2aac36";
+         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=8ceb86c";
 
-import * as jobs from "./job_status.js?v=a2aac36";
+import * as jobs from "./job_status.js?v=8ceb86c";
 
 // 進捗の見張りは job_status に任せる。パネルを閉じても続くようにするため。
 
