@@ -674,3 +674,38 @@ body { display: flex; flex-direction: column; }
 }
 .preview-modes button:hover { background: rgba(0,0,0,.7); }
 .preview-modes button.is-active { background: var(--coral); }
+
+/* ── 処理中の見張り（画面の隅に出しっぱなし） ──
+   パネルを閉じても、どのタブにいても進み具合が見えるようにする。
+   再生バーの上に置く。 */
+.job-status {
+  position: fixed;
+  right: 16px;
+  bottom: 72px;
+  z-index: 300;
+  width: 240px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--white);
+  border: 1px solid var(--gray-2);
+  box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  font-size: 12px;
+  cursor: pointer;
+}
+.job-status.is-done  { border-color: #2e7d32; }
+.job-status.is-error { border-color: var(--coral); }
+.job-head { display: flex; justify-content: space-between; align-items: baseline; }
+.job-pct { font-variant-numeric: tabular-nums; color: var(--gray-4); }
+.job-bar {
+  height: 5px; margin: 6px 0 4px;
+  background: var(--gray-2); border-radius: 3px; overflow: hidden;
+}
+.job-bar i { display: block; height: 100%; background: var(--coral); transition: width .3s; }
+.job-sub { font-size: 11px; color: var(--gray-4); }
+.job-hint { color: var(--gray-3); margin-top: 2px; }
+.job-close {
+  position: absolute; top: 4px; right: 6px;
+  border: none; background: none; cursor: pointer;
+  font-size: 14px; color: var(--gray-3); line-height: 1;
+}
+.job-close:hover { color: var(--gray-5); }
