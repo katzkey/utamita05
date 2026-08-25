@@ -723,3 +723,10 @@ body { display: flex; flex-direction: column; }
   font-size: 11px;
   pointer-events: none;
 }
+
+/* 背景一覧：動画のファイルは色を変えて分かるようにする
+   （画像しか置けないと思われがちなので） */
+.bg-table-body input[data-kind="video"] {
+  border-color: var(--coral);
+  background: rgba(249,97,103,.06);
+}
