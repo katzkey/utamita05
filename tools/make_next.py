@@ -20,10 +20,13 @@ COPY = ["app", "ae", "templates", "tools"]
 # 写してしまうと、あとから足した道具が promote で消える（実際に消えた）。
 DEV_ONLY = {"make_next.py", "promote.py", "stamp_version.py", "check_calls.py", "rollback.py"}
 
-# next/ の中では、参照先も next/ を向かせる
+# next/ の中では、参照先も next/ を向かせる。
+# 書き換えるのは配信元の URL だけ。手元の置き場所（Application Support の下）は
+# next でも同じ tools/ なので、そこまで書き換えると存在しない場所を案内してしまう。
+SITE = "katzkey.github.io/utamita05/"
 REWRITE = [
-    ("utamita05/app/",   "utamita05/next/app/"),
-    ("utamita05/tools/", "utamita05/next/tools/"),
+    (SITE + "app/",   SITE + "next/app/"),
+    (SITE + "tools/", SITE + "next/tools/"),
 ]
 TEXT_EXT = {".html", ".js", ".css", ".json", ".py", ".sh", ".bat", ".vbs", ".ps1", ".md", ".txt"}
 

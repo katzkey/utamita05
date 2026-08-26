@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=2d47649";
-import { cssFamilyFor, fontStackFor, labelFor } from "./fonts_loader.js?v=2d47649";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=2d47649";
-import { SMALL_KANA, classifyChar, autoKerningEm, typeKerningEm } from "./char_type.js?v=2d47649";
-import { escapeHtml } from "./html.js?v=2d47649";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=3a52e07";
+import { cssFamilyFor, fontStackFor, labelFor } from "./fonts_loader.js?v=3a52e07";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=3a52e07";
+import { SMALL_KANA, classifyChar, autoKerningEm, typeKerningEm } from "./char_type.js?v=3a52e07";
+import { escapeHtml } from "./html.js?v=3a52e07";
 
 // フォントごとの「行ボックスの中心」と「文字のインクの中心」のずれ（em、＋で文字が下寄り）。
 //

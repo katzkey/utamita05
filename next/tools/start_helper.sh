@@ -5,7 +5,7 @@
 # 止まってしまったときだけ。
 #
 # 使い方（ターミナルに貼り付ける）:
-#   bash "$HOME/Library/Application Support/utamita05/next/tools/start_helper.sh"
+#   bash "$HOME/Library/Application Support/utamita05/tools/start_helper.sh"
 
 set -u
 DEST="$HOME/Library/Application Support/utamita05"

@@ -4,7 +4,7 @@
 // 以前はポート番号・接続確認・進捗ポーリング・工程表示が
 // 2 ファイルに重複していて、片方だけ直すと不整合になる状態だった。
 
-import { escapeHtml } from "../core/html.js?v=2d47649";
+import { escapeHtml } from "../core/html.js?v=3a52e07";
 
 // ポート番号はここだけ。ヘルパー側の UTAMITA_HELPER_PORT と合わせる。
 export const HELPER_BASE = "http://127.0.0.1:8777";
@@ -195,7 +195,7 @@ export function helperMissingHtml(extra = "") {
     <br>
     それでも出るときだけ、手で起こしてください。${mac
       ? `ターミナルに次を貼り付けます。<br>
-         <code style="user-select:all">bash "$HOME/Library/Application Support/utamita05/next/tools/start_helper.sh"</code><br>
+         <code style="user-select:all">bash "$HOME/Library/Application Support/utamita05/tools/start_helper.sh"</code><br>
          自動起動に戻すときは<br>
          <code style="user-select:all">launchctl load ~/Library/LaunchAgents/com.utamita05.helper.plist</code>`
       : `エクスプローラの<b>アドレス欄</b>に次を貼り付けて Enter を押し、
