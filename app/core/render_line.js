@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=093a47e";
-import { cssFamilyFor, labelFor } from "./fonts_loader.js?v=093a47e";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=093a47e";
-import { SMALL_KANA, classifyChar, autoKerningEm } from "./char_type.js?v=093a47e";
-import { escapeHtml } from "./html.js?v=093a47e";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=ac31364";
+import { cssFamilyFor, fontStackFor, labelFor } from "./fonts_loader.js?v=ac31364";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=ac31364";
+import { SMALL_KANA, classifyChar, autoKerningEm, typeKerningEm } from "./char_type.js?v=ac31364";
+import { escapeHtml } from "./html.js?v=ac31364";
 
 // フォントごとの「行ボックスの中心」と「文字のインクの中心」のずれ（em、＋で文字が下寄り）。
 //
@@ -133,8 +133,9 @@ export function renderLinePreviewHtml(line, project) {
   // AE 実寸 → ステージ幅基準の cqw 換算（1cqw = ステージ幅の1%）
   const toCqw = (px) => (px / resW * 100);
   const fontCqw = toCqw(rawSize);
-  // char モードの文字送りは ratio = 1.10 + tracking → 余白分 = (0.10 + tracking) * fontSize
-  const letterCqw = toCqw((0.10 + tracking) * rawSize);
+  // 和文の送り。PDF 実測は 1.050em（03_座布団.pdf：送り 31.62px / フォント 30.12px）。
+  // 以前は 1.10em で、PDF より 5% 広かった。余白分 = (0.05 + tracking) * fontSize
+  const letterCqw = toCqw((0.05 + tracking) * rawSize);
 
   const layout = String(line.layout || "h_bottom");
   const vertical = /^v[lrc]_/.test(layout);
@@ -269,7 +270,7 @@ export function renderLinePreviewHtml(line, project) {
   const textStyle = [
     `position: relative`,
     `z-index: 1`,
-    `font-family: '${(cssFam || "").replace(/'/g, "\\'")}', system-ui, sans-serif`,
+    `font-family: ${fontStackFor(familyValue)}`,
     `font-size: ${fontCqw.toFixed(3)}cqw`,
     `letter-spacing: ${letterCqw.toFixed(3)}cqw`,
     // letter-spacing は最後の 1 文字の後ろにも入る。そのままだと行の箱が
@@ -700,10 +701,13 @@ function buildLineInnerHtml(line, opts) {
       const curType = classifyChar(t.ch);
       // オートカーニング ON なら組版ルール（和文↔欧文だけ空ける）、
       // OFF なら従来どおり「種類が変わったら一律 interTypeGap」
-      const gap = autoKerning
+      // 自動カーニング（和文↔欧文の四分アキ）に、文字種ごとの値を足す。
+      // 自動を切っていても、種類ごとの値だけで詰めたり空けたりできる。
+      const auto = autoKerning
         ? autoKerningEm(prevType, curType)
         : ((interTypeGap > 0 && prevType && curType && prevType !== curType) ? interTypeGap : 0);
-      if (gap > 0) {
+      const gap = auto + typeKerningEm(prevType, curType, line.kerning);
+      if (gap !== 0) {
         chHtml = `<span style="padding-inline-start:${gap}em">${chHtml}</span>`;
       }
       prevType = curType;

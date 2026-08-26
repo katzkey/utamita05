@@ -11,6 +11,9 @@ import io, os, shutil, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NEXT = os.path.join(ROOT, "next")
 COPY = ["app", "ae", "templates", "tools"]
+# 開発用の道具は写さない。next/tools はヘルパーの配布物としてだけ使う。
+# 写してしまうと、あとから足した道具が promote で消える（実際に消えた）。
+DEV_ONLY = {"make_next.py", "promote.py", "stamp_version.py", "check_calls.py"}
 REWRITE = [
     ("utamita05/next/app/",   "utamita05/app/"),
     ("utamita05/next/tools/", "utamita05/tools/"),
@@ -25,9 +28,16 @@ def main():
         src, dst = os.path.join(NEXT, d), os.path.join(ROOT, d)
         if not os.path.isdir(src):
             continue
+        if d == "tools":
+            # tools は丸ごと入れ替えない。開発用の道具まで消えるため、上書きだけ。
+            for name in os.listdir(src):
+                if name in DEV_ONLY or name == "__pycache__":
+                    continue
+                shutil.copy2(os.path.join(src, name), os.path.join(dst, name))
+            continue
         if os.path.isdir(dst):
             shutil.rmtree(dst)
-        shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", *DEV_ONLY))
 
     for base, _dirs, files in os.walk(ROOT):
         if os.sep + "next" in base or os.sep + ".git" in base:

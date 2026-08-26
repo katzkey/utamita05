@@ -5,15 +5,16 @@ import {
   now, indexOfId, findById,
   insertAt, removeAt, moveItem, replaceAt,
   syncChars, splitChars,
-} from "./utils.js?v=093a47e";
+} from "./utils.js?v=ac31364";
 
 import {
   createLine, createBackground, createTitle, createTemplateRef,
   defaultZabuton, defaultJitter,
   PROJECT_VERSION,
-} from "./project.js?v=093a47e";
-import { normalizeMotion } from "./motion.js?v=093a47e";
-import { getPresetById, getFontPresetById, getZabutonPresetById, getCustomPresetById } from "./presets.js?v=093a47e";
+} from "./project.js?v=ac31364";
+import { normalizeMotion } from "./motion.js?v=ac31364";
+import { defaultKerning } from "./char_type.js?v=ac31364";
+import { getPresetById, getFontPresetById, getZabutonPresetById, getCustomPresetById } from "./presets.js?v=ac31364";
 
 // ──────────────────────────────────────────────────
 // 内部ヘルパー
@@ -182,6 +183,7 @@ function extractLook(line) {
     tracking: line.tracking ?? 0,
     interTypeGap: line.interTypeGap ?? 0,
     autoKerning: !!line.autoKerning,
+    kerning: clone(line.kerning),
     stagger: line.stagger ?? 0,
     textColor: line.textColor ?? null,
     textStroke: clone(line.textStroke),
@@ -208,6 +210,7 @@ function applyLook(line, look) {
     tracking: look.tracking,
     interTypeGap: look.interTypeGap,
     autoKerning: look.autoKerning,
+    kerning: clone(look.kerning),
     stagger: look.stagger,
     textColor: look.textColor,
     textStroke: clone(look.textStroke),
@@ -352,6 +355,14 @@ export function setLineCustomPresetId(project, id, presetId) {
 // カスタムプリセットを削除したときに、行が消えた id を指したままにならないよう使う
 export function setLineZabutonPresetId(project, id, presetId) {
   return updateLine(project, id, (line) => ({ ...line, zabutonPresetId: presetId ?? null }));
+}
+
+// 文字種ごとのアキ（em）。{ latin, hiragana, katakana, kanji, other } を部分更新する
+export function setLineKerning(project, id, partial) {
+  return updateLine(project, id, (line) => {
+    if (partial === null) return { ...line, kerning: null };
+    return { ...line, kerning: { ...defaultKerning(), ...(line.kerning || {}), ...partial } };
+  });
 }
 
 // 出入りの動き。partial を深さ 2 までマージする（in/out の中身を個別に触れるように）

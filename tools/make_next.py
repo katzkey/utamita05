@@ -16,6 +16,9 @@ import io, os, shutil, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NEXT = os.path.join(ROOT, "next")
 COPY = ["app", "ae", "templates", "tools"]
+# 開発用の道具は写さない。next/tools はヘルパーの配布物としてだけ使う。
+# 写してしまうと、あとから足した道具が promote で消える（実際に消えた）。
+DEV_ONLY = {"make_next.py", "promote.py", "stamp_version.py", "check_calls.py"}
 
 # next/ の中では、参照先も next/ を向かせる
 REWRITE = [
@@ -34,7 +37,7 @@ def main():
         if not os.path.isdir(src):
             continue
         shutil.copytree(src, os.path.join(NEXT, d),
-                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", *DEV_ONLY))
 
     n = 0
     for base, _dirs, files in os.walk(NEXT):

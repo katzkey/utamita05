@@ -1,17 +1,18 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=093a47e";
-import * as ops from "../core/operations.js?v=093a47e";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=093a47e";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=093a47e";
-import { loadFonts, getFontEntries, cssFamilyFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=093a47e";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=093a47e";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=093a47e";
-import { AE_ENABLED } from "../core/features.js?v=093a47e";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=093a47e";
-import { escapeHtml } from "../core/html.js?v=093a47e";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=093a47e";
-import * as songPreview from "./song_preview.js?v=093a47e";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=ac31364";
+import * as ops from "../core/operations.js?v=ac31364";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=ac31364";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=ac31364";
+import { loadFonts, getFontEntries, cssFamilyFor, fontStackFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=ac31364";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=ac31364";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=ac31364";
+import { AE_ENABLED } from "../core/features.js?v=ac31364";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=ac31364";
+import { KERN_TYPES } from "../core/char_type.js?v=ac31364";
+import { escapeHtml } from "../core/html.js?v=ac31364";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=ac31364";
+import * as songPreview from "./song_preview.js?v=ac31364";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -21,6 +22,11 @@ let lineCountEl;
 // 詳細ペインは毎回作り直されるので、描き直すたびに止めて張り直す。
 let previewMotionTimer = null;
 let previewMotionStart = 0;
+// 曲が鳴っている間は、プレビューを本当の TC に合わせる。
+// 行をクリックして聞くとき、作り込み用のループが回っていると
+// 「この曲のこの位置で本当にこう出入りするか」が確かめられないため。
+let previewFollowing = false;
+let previewFollowOff = null;
 
 function stopPreviewMotion() {
   if (previewMotionTimer) { clearInterval(previewMotionTimer); previewMotionTimer = null; }
@@ -48,6 +54,46 @@ function startPreviewMotion(line) {
   };
   tick();
   previewMotionTimer = setInterval(tick, 1000 / 60);
+}
+
+function stopPreviewFollow() {
+  previewFollowOff?.(); previewFollowOff = null;
+  previewFollowing = false;
+}
+
+function startPreviewFollow(line) {
+  stopPreviewFollow();
+  const player = document.getElementById("player");
+  if (!player) return;
+
+  const apply = () => {
+    const host = detailPaneEl.querySelector("#previewHost");
+    if (!host) return;
+    const playing = !!player.src && !player.paused;
+    if (playing === previewFollowing) return;
+    previewFollowing = playing;
+    if (playing) {
+      // 曲に合わせた表示に切り替える。背景も動画もその時刻のものが出る
+      stopPreviewMotion();
+      songPreview.start(host);
+      host.insertAdjacentHTML("afterbegin",
+        '<div class="preview-follow">曲に合わせて表示中</div>');
+    } else {
+      songPreview.stop();
+      host.innerHTML = renderLinePreviewHtml(line, getProject());
+      startPreviewMotion(line);
+    }
+  };
+
+  player.addEventListener("play", apply);
+  player.addEventListener("pause", apply);
+  player.addEventListener("ended", apply);
+  previewFollowOff = () => {
+    player.removeEventListener("play", apply);
+    player.removeEventListener("pause", apply);
+    player.removeEventListener("ended", apply);
+  };
+  apply();   // 既に鳴っている状態で行を選び直した場合
 }
 
 export function init() {
@@ -79,10 +125,10 @@ function fontFamilyOptionsForLine(currentValue, projectDefault) {
   const options = [`<option value="" ${!currentValue ? "selected" : ""}>${escapeHtml(inhLabel)}</option>`];
   for (const e of entries) {
     const sel = e.value === currentValue ? "selected" : "";
-    const style = `font-family: '${(e.cssFamily || "").replace(/'/g, "\\'")}', system-ui, sans-serif`;
+    const style = `font-family: ${fontStackFor(e.value)}`;
     // 一覧はデザイナーの AE 機のものなので、この PC に無いフォントも並ぶ。
     // 選ぶと黙って別の書体で描かれてしまうため、選ぶ前に分かるようにする。
-    const miss = isFontAvailable(e.cssFamily || e.value) ? "" : "⚠ ";
+    const miss = isFontValueAvailable(e.value) ? "" : "⚠ ";
     options.push(`<option value="${escapeHtml(e.value)}" style="${style}" ${sel}>${miss}${escapeHtml(e.label)}</option>`);
   }
   return options.join("");
@@ -122,6 +168,7 @@ function renderRows(project, ui) {
 
 function renderDetail(project, ui) {
   stopPreviewMotion();
+  stopPreviewFollow();
   songPreview.stop();
   const selected = [...ui.selectedLineIds];
   if (selected.length === 0) {
@@ -254,8 +301,11 @@ function renderDetail(project, ui) {
               html += `<optgroup label="${escapeHtml(cat)}">`;
               for (const p of list) {
                 const sel = line.fontPresetId === p.id ? "selected" : "";
-                const miss = isFontValueAvailable(p.apply?.fontOverride?.family) ? "" : "⚠ ";
-                html += `<option value="${p.id}" ${sel}>${miss}${escapeHtml(p.label)}</option>`;
+                const fam = p.apply?.fontOverride?.family;
+                const miss = isFontValueAvailable(fam) ? "" : "⚠ ";
+                // 見本としてそのフォントで表示する（行のフォント一覧と同じ扱い）
+                const style = fam ? ` style="font-family: ${fontStackFor(fam)}"` : "";
+                html += `<option value="${p.id}"${style} ${sel}>${miss}${escapeHtml(p.label)}</option>`;
               }
               html += "</optgroup>";
             }
@@ -390,10 +440,24 @@ function renderDetail(project, ui) {
         <input class="field-input" id="fldInterTypeGap" type="number" step="0.02" min="0" value="${line.interTypeGap ?? 0}" style="width:80px">
         <span style="font-size:10px;color:var(--gray-3);margin-left:8px">em（種類が変わる所に一律で空き）</span>
       </div>
+      <div class="field">
+        <span class="field-label">文字種ごとのアキ</span>
+        <span style="font-size:10px;color:var(--gray-3)">em。負で詰め、正で開く</span>
+      </div>
+      <div class="field" style="flex-wrap:wrap;gap:4px">
+        ${KERN_TYPES.map(t => `
+          <label style="display:flex;align-items:center;gap:3px;font-size:11px">
+            <span style="color:var(--gray-4);width:62px">${escapeHtml(t.label)}</span>
+            <input class="field-input" id="fldKern_${t.key}" type="number" step="0.02"
+              value="${line.kerning?.[t.key] ?? 0}" style="width:62px">
+          </label>`).join("")}
+      </div>
       <div style="font-size:10px;color:var(--gray-3);margin:-4px 0 8px">
+        隣り合う 2 文字には<b>両側の値の平均</b>が入ります。<br>
+        （カタカナ 0.10 なら カタカナ同士 0.10、カタカナとひらがな 0.05）<br>
         ${line.autoKerning
-          ? "和文と英数字の境界だけ四分アキ(0.25em)。かな・カタカナ・漢字どうしはベタ組み（PDF 実測に準拠）"
-          : "手動：種類が変わる所すべてに同じ幅を入れます"}
+          ? "オートカーニング：和文と英数字の境界だけ四分アキ(0.25em)。上の値はそこへ足されます"
+          : "オート OFF：上の値だけが効きます"}
       </div>
       <div class="field">
         <span class="field-label">italic</span>
@@ -703,6 +767,7 @@ function renderDetail(project, ui) {
     songPreview.start(detailPaneEl.querySelector("#previewHost"));
   } else {
     startPreviewMotion(line);
+    startPreviewFollow(line);   // 曲が鳴っている間は本当の TC に合わせる
   }
 
   // サブタブ：セクションの DOM 並び順は変えず、data-active-tab で CSS 出し分け
@@ -836,6 +901,15 @@ function renderDetail(project, ui) {
     const line2 = p.lines.find(l => l.id === id);
     if (line2) setProject({ ...p, lines: p.lines.map(l => l.id === id ? { ...l, interTypeGap: v } : l) });
   });
+  // 文字種ごとのアキ
+  for (const t of KERN_TYPES) {
+    document.getElementById("fldKern_" + t.key)?.addEventListener("change", (e) => {
+      setProject(ops.setLineKerning(getProject(), id, { [t.key]: Number(e.target.value) || 0 }));
+    });
+    attachArrowStep("fldKern_" + t.key, (v) =>
+      setProject(ops.setLineKerning(getProject(), id, { [t.key]: v })));
+  }
+
   document.getElementById("fldAutoKerning")?.addEventListener("change", (e) => {
     const p = getProject();
     const on = e.target.checked;

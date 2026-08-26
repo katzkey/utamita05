@@ -8,16 +8,17 @@
 // ヘルパーが無くても、tools/auto_timing.py が出した timing.json を
 // 直接読み込む経路を用意してあるので、そちらだけでも実用できる。
 
-import { getProject, setProject, getUi } from "./state.js?v=093a47e";
-import * as ops from "../core/operations.js?v=093a47e";
-import { escapeHtml } from "../core/html.js?v=093a47e";
-import { pingHelper, startJob, pollJob, fetchResult, cancelJob,
-         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=093a47e";
+import { getProject, setProject, getUi } from "./state.js?v=ac31364";
+import * as ops from "../core/operations.js?v=ac31364";
+import { escapeHtml } from "../core/html.js?v=ac31364";
+import { pingHelper, startJob, fetchResult, cancelJob,
+         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=ac31364";
 
-const POLL_MS = 1500;
+import * as jobs from "./job_status.js?v=ac31364";
+
+// 進捗の見張りは job_status に任せる。パネルを閉じても続くようにするため。
 
 let overlayEl = null;
-let stopPoll = null;
 let currentJob = null;
 
 export function init() {
@@ -42,12 +43,44 @@ function open() {
   document.body.appendChild(overlayEl);
   overlayEl.querySelector("#atClose").addEventListener("click", close);
   overlayEl.addEventListener("click", (e) => { if (e.target === overlayEl) close(); });
-  renderIdle();
-  checkHelper();
+  // 実行中・完了済みのものがあれば、待機画面ではなくそちらを見せる
+  if (jobs.isRunning("timing")) {
+    renderProgress(jobs.current().steps, jobs.current().elapsed);
+    watch();
+  } else if (jobs.pending("timing")) {
+    showFinished();
+  } else {
+    renderIdle();
+    checkHelper();
+  }
+}
+
+// job_status の更新を受けて、パネルの中身も追随させる
+let unwatch = null;
+function watch() {
+  unwatch?.();
+  unwatch = jobs.subscribe((j) => {
+    if (!overlayEl || !j || j.kind !== "timing") return;
+    if (j.status === "running") renderProgress(j.steps, j.elapsed);
+    else showFinished();
+  });
+}
+
+async function showFinished() {
+  const j = jobs.current();
+  if (!j) return;
+  if (j.status === "error") { renderError(j.error || "処理に失敗しました"); jobs.clear(); return; }
+  try {
+    renderReview(await fetchResult(j.jobId));
+  } catch (e) {
+    renderError("結果を受け取れませんでした: " + (e.message || e));
+  }
+  jobs.clear();
 }
 
 function close() {
-  stopPoll?.(); stopPoll = null;
+  // 処理そのものは止めない。閉じても隅の表示が見張り続ける。
+  unwatch?.(); unwatch = null;
   overlayEl?.remove();
   overlayEl = null;
 }
@@ -120,12 +153,8 @@ async function run() {
   renderProgress([], 0, "送信しています…");
   try {
     currentJob = await startJob("/jobs", fd);
-    stopPoll = pollJob(currentJob, {
-      intervalMs: POLL_MS,
-      onProgress: (steps, elapsed) => renderProgress(steps, elapsed),
-      onDone: async () => renderReview(await fetchResult(currentJob)),
-      onError: (msg) => renderError(msg),
-    });
+    jobs.start("timing", currentJob);
+    watch();
   } catch (e) {
     renderError(String(e.message || e));
   }
@@ -140,7 +169,7 @@ function renderProgress(steps, elapsed, note) {
 }
 
 async function onCancel() {
-  stopPoll?.(); stopPoll = null;
+  jobs.clear();
   await cancelJob(currentJob);
   currentJob = null;
   renderIdle("ok");

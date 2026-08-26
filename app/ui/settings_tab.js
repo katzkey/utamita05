@@ -1,11 +1,13 @@
 // 全体設定タブ
 
-import { getProject, setProject } from "./state.js?v=093a47e";
-import * as ops from "../core/operations.js?v=093a47e";
-import { loadFonts, getFontEntries, isFontAvailable } from "../core/fonts_loader.js?v=093a47e";
-import { getCustomZabutonPresets } from "../core/presets.js?v=093a47e";
-import { exportCustomPresetsJson, importCustomPresetsJson } from "../core/custom_presets.js?v=093a47e";
-import { escapeHtml } from "../core/html.js?v=093a47e";
+import { getProject, setProject } from "./state.js?v=ac31364";
+import * as ops from "../core/operations.js?v=ac31364";
+import { loadFonts, getFontEntries, fontStackFor, isFontValueAvailable,
+         hasLocalFontAccess, loadLocalFonts, getLocalFonts, getFontAliases, setFontAlias,
+         autoAliasMissing, probeFonts, guessLocalFont } from "../core/fonts_loader.js?v=ac31364";
+import { getCustomZabutonPresets, FONT_PRESETS } from "../core/presets.js?v=ac31364";
+import { exportCustomPresetsJson, importCustomPresetsJson } from "../core/custom_presets.js?v=ac31364";
+import { escapeHtml } from "../core/html.js?v=ac31364";
 
 let pane;
 
@@ -79,6 +81,23 @@ export function render() {
     </div>
     <button class="tool-btn tool-btn-danger" id="btnInheritAll" data-ae="1">全行・全スロットを継承に戻す</button>
 
+    <h2 style="margin-top:36px">フォントの読み替え</h2>
+    <div style="font-size:12px;color:var(--gray-3,#999);margin-bottom:8px">
+      プリセットが指しているフォント名と、この PC に入っている名前が違うと、
+      別の書体で表示されます。ここで<b>実際に使うフォントを指定</b>できます。<br>
+      設定は<b>この PC のブラウザ</b>に残ります。プロジェクトには入りません。
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="tool-btn" id="btnLoadLocalFonts"
+        ${hasLocalFontAccess() ? "" : "disabled"}>この PC のフォントを読み込む</button>
+      <button class="tool-btn" id="btnAutoAlias" ${getLocalFonts() ? "" : "disabled"}>
+        見つからないものを自動で割り当てる</button>
+    </div>
+    ${hasLocalFontAccess() ? "" : `<div class="at-warn" style="font-size:11px">
+      このブラウザには、入っているフォントを調べる仕組みがありません
+      （Chrome か Edge で開くと使えます）。手で選ぶことはできます。</div>`}
+    <div id="fontAliasRows"></div>
+
     <h2 style="margin-top:36px">カスタムプリセット</h2>
     <div style="font-size:12px;color:var(--gray-3,#999);margin-bottom:8px">
       保存したプリセットは <b>この PC のブラウザ</b> に入っています（現在 ${getCustomZabutonPresets().length} 個）。<br>
@@ -140,6 +159,22 @@ export function render() {
   });
 
   // カスタムプリセットの書き出し / 読み込み
+  renderFontAliasRows();
+  pane.querySelector("#btnLoadLocalFonts")?.addEventListener("click", async () => {
+    const list = await loadLocalFonts();
+    if (!list) { alert("読み込めませんでした（許可されなかったか、この環境では使えません）"); return; }
+    alert(`この PC のフォント ${list.length} 個を読み込みました。`);
+    render();
+  });
+  pane.querySelector("#btnAutoAlias")?.addEventListener("click", async () => {
+    const values = FONT_PRESETS.map(p => p.apply?.fontOverride?.family).filter(Boolean);
+    await probeFonts(values);
+    const n = autoAliasMissing(values);
+    await probeFonts(values);
+    alert(n ? `${n} 個を割り当てました。` : "割り当てられるものはありませんでした。");
+    render();
+  });
+
   pane.querySelector("#btnExportPresets").addEventListener("click", () => {
     if (!getCustomZabutonPresets().length) { alert("書き出すカスタムプリセットがありません。"); return; }
     const blob = new Blob([exportCustomPresetsJson()], { type: "application/json" });
@@ -170,6 +205,41 @@ export function render() {
   });
 }
 
+// プリセットが使うフォントを並べ、実際に使うものを選べるようにする
+function renderFontAliasRows() {
+  const host = pane.querySelector("#fontAliasRows");
+  if (!host) return;
+  const alias = getFontAliases();
+  const local = getLocalFonts();
+  const seen = new Set();
+  const rows = [];
+  for (const p of FONT_PRESETS) {
+    const v = p.apply?.fontOverride?.family;
+    if (!v || seen.has(v)) continue;
+    seen.add(v);
+    const ok = isFontValueAvailable(v);
+    const cur = alias[v] || "";
+    const opts = local
+      ? [`<option value="">— そのまま —</option>`].concat(
+          local.map(f => `<option value="${escapeHtml(f.postscriptName)}" ${cur === f.postscriptName ? "selected" : ""}>${escapeHtml(f.fullName || f.postscriptName)}</option>`)
+        ).join("")
+      : `<option value="">（フォント一覧を先に読み込んでください）</option>`;
+    rows.push(`<div class="field">
+      <span class="field-label" style="width:190px">${ok ? "" : "⚠ "}${escapeHtml(p.label)}</span>
+      <select class="field-select" data-alias-for="${escapeHtml(v)}" style="flex:1" ${local ? "" : "disabled"}>${opts}</select>
+      <span style="font-size:10px;color:var(--gray-3);margin-left:8px;width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(cur || v)}</span>
+    </div>`);
+  }
+  host.innerHTML = rows.join("");
+  host.querySelectorAll("[data-alias-for]").forEach(sel => {
+    sel.addEventListener("change", async () => {
+      setFontAlias(sel.getAttribute("data-alias-for"), sel.value);
+      await probeFonts([sel.getAttribute("data-alias-for")]);
+      render();
+    });
+  });
+}
+
 function tmplOpts(project, slot, current) {
   return project.templates
     .filter(t => t.slot === slot)
@@ -188,9 +258,9 @@ function fontFamilyOptions(current) {
   }
   return entries.map(e => {
     const sel = e.value === current ? "selected" : "";
-    const style = `font-family: '${(e.cssFamily || "").replace(/'/g, "\\'")}', system-ui, sans-serif`;
+    const style = `font-family: ${fontStackFor(e.value)}`;
     // この PC に入っていないフォントには印を付ける（詳細ペインと同じ）
-    const miss = isFontAvailable(e.cssFamily || e.value) ? "" : "⚠ ";
+    const miss = isFontValueAvailable(e.value) ? "" : "⚠ ";
     return `<option value="${escapeHtml(e.value)}" style="${style}" ${sel}>${miss}${escapeHtml(e.label)}</option>`;
   }).join("");
 }

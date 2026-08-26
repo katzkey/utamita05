@@ -59,8 +59,9 @@ export const ZABUTON_PRESETS = [
       zabuton: {
         ...ZABUTON_BASE, shape: "round", cornerRadius: 24,
         // 01_座布団.pdf p1 の図形データ実測（フォント 30.47px）：厚み 56.0px = 1.838em
-        //   → paddingY = (1.838 - 1.3) * 28 / 2 = 7.5 → 8。左右は未計測（30 のまま）
-        color: "#802080", opacity: 0.9, paddingX: 30, paddingY: 8,
+        //   → paddingY = (1.838 - 1.3) * 28 / 2 = 7.5 → 8
+        //   左右の余白 33.7px = 1.105em → paddingX = 31
+        color: "#802080", opacity: 0.9, paddingX: 31, paddingY: 8,
       },
       glow: null, textColor: "#FFFFFF", textStroke: null,
     },
@@ -70,7 +71,11 @@ export const ZABUTON_PRESETS = [
     apply: {
       zabuton: {
         ...ZABUTON_BASE, shape: "rect", cornerRadius: 0,
-        color: "#9ADEE3", opacity: 0.9, paddingX: 30, paddingY: 10,
+        // 01_座布団.pdf p2 実測（フォント 30.47px）。図形でも画像でも取れないので
+        // 帯の色（明るく彩度が中くらい）で画素から特定した。
+        //   帯 941.3x56.0px  厚み 1.838em / 左右の余白 21.1px = 0.694em
+        //   → paddingY = (1.838 - 1.3) * 28 / 2 = 7.5 → 8   paddingX = 0.694 * 28 = 19.4 → 19
+        color: "#9ADEE3", opacity: 0.9, paddingX: 19, paddingY: 8,
         // PDF 実測（x=0.35/0.55/0.65）: アクア → ラベンダー → ピンク
         gradient: { enabled: true, angle: 90, colorA: "#9ADEE3", colorB: "#C8BCE0", colorC: "#DFACD3" },
       },
@@ -203,7 +208,9 @@ export const ZABUTON_PRESETS = [
         //   文字の em 箱から線まで 14.5px = 0.393em → 28px 換算 11
         // カスレ：PDF の線はまっすぐで、太さのばらつき σ0.30px・中心のゆらぎ σ0.17px。
         //   これはアンチエイリアスの範囲で、実質まっすぐ。掛かりは控えめにしてある
-        enabled: true, style: "brackets", texture: "scratchy",
+        // PDF のラインは 3 種とも完全にまっすぐ（太さのばらつき σ0.00・欠け 0%）。
+        // カスレは付けない。機能は残してあるので、要るときは画面から入れられる。
+        enabled: true, style: "brackets", texture: null,
         color: "#FFFFFF", width: 1.5, offset: 11, extend: 8,
         // カスレの粒（AE px）。PDF の線はまっすぐなので控えめに置いてある
         pitch: 16, wobble: 1.2, rough: 0.45, seed: 3,
@@ -218,8 +225,9 @@ export const ZABUTON_PRESETS = [
       zabuton: {
         ...ZABUTON_BASE, shape: "rect", color: "#DDE8F0", opacity: 0.9,
         // 05_座布団.pdf p0 実測（フォント 31.89px）：帯の画像 83.0px = 2.603em
-        //   → paddingY = (2.603 - 1.3) * 28 / 2 = 18.2 → 18。左右は画像の縁がぼけていて未計測
-        cornerRadius: 0, paddingX: 40, paddingY: 18,
+        //   → paddingY = (2.603 - 1.3) * 28 / 2 = 18.2 → 18
+        //   左右の余白 20.5px = 0.644em → paddingX = 18
+        cornerRadius: 0, paddingX: 18, paddingY: 18,
         // 05_座布団.pdf p0 実測：帯の縁は 10%→90% で 19〜20px かけて変化する。
         //   ガウスぼかしの σ ≒ 20 / 2.56 = 7.6px（フォント 31.89px）→ 28px 換算で 7
         // X と Y を同じにしてあるのは、CSS の blur() を使う経路に乗せるため
@@ -248,7 +256,8 @@ export const ZABUTON_PRESETS = [
         ...ZABUTON_BASE, shape: "rect", color: "#56D4D9", opacity: 0.95,
         // 05_座布団.pdf p1 実測（フォント 31.18px）：帯 49.0px = 1.571em
         //   → paddingY = (1.571 - 1.3) * 28 / 2 = 3.8 → 4
-        cornerRadius: 0, paddingX: 30, paddingY: 4,
+        //   左右の余白 6.3px = 0.201em → paddingX = 6
+        cornerRadius: 0, paddingX: 6, paddingY: 4,
         gradient: { enabled: true, angle: 90, colorA: "#56D4D9", colorB: "#C6E9F8", colorC: "#59EDDE" },
       },
       glow: null, textColor: "#000000", textStroke: null,

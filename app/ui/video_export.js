@@ -5,17 +5,18 @@
 //   重ね合わせ・フェード・エンコード・音声の多重化は ffmpeg（ローカルヘルパー）に任せる。
 //   ブラウザで全部やるより速く、音声と背景動画がそのまま扱えるため。
 
-import { getProject, getUi, getFileBlob } from "./state.js?v=093a47e";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=093a47e";
-import { renderLineLayer } from "../core/render_layer.js?v=093a47e";
-import { escapeHtml } from "../core/html.js?v=093a47e";
-import { pingHelper, startJob, pollJob, downloadUrl,
-         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=093a47e";
+import { getProject, getUi, getFileBlob } from "./state.js?v=ac31364";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=ac31364";
+import { renderLineLayer } from "../core/render_layer.js?v=ac31364";
+import { escapeHtml } from "../core/html.js?v=ac31364";
+import { pingHelper, startJob, downloadUrl,
+         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=ac31364";
 
-const POLL_MS = 1000;
+import * as jobs from "./job_status.js?v=ac31364";
+
+// 進捗の見張りは job_status に任せる。パネルを閉じても続くようにするため。
 
 let overlayEl = null;
-let stopPoll = null;
 let currentJob = null;
 
 export function init() {
@@ -37,12 +38,38 @@ function open() {
   document.body.appendChild(overlayEl);
   overlayEl.querySelector("#veClose").addEventListener("click", close);
   overlayEl.addEventListener("click", (e) => { if (e.target === overlayEl) close(); });
-  renderIdle();
-  checkHelper();
+  if (jobs.isRunning("export")) {
+    renderSteps(withDrawStep(jobs.current().steps), jobs.current().elapsed);
+    watch();
+  } else if (jobs.pending("export")) {
+    showFinished();
+  } else {
+    renderIdle();
+    checkHelper();
+  }
+}
+
+let unwatch = null;
+function watch() {
+  unwatch?.();
+  unwatch = jobs.subscribe((j) => {
+    if (!overlayEl || !j || j.kind !== "export") return;
+    if (j.status === "running") renderSteps(withDrawStep(j.steps), j.elapsed);
+    else showFinished();
+  });
+}
+
+function showFinished() {
+  const j = jobs.current();
+  if (!j) return;
+  if (j.status === "error") renderError(j.error || "書き出しに失敗しました");
+  else renderDone({ elapsed: j.elapsed, result: j.result });
+  jobs.clear();
 }
 
 function close() {
-  stopPoll?.(); stopPoll = null;
+  // 書き出しそのものは止めない。閉じても隅の表示が見張り続ける。
+  unwatch?.(); unwatch = null;
   overlayEl?.remove();
   overlayEl = null;
 }
@@ -210,12 +237,8 @@ async function run() {
 
   try {
     currentJob = await startJob("/render", fd);
-    stopPoll = pollJob(currentJob, {
-      intervalMs: POLL_MS,
-      onProgress: (steps, elapsed) => renderSteps(withDrawStep(steps), elapsed),
-      onDone: (d) => renderDone(d),
-      onError: (msg) => renderError(msg),
-    });
+    jobs.start("export", currentJob);
+    watch();
   } catch (e) {
     renderError(String(e.message || e));
   }
