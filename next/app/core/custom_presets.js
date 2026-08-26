@@ -8,7 +8,7 @@
 // ビルトインの ZABUTON_PRESETS と同じ形（{ id, category, label, apply }）で持つ。
 // category は固定で CUSTOM_CATEGORY。id は "custom_zab_<epoch>_<rand>"。
 
-import { setCustomZabutonPresets, getCustomZabutonPresets } from "./presets.js?v=89939f4";
+import { setCustomZabutonPresets, getCustomZabutonPresets } from "./presets.js?v=663afdc";
 
 const STORAGE_KEY = "utamita05.customPresets.v1";
 export const CUSTOM_CATEGORY = "カスタム";
