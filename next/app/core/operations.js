@@ -5,16 +5,16 @@ import {
   now, indexOfId, findById,
   insertAt, removeAt, moveItem, replaceAt,
   syncChars, splitChars,
-} from "./utils.js?v=4cbc73e";
+} from "./utils.js?v=89939f4";
 
 import {
   createLine, createBackground, createTitle, createTemplateRef,
   defaultZabuton, defaultJitter,
   PROJECT_VERSION,
-} from "./project.js?v=4cbc73e";
-import { normalizeMotion } from "./motion.js?v=4cbc73e";
-import { defaultKerning } from "./char_type.js?v=4cbc73e";
-import { getPresetById, getFontPresetById, getZabutonPresetById, getCustomPresetById } from "./presets.js?v=4cbc73e";
+} from "./project.js?v=89939f4";
+import { normalizeMotion } from "./motion.js?v=89939f4";
+import { defaultKerning } from "./char_type.js?v=89939f4";
+import { getPresetById, getFontPresetById, getZabutonPresetById, getCustomPresetById } from "./presets.js?v=89939f4";
 
 // ──────────────────────────────────────────────────
 // 内部ヘルパー

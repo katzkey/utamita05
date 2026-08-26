@@ -1,18 +1,18 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=4cbc73e";
-import * as ops from "../core/operations.js?v=4cbc73e";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=4cbc73e";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=4cbc73e";
-import { loadFonts, getFontEntries, cssFamilyFor, fontStackFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=4cbc73e";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=4cbc73e";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=4cbc73e";
-import { AE_ENABLED } from "../core/features.js?v=4cbc73e";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=4cbc73e";
-import { KERN_TYPES } from "../core/char_type.js?v=4cbc73e";
-import { escapeHtml } from "../core/html.js?v=4cbc73e";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=4cbc73e";
-import * as songPreview from "./song_preview.js?v=4cbc73e";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=89939f4";
+import * as ops from "../core/operations.js?v=89939f4";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=89939f4";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=89939f4";
+import { loadFonts, getFontEntries, cssFamilyFor, fontStackFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=89939f4";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=89939f4";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=89939f4";
+import { AE_ENABLED } from "../core/features.js?v=89939f4";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=89939f4";
+import { KERN_TYPES } from "../core/char_type.js?v=89939f4";
+import { escapeHtml } from "../core/html.js?v=89939f4";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=89939f4";
+import * as songPreview from "./song_preview.js?v=89939f4";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -339,6 +339,10 @@ function renderDetail(project, ui) {
             `<option value="${p.id}" ${line.customPresetId === p.id ? "selected" : ""}>${escapeHtml(p.label)}</option>`
           ).join("")}
         </select>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button class="tool-btn" id="btnPickFont" style="font-size:11px">フォントを見本から選ぶ</button>
+        <button class="tool-btn" id="btnPickZabuton" style="font-size:11px">座布団を見本から選ぶ</button>
       </div>
       <div style="display:flex;gap:6px;margin-top:6px">
         <button class="tool-btn" id="btnSaveCustomPreset" style="font-size:11px">現在の設定を保存…</button>
@@ -793,6 +797,9 @@ function renderDetail(project, ui) {
     if (!v) { setProject(ops.setLineCustomPresetId(getProject(), id, null)); return; }
     setProject(ops.applyCustomPresetToLine(getProject(), id, v));
   });
+
+  document.getElementById("btnPickFont")?.addEventListener("click", () => openPicker("font", id));
+  document.getElementById("btnPickZabuton")?.addEventListener("click", () => openPicker("zabuton", id));
 
   // カスタムプリセットの保存 / 削除
   document.getElementById("btnSaveCustomPreset")?.addEventListener("click", () => {

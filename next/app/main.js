@@ -1,22 +1,22 @@
 // うたみた05 — メインエントリ
 // 全体のレンダー調整、タブ切替、ショートカットキー
 
-import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=4cbc73e";
-import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=4cbc73e";
-import { initCustomPresets } from "./core/custom_presets.js?v=4cbc73e";
-import { applyFeatureFlags } from "./core/features.js?v=4cbc73e";
-import * as lyrics from "./ui/lyrics_tab.js?v=4cbc73e";
-import * as bgTab from "./ui/background_tab.js?v=4cbc73e";
-import * as titlesTab from "./ui/titles_tab.js?v=4cbc73e";
-import * as tmplTab from "./ui/templates_tab.js?v=4cbc73e";
-import * as settings from "./ui/settings_tab.js?v=4cbc73e";
-import * as playbar from "./ui/playbar.js?v=4cbc73e";
-import * as fileio from "./ui/file_io.js?v=4cbc73e";
-import * as autoTiming from "./ui/auto_timing.js?v=4cbc73e";
-import * as videoExport from "./ui/video_export.js?v=4cbc73e";
-import * as jobs from "./ui/job_status.js?v=4cbc73e";
-import { probeFonts, loadLocalFonts, autoAliasMissing, hasLocalFontAccess, isFontValueAvailable } from "./core/fonts_loader.js?v=4cbc73e";
-import { FONT_PRESETS } from "./core/presets.js?v=4cbc73e";
+import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=89939f4";
+import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=89939f4";
+import { initCustomPresets } from "./core/custom_presets.js?v=89939f4";
+import { applyFeatureFlags } from "./core/features.js?v=89939f4";
+import * as lyrics from "./ui/lyrics_tab.js?v=89939f4";
+import * as bgTab from "./ui/background_tab.js?v=89939f4";
+import * as titlesTab from "./ui/titles_tab.js?v=89939f4";
+import * as tmplTab from "./ui/templates_tab.js?v=89939f4";
+import * as settings from "./ui/settings_tab.js?v=89939f4";
+import * as playbar from "./ui/playbar.js?v=89939f4";
+import * as fileio from "./ui/file_io.js?v=89939f4";
+import * as autoTiming from "./ui/auto_timing.js?v=89939f4";
+import * as videoExport from "./ui/video_export.js?v=89939f4";
+import * as jobs from "./ui/job_status.js?v=89939f4";
+import { probeFonts, loadLocalFonts, autoAliasMissing, hasLocalFontAccess, isFontValueAvailable } from "./core/fonts_loader.js?v=89939f4";
+import { FONT_PRESETS } from "./core/presets.js?v=89939f4";
 
 let projectNameEl;
 let dirtyStatusEl;
