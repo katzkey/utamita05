@@ -18,7 +18,7 @@ NEXT = os.path.join(ROOT, "next")
 COPY = ["app", "ae", "templates", "tools"]
 # 開発用の道具は写さない。next/tools はヘルパーの配布物としてだけ使う。
 # 写してしまうと、あとから足した道具が promote で消える（実際に消えた）。
-DEV_ONLY = {"make_next.py", "promote.py", "stamp_version.py", "check_calls.py"}
+DEV_ONLY = {"make_next.py", "promote.py", "stamp_version.py", "check_calls.py", "rollback.py"}
 
 # next/ の中では、参照先も next/ を向かせる
 REWRITE = [

@@ -47,10 +47,15 @@ def main():
         print(dirty)
         return 1
 
+    # 先に消してから取り出す。checkout だけだと、その版より後に増えた
+    # ファイルが残ってしまい、中身が完全には一致しない。
+    run(["git", "rm", "-rq", "--ignore-unmatch", "--"] + TARGETS)
     r = run(["git", "checkout", tag, "--"] + TARGETS)
     if r.returncode != 0:
         print("戻せませんでした:")
         print(r.stderr)
+        run(["git", "reset", "-q", "--"] + TARGETS)
+        run(["git", "checkout", "-q", "HEAD", "--"] + TARGETS)
         return 1
 
     subprocess.run([sys.executable, os.path.join(ROOT, "tools", "stamp_version.py")], cwd=ROOT)
