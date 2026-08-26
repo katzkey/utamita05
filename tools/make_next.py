@@ -53,10 +53,8 @@ def main():
             for a, b in REWRITE:
                 s2 = s2.replace(a, b)
             # セットアップが ZIP から取り出す場所も next/tools にする
-            s2 = s2.replace("(Get-ChildItem $ex -Directory | Select-Object -First 1).FullName 'tools'",
-                            "(Get-ChildItem $ex -Directory | Select-Object -First 1).FullName 'next\tools'")
-            s2 = s2.replace('-maxdepth 2 -type d -name tools',
-                            '-maxdepth 3 -type d -path "*/next/tools"')
+            s2 = s2.replace('SUBDIR="tools"', 'SUBDIR="next/tools"')
+            s2 = s2.replace('set "SUBDIR=tools"', 'set "SUBDIR=next/tools"')
             if s2 != s:
                 nl = "\r\n" if f.endswith((".bat", ".vbs", ".ps1")) else "\n"
                 io.open(p, "w", encoding="utf-8", newline=nl).write(s2)

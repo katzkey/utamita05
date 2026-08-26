@@ -77,7 +77,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$ex = Join-Path $env:TEMP 'utamita05_ex';" ^
   "if (Test-Path $ex) { Remove-Item $ex -Recurse -Force }" ^
   "; Expand-Archive -Path $tmp -DestinationPath $ex -Force;" ^
-  "$src = Join-Path (Get-ChildItem $ex -Directory | Select-Object -First 1).FullName 'next	ools';" ^
+  "$src = Join-Path (Get-ChildItem $ex -Directory | Select-Object -First 1).FullName 'tools';" ^
   "$dst = Join-Path '%DEST%' 'tools';" ^
   "New-Item -ItemType Directory -Force -Path $dst | Out-Null;" ^
   "Copy-Item (Join-Path $src '*') $dst -Recurse -Force;" ^

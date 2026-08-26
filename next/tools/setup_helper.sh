@@ -84,11 +84,34 @@ echo "[3/5] ヘルパー本体をダウンロードしています..."
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 curl -fsSL "$ZIPURL" -o "$TMP/src.zip" || die "ダウンロードに失敗しました"
-unzip -q "$TMP/src.zip" -d "$TMP/ex" || die "展開に失敗しました"
-SRC="$(find "$TMP/ex" -maxdepth 3 -type d -path "*/next/tools" | head -1)"
-[ -n "$SRC" ] || die "tools フォルダが見つかりませんでした"
+# ここで取り出すフォルダ（開発用の写しでは next/tools になる）
+SUBDIR="next/tools"
 mkdir -p "$DEST/tools"
-cp -R "$SRC/." "$DEST/tools/"
+# unzip は日本語のファイル名で止まることがある（Illegal byte sequence）。
+# 実際に Mac で失敗した。必要なのは tools だけなので、Python で該当分だけ取り出す。
+"$PY" - "$TMP/src.zip" "$DEST/tools" "$SUBDIR" <<'PYEOF' || die "展開に失敗しました"
+import sys, os, zipfile
+zp, dest, subdir = sys.argv[1], sys.argv[2], sys.argv[3].split("/")
+n = 0
+with zipfile.ZipFile(zp) as z:
+    for info in z.infolist():
+        if info.is_dir():
+            continue
+        parts = info.filename.split("/")
+        # <リポジトリ>-main/<subdir>/... だけを取り出す
+        if parts[1:1 + len(subdir)] != subdir:
+            continue
+        rel = parts[1 + len(subdir):]
+        if not rel:
+            continue
+        out = os.path.join(dest, *rel)
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        with z.open(info) as src, open(out, "wb") as dst:
+            dst.write(src.read())
+        n += 1
+print("      %d 個のファイルを取り出しました" % n)
+sys.exit(0 if n else 1)
+PYEOF
 # ZIP 経由だと実行権限が落ちるので付け直す
 chmod +x "$DEST/tools/"*.sh 2>/dev/null || true
 echo "      OK"

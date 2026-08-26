@@ -53,8 +53,8 @@ def main():
             s2 = s
             for a, b in REWRITE:
                 s2 = s2.replace(a, b)
-            s2 = s2.replace("'next\tools'", "'tools'")
-            s2 = s2.replace('-maxdepth 3 -type d -path "*/next/tools"', '-maxdepth 2 -type d -name tools')
+            s2 = s2.replace('SUBDIR="next/tools"', 'SUBDIR="tools"')
+            s2 = s2.replace('set "SUBDIR=next/tools"', 'set "SUBDIR=tools"')
             if s2 != s:
                 nl = "\r\n" if f.endswith((".bat", ".vbs", ".ps1")) else "\n"
                 io.open(p, "w", encoding="utf-8", newline=nl).write(s2)

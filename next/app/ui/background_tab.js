@@ -1,9 +1,9 @@
 // 背景タブ：行リスト形式の編集
 
-import { getProject, setProject, registerFileBlob } from "./state.js?v=663afdc";
-import * as ops from "../core/operations.js?v=663afdc";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=663afdc";
-import { escapeHtml } from "../core/html.js?v=663afdc";
+import { getProject, setProject, registerFileBlob } from "./state.js?v=2d47649";
+import * as ops from "../core/operations.js?v=2d47649";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=2d47649";
+import { escapeHtml } from "../core/html.js?v=2d47649";
 
 let bgRowsEl, bgCountEl;
 let pickingFile = false;  // モジュール全体で1個。多重ダイアログ防止。
