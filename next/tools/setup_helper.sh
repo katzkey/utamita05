@@ -146,19 +146,32 @@ try:
         print("note: torchaudio に書き出す部品がありません（soundfile を入れてあります）")
 except Exception:
     pass
-import demucs
-dv = getattr(demucs, "__version__", "0")
-if tuple(int(x) for x in str(dv).split(".")[:2] if x.isdigit()) < (4, 1):
-    miss.append("demucs " + str(dv) + " は古すぎます。4.1.0 以上が要ります")
+# demucs は版で使い方が変わる。新しい版には api があり、
+# 古い版（Python 3.9 だとこちら）はコマンド版を使う。どちらでも進めるので、
+# 版の数字では止めない。代わりに「実際に書き出せるか」を試す。
+# ここで止めると、入っているのに使えないという理不尽な止まり方になる。
 try:
-    import demucs.api
+    import demucs
+    dv = str(getattr(demucs, "__version__", "?"))
 except Exception:
+    dv = None          # 入っていない。上の miss で拾うので、ここは黙る
+
+if dv is not None:
     try:
-        import demucs
-        v = getattr(demucs, "__version__", "?")
+        import demucs.api
+        print("note: demucs " + dv + "（api 版）を使います")
     except Exception:
-        v = "?"
-    print("note: demucs " + str(v) + " には api が無いので、コマンド版を使います")
+        print("note: demucs " + dv + " には api が無いので、コマンド版を使います")
+        # コマンド版は torchaudio で書き出す。書き出せるかを実際に試しておく。
+        try:
+            import os, tempfile, torch, torchaudio
+            with tempfile.TemporaryDirectory() as d:
+                torchaudio.save(os.path.join(d, "t.wav"), torch.zeros(1, 160), 16000)
+            print("note: 分離の書き出しは動きます")
+        except Exception as e:
+            print("note: 分離の書き出しができません（" + str(e)[:70] + "）")
+            print("note: そのときはボーカル分離を飛ばして進めます（精度は少し落ちます）")
+
 if miss:
     print("MISSING")
     for m in miss:

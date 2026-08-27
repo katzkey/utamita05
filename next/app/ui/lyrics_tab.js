@@ -1,18 +1,18 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=6355ec0";
-import * as ops from "../core/operations.js?v=6355ec0";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=6355ec0";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=6355ec0";
-import { loadFonts, getFontEntries, cssFamilyFor, fontStackFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=6355ec0";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=6355ec0";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=6355ec0";
-import { AE_ENABLED } from "../core/features.js?v=6355ec0";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=6355ec0";
-import { KERN_TYPES } from "../core/char_type.js?v=6355ec0";
-import { escapeHtml } from "../core/html.js?v=6355ec0";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=6355ec0";
-import * as songPreview from "./song_preview.js?v=6355ec0";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=6c5382d";
+import * as ops from "../core/operations.js?v=6c5382d";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=6c5382d";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=6c5382d";
+import { loadFonts, getFontEntries, cssFamilyFor, fontStackFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=6c5382d";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=6c5382d";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=6c5382d";
+import { AE_ENABLED } from "../core/features.js?v=6c5382d";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=6c5382d";
+import { KERN_TYPES } from "../core/char_type.js?v=6c5382d";
+import { escapeHtml } from "../core/html.js?v=6c5382d";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=6c5382d";
+import * as songPreview from "./song_preview.js?v=6c5382d";
 
 let detailPaneEl;
 let lyricRowsEl;

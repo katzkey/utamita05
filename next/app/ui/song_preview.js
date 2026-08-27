@@ -15,10 +15,10 @@
 //   動画要素がブラウザの再生資源を食い尽くす）。背景は、背景そのものが
 //   変わったときだけ作り直す。
 
-import { getProject } from "./state.js?v=6355ec0";
-import { renderLinePreviewHtml, backgroundLayerHtml, previewStageStyle, VIDEO_EXTS } from "../core/render_line.js?v=6355ec0";
-import { secondsToTC } from "./tc.js?v=6355ec0";
-import { transformAt, motionTransformCss } from "../core/motion.js?v=6355ec0";
+import { getProject } from "./state.js?v=6c5382d";
+import { renderLinePreviewHtml, backgroundLayerHtml, previewStageStyle, VIDEO_EXTS } from "../core/render_line.js?v=6c5382d";
+import { secondsToTC } from "./tc.js?v=6c5382d";
+import { transformAt, motionTransformCss } from "../core/motion.js?v=6c5382d";
 
 let timer = null;
 let hostRef = null;      // いま使っている枠。変わったら作り直す

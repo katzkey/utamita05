@@ -358,8 +358,10 @@ def main():
         try:
             voc16 = separate_vocals(wav44, workdir, rep, a.device)
         except Exception as e:
+            # 中身に丸ごとの traceback が入ることがあるので、1 行目だけ見せる
+            why = str(e).strip().splitlines()[0] if str(e).strip() else e.__class__.__name__
             rep.emit({"type": "warn",
-                      "message": "ボーカル分離を飛ばしました（%s）。精度が落ちることがあります。" % e})
+                      "message": "ボーカル分離を飛ばしました（%s）。精度が落ちることがあります。" % why[:120]})
             rep.step("separate", 100)
             voc16 = wav16
         words = transcribe(voc16, dur, rep, a.model)

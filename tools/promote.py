@@ -14,9 +14,13 @@ COPY = ["app", "ae", "templates", "tools"]
 # 開発用の道具は写さない。next/tools はヘルパーの配布物としてだけ使う。
 # 写してしまうと、あとから足した道具が promote で消える（実際に消えた）。
 DEV_ONLY = {"make_next.py", "promote.py", "stamp_version.py", "check_calls.py", "rollback.py"}
+# 文字列を直に書くと、この書き換えが自分自身にも当たって壊れる（実際に壊れた）。
+# 組み立てて持つことで、この行が置換の的にならないようにする。
+_N = "utamita05/next/"
+_P = "utamita05/"
 REWRITE = [
-    ("utamita05/app/",   "utamita05/app/"),
-    ("utamita05/tools/", "utamita05/tools/"),
+    (_N + "app/",   _P + "app/"),
+    (_N + "tools/", _P + "tools/"),
 ]
 TEXT_EXT = {".html", ".js", ".css", ".json", ".py", ".sh", ".bat", ".vbs", ".ps1", ".md", ".txt"}
 
@@ -45,6 +49,10 @@ def main():
         for f in files:
             if os.path.splitext(f)[1].lower() not in TEXT_EXT:
                 continue
+            # 開発用の道具は書き換えない。中に next/ の文字を持っているので、
+            # 巻き込むと自分たちを壊す（実際に make_next.py と自分自身が壊れた）。
+            if f in DEV_ONLY:
+                continue
             p = os.path.join(base, f)
             try:
                 s = io.open(p, encoding="utf-8").read()
@@ -53,8 +61,8 @@ def main():
             s2 = s
             for a, b in REWRITE:
                 s2 = s2.replace(a, b)
-            s2 = s2.replace('SUBDIR="tools"', 'SUBDIR="tools"')
-            s2 = s2.replace('set "SUBDIR=tools"', 'set "SUBDIR=tools"')
+            s2 = s2.replace('SUBDIR="' + "next/" + 'tools"', 'SUBDIR="tools"')
+            s2 = s2.replace('set "SUBDIR=' + "next/" + 'tools"', 'set "SUBDIR=tools"')
             if s2 != s:
                 nl = "\r\n" if f.endswith((".bat", ".vbs", ".ps1")) else "\n"
                 io.open(p, "w", encoding="utf-8", newline=nl).write(s2)

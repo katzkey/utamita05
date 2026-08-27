@@ -3,7 +3,7 @@
 """開発用の写し next/ を作り直す
 
 テスターが使う URL（…/utamita05/app/）は凍結し、直すのは
-…/utamita05/app/ だけにする。テスト中に足元が動かないようにするため。
+…/utamita05/next/app/ だけにする。テスト中に足元が動かないようにするため。
 
 next/ は丸ごと独立した写しにする。共有にすると、開発中の変更が
 そのままテスター側にも出てしまう（ヘルパーの配布物も含めて）。
@@ -61,14 +61,14 @@ def main():
             for a, b in REWRITE:
                 s2 = s2.replace(a, b)
             # セットアップが ZIP から取り出す場所も next/tools にする
-            s2 = s2.replace('SUBDIR="tools"', 'SUBDIR="tools"')
-            s2 = s2.replace('set "SUBDIR=tools"', 'set "SUBDIR=tools"')
+            s2 = s2.replace('SUBDIR="tools"', 'SUBDIR="next/tools"')
+            s2 = s2.replace('set "SUBDIR=tools"', 'set "SUBDIR=next/tools"')
             if s2 != s:
                 nl = "\r\n" if f.endswith((".bat", ".vbs", ".ps1")) else "\n"
                 io.open(p, "w", encoding="utf-8", newline=nl).write(s2)
                 n += 1
     print("next/ を作り直しました（書き換えたファイル %d 件）" % n)
-    print("開発用: https://katzkey.github.io/utamita05/app/")
+    print("開発用: " + "https://katzkey.github.io/" + "utamita05/next/app/")
 
 
 if __name__ == "__main__":
