@@ -353,7 +353,15 @@ def main():
     workdir = tempfile.mkdtemp(prefix="autotiming_")
     try:
         wav44, wav16, dur = extract_audio(a.song, workdir, rep)
-        voc16 = separate_vocals(wav44, workdir, rep, a.device)
+        # ボーカル分離は精度を上げるための下ごしらえで、無くても進められる。
+        # demucs が入らない環境（Python 3.9 など）で全体が止まるのは割に合わない。
+        try:
+            voc16 = separate_vocals(wav44, workdir, rep, a.device)
+        except Exception as e:
+            rep.emit({"type": "warn",
+                      "message": "ボーカル分離を飛ばしました（%s）。精度が落ちることがあります。" % e})
+            rep.step("separate", 100)
+            voc16 = wav16
         words = transcribe(voc16, dur, rep, a.model)
         times, out_times, coverage = align_kana(words, lines, rep)
         times = snap(times, voc16, rep)

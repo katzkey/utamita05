@@ -5,14 +5,14 @@
 //   重ね合わせ・フェード・エンコード・音声の多重化は ffmpeg（ローカルヘルパー）に任せる。
 //   ブラウザで全部やるより速く、音声と背景動画がそのまま扱えるため。
 
-import { getProject, getUi, getFileBlob } from "./state.js?v=3a52e07";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=3a52e07";
-import { renderLineLayer } from "../core/render_layer.js?v=3a52e07";
-import { escapeHtml } from "../core/html.js?v=3a52e07";
+import { getProject, getUi, getFileBlob } from "./state.js?v=7fe9d4b";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=7fe9d4b";
+import { renderLineLayer } from "../core/render_layer.js?v=7fe9d4b";
+import { escapeHtml } from "../core/html.js?v=7fe9d4b";
 import { pingHelper, startJob, downloadUrl,
-         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=3a52e07";
+         helperStatusHtml, helperMissingHtml, bindHelperMissing, stepsHtml, fmtSec } from "./helper_client.js?v=7fe9d4b";
 
-import * as jobs from "./job_status.js?v=3a52e07";
+import * as jobs from "./job_status.js?v=7fe9d4b";
 
 // 進捗の見張りは job_status に任せる。パネルを閉じても続くようにするため。
 

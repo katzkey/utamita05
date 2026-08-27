@@ -2,8 +2,10 @@
 #
 #   faster-whisper … 歌声の書き起こし
 #   demucs         … 曲からボーカルだけを取り出す（torch を連れてくるので 1〜2GB あります）
-#                    4.1.0 で確認済み。それ未満は保存に torchaudio を使い、
-#                    書き出す部品が無いと落ちる（soundfile はその保険）
+#                    4.1.0 で確認済みだが、4.1.0 は Python 3.10 以上でないと入らない。
+#                    macOS に最初から入っているのは 3.9 なので、3.9 では 4.0 系にする。
+#                    4.0 系は保存に torchaudio を使うので soundfile が要る（下記）。
+#                    どうしても入らなくても、分離を飛ばして続けられるようにしてある。
 #   pykakasi       … 漢字かな交じりの歌詞をかなに直す
 #   numpy          … 音量の波形処理
 #   soundfile      … torchaudio が音声を書き出すときの部品。これが無いと
@@ -13,7 +15,8 @@
 # ffmpeg は pip では入りません。setup_helper.bat が面倒を見ます。
 
 faster-whisper>=1.0
-demucs>=4.1.0
+demucs>=4.1.0; python_version >= "3.10"
+demucs>=4.0.1; python_version < "3.10"
 pykakasi>=2.2
 numpy>=1.24
 soundfile>=0.12
