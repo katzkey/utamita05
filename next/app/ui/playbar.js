@@ -1,12 +1,47 @@
 // 下部の再生バー：再生制御、TC表示、マーキング
 
-import { getProject, getUi, setProject, setUi } from "./state.js?v=7fe9d4b";
-import * as ops from "../core/operations.js?v=7fe9d4b";
-import { secondsToTC } from "./tc.js?v=7fe9d4b";
+import { getProject, getUi, setProject, setUi } from "./state.js?v=12d0b2b";
+import * as ops from "../core/operations.js?v=12d0b2b";
+import { secondsToTC } from "./tc.js?v=12d0b2b";
 
 let player, playBtn, loopBtn, markingBtn, markInBtn, markOutBtn;
 let currentTCEl, totalTCEl, progressFill, progressMarker, progressBar;
+let volumeRange, volumeValue, muteBtn;
 let state = { loopRange: null, loopLineId: null };
+
+// 音量は次回起動まで覚えておく。プロジェクトの中身ではないので localStorage に置く。
+const VOLUME_KEY = "utamita05.volume.v1";
+
+function loadVolume() {
+  try {
+    const raw = localStorage.getItem(VOLUME_KEY);
+    if (raw == null) return { volume: 1, muted: false };
+    const o = JSON.parse(raw);
+    const v = Number(o.volume);
+    return { volume: (v >= 0 && v <= 1) ? v : 1, muted: !!o.muted };
+  } catch (e) {
+    return { volume: 1, muted: false };
+  }
+}
+
+function saveVolume() {
+  try {
+    localStorage.setItem(VOLUME_KEY, JSON.stringify({ volume: player.volume, muted: player.muted }));
+  } catch (e) {
+    // 保存できなくても再生には困らない
+  }
+}
+
+// つまみ・数字・アイコンを、いまの音量に合わせる
+function updateVolumeUi() {
+  const pct = Math.round(player.volume * 100);
+  if (volumeRange && String(volumeRange.value) !== String(pct)) volumeRange.value = String(pct);
+  if (volumeValue) volumeValue.textContent = player.muted ? "0" : String(pct);
+  if (muteBtn) {
+    muteBtn.textContent = (player.muted || pct === 0) ? "🔇" : (pct <= 50 ? "🔉" : "🔊");
+    muteBtn.classList.toggle("is-muted", player.muted);
+  }
+}
 
 function clearLoop() {
   state.loopRange = null;
@@ -25,6 +60,31 @@ export function init() {
   progressFill = document.getElementById("progressFill");
   progressMarker = document.getElementById("progressMarker");
   progressBar = document.getElementById("playbarProgress");
+  volumeRange = document.getElementById("volumeRange");
+  volumeValue = document.getElementById("volumeValue");
+  muteBtn = document.getElementById("muteBtn");
+
+  // 音量：前回の値を戻してから、つまみを繋ぐ
+  const saved = loadVolume();
+  player.volume = saved.volume;
+  player.muted = saved.muted;
+  updateVolumeUi();
+
+  volumeRange?.addEventListener("input", () => {
+    player.volume = Math.max(0, Math.min(1, Number(volumeRange.value) / 100));
+    // つまみを動かしたら消音は解く（動かしても鳴らない、を防ぐ）
+    if (player.muted && player.volume > 0) player.muted = false;
+    updateVolumeUi();
+    saveVolume();
+  });
+  muteBtn?.addEventListener("click", () => {
+    // 0 のまま消音を解いても鳴らないので、そのときは戻してやる
+    if (player.muted && player.volume === 0) player.volume = 1;
+    player.muted = !player.muted;
+    updateVolumeUi();
+    saveVolume();
+  });
+  player.addEventListener("volumechange", updateVolumeUi);
 
   playBtn.addEventListener("click", togglePlay);
   loopBtn.addEventListener("click", () => {

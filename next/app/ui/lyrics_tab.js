@@ -1,18 +1,18 @@
 // 歌詞タブ：行リスト + 詳細パネル
 
-import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=7fe9d4b";
-import * as ops from "../core/operations.js?v=7fe9d4b";
-import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=7fe9d4b";
-import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=7fe9d4b";
-import { loadFonts, getFontEntries, cssFamilyFor, fontStackFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=7fe9d4b";
-import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=7fe9d4b";
-import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=7fe9d4b";
-import { AE_ENABLED } from "../core/features.js?v=7fe9d4b";
-import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=7fe9d4b";
-import { KERN_TYPES } from "../core/char_type.js?v=7fe9d4b";
-import { escapeHtml } from "../core/html.js?v=7fe9d4b";
-import { renderLinePreviewHtml } from "../core/render_line.js?v=7fe9d4b";
-import * as songPreview from "./song_preview.js?v=7fe9d4b";
+import { getProject, getUi, setProject, setUi, getFileBlobUrl } from "./state.js?v=12d0b2b";
+import * as ops from "../core/operations.js?v=12d0b2b";
+import { secondsToTC, tcToSeconds, attachTcDrag } from "./tc.js?v=12d0b2b";
+import { resolveLineTemplate, isLineTemplateFixed, resolveLineLayerMode } from "../core/project.js?v=12d0b2b";
+import { loadFonts, getFontEntries, cssFamilyFor, fontStackFor, labelFor, isFontAvailable, isFontValueAvailable } from "../core/fonts_loader.js?v=12d0b2b";
+import { getFontPresetsByCategory, getAllZabutonPresetsByCategory, getFontPresetById, getCustomZabutonPresets } from "../core/presets.js?v=12d0b2b";
+import { saveLineAsCustomPreset, deleteCustomPreset, isCustomPresetId } from "../core/custom_presets.js?v=12d0b2b";
+import { AE_ENABLED } from "../core/features.js?v=12d0b2b";
+import { EASINGS, SLIDE_DIRS, defaultMotion, transformAt, motionTransformCss, loopTime, isStatic } from "../core/motion.js?v=12d0b2b";
+import { KERN_TYPES } from "../core/char_type.js?v=12d0b2b";
+import { escapeHtml } from "../core/html.js?v=12d0b2b";
+import { renderLinePreviewHtml } from "../core/render_line.js?v=12d0b2b";
+import * as songPreview from "./song_preview.js?v=12d0b2b";
 
 let detailPaneEl;
 let lyricRowsEl;
@@ -169,13 +169,17 @@ function renderRows(project, ui) {
 function renderDetail(project, ui) {
   stopPreviewMotion();
   stopPreviewFollow();
-  songPreview.stop();
+  // songPreview はここで止めない。詳細ペインは値をいじるたび描き直されるので、
+  // 毎回止めて作り直すと背景の <video> も作り直しになり、操作 100 回ほどで
+  // 音が出なくなった。曲に合わせたプレビューを出さない道筋でだけ止める。
   const selected = [...ui.selectedLineIds];
   if (selected.length === 0) {
+    songPreview.stop();
     detailPaneEl.innerHTML = `<div class="empty-state">行を選択してください</div>`;
     return;
   }
   if (selected.length > 1) {
+    songPreview.stop();
     // 選択の「一番上の行」を見本にする（行リストの並び順で判定）
     const order = project.lines.map(l => l.id);
     const ordered = [...selected].sort((a, b) => order.indexOf(a) - order.indexOf(b));
@@ -766,6 +770,7 @@ function renderDetail(project, ui) {
   if (previewMode === "song") {
     songPreview.start(detailPaneEl.querySelector("#previewHost"));
   } else {
+    songPreview.stop();
     startPreviewMotion(line);
     startPreviewFollow(line);   // 曲が鳴っている間は本当の TC に合わせる
   }
