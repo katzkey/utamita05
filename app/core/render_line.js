@@ -7,11 +7,11 @@
 // 動画書き出しでは、ここが返した HTML をそのまま画像化する。
 // プレビューと完成品を必ず一致させるため、描き方を二重に持たない。
 
-import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=2d47649";
-import { cssFamilyFor, fontStackFor, labelFor } from "./fonts_loader.js?v=2d47649";
-import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=2d47649";
-import { SMALL_KANA, classifyChar, autoKerningEm, typeKerningEm } from "./char_type.js?v=2d47649";
-import { escapeHtml } from "./html.js?v=2d47649";
+import { getBlobUrl as getFileBlobUrl } from "./blob_registry.js?v=6c5382d";
+import { cssFamilyFor, fontStackFor, labelFor } from "./fonts_loader.js?v=6c5382d";
+import { parseJitterBlocks, jitterOffsetFor } from "./utils.js?v=6c5382d";
+import { SMALL_KANA, classifyChar, autoKerningEm, typeKerningEm } from "./char_type.js?v=6c5382d";
+import { escapeHtml } from "./html.js?v=6c5382d";
 
 // フォントごとの「行ボックスの中心」と「文字のインクの中心」のずれ（em、＋で文字が下寄り）。
 //
@@ -122,7 +122,10 @@ export function previewStageStyle(project) {
 // - X: 中央 + dx（AE 側と同じ）
 // - フォントサイズ等は cqw 単位（ステージ幅基準）で解像度比スケール
 // 動画書き出しでも同じ絵を使うため公開している（app/ui/video_export.js が利用）
-export function renderLinePreviewHtml(line, project) {
+// opts.backgrounds に false を渡すと背景を描かない。
+// 曲に合わせたプレビューは背景を別に持っているので、ここで作ると
+// 同じ動画を二重に読み込むことになる（作っては捨てるので音が出なくなる）。
+export function renderLinePreviewHtml(line, project, opts = {}) {
   const resW = project.resolution?.w || 1920;
   const resH = project.resolution?.h || 1080;
   const familyValue = line.fontOverride?.family || project.font.family || "";
@@ -294,7 +297,7 @@ export function renderLinePreviewHtml(line, project) {
   const meta = `${escapeHtml(labelFor(familyValue) || "(継承)")} / size ${rawSize} / tracking ${tracking} / ${escapeHtml(layout)}${dx || dy ? ` / dx:${dx} dy:${dy}` : ""}`;
   return `
     <div style="${previewStageStyle(project)}">
-      ${renderPreviewBackgrounds(line, project)}
+      ${opts.backgrounds === false ? `` : renderPreviewBackgrounds(line, project)}
       ${guide(15)}${guide(50)}${guide(85)}
       ${vGuide}
       <div style="${wrapperStyle}">

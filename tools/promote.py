@@ -15,8 +15,8 @@ COPY = ["app", "ae", "templates", "tools"]
 # 写してしまうと、あとから足した道具が promote で消える（実際に消えた）。
 DEV_ONLY = {"make_next.py", "promote.py", "stamp_version.py", "check_calls.py", "rollback.py"}
 REWRITE = [
-    ("utamita05/next/app/",   "utamita05/app/"),
-    ("utamita05/next/tools/", "utamita05/tools/"),
+    ("utamita05/app/",   "utamita05/app/"),
+    ("utamita05/tools/", "utamita05/tools/"),
 ]
 TEXT_EXT = {".html", ".js", ".css", ".json", ".py", ".sh", ".bat", ".vbs", ".ps1", ".md", ".txt"}
 
@@ -53,8 +53,8 @@ def main():
             s2 = s
             for a, b in REWRITE:
                 s2 = s2.replace(a, b)
-            s2 = s2.replace('SUBDIR="next/tools"', 'SUBDIR="tools"')
-            s2 = s2.replace('set "SUBDIR=next/tools"', 'set "SUBDIR=tools"')
+            s2 = s2.replace('SUBDIR="tools"', 'SUBDIR="tools"')
+            s2 = s2.replace('set "SUBDIR=tools"', 'set "SUBDIR=tools"')
             if s2 != s:
                 nl = "\r\n" if f.endswith((".bat", ".vbs", ".ps1")) else "\n"
                 io.open(p, "w", encoding="utf-8", newline=nl).write(s2)

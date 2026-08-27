@@ -730,3 +730,39 @@ body { display: flex; flex-direction: column; }
   border-color: var(--coral);
   background: rgba(249,97,103,.06);
 }
+
+/* ========== 再生バーの音量 ========== */
+.volume {
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0;
+}
+.volume-btn {
+  background: transparent; border: 0; cursor: pointer;
+  font-size: 14px; line-height: 1; padding: 2px 4px;
+  border-radius: 4px;
+}
+.volume-btn:hover { background: rgba(255,255,255,.12); }
+.volume input[type="range"] {
+  width: 90px; height: 4px; cursor: pointer;
+  accent-color: var(--coral);
+}
+.volume-value {
+  font-family: "Consolas", monospace;
+  font-size: 11px; color: var(--ice);
+  width: 24px; text-align: right;
+}
+
+/* ========== 版の表示（ロゴの隣・うっすら） ========== */
+/* 本番と開発用のどちらを見ているか、取り違えないための目印。
+   数字は配信のたびに変わる印なので、これが同じなら中身も同じ。 */
+.build-badge {
+  font-family: "Consolas", monospace;
+  font-size: 10px;
+  color: var(--ice);
+  opacity: 0.45;
+  letter-spacing: 0.3px;
+  cursor: default;
+  user-select: text;
+}
+.build-badge:hover { opacity: 0.9; }
+.build-badge.is-next { color: var(--gold); opacity: 0.75; }
