@@ -10,6 +10,11 @@ next/ は丸ごと独立した写しにする。共有にすると、開発中�
 
   python tools/make_next.py     # 今の app/ から next/ を作り直す
   python tools/promote.py       # 区切りがついたら next/ を本番へ
+
+注意：ふだんの開発は next/app を直に編集する。
+app/ を編集して make_next で写す作りにすると、公開中を凍結するために
+app/ を戻した拍子に、直したものまで消える（実際に消えた）。
+これを使うのは、promote のあとに next/ を作り直すときだけ。
 """
 import io, os, shutil, sys
 

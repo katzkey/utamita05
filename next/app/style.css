@@ -751,3 +751,18 @@ body { display: flex; flex-direction: column; }
   font-size: 11px; color: var(--ice);
   width: 24px; text-align: right;
 }
+
+/* ========== 版の表示（ロゴの隣・うっすら） ========== */
+/* 本番と開発用のどちらを見ているか、取り違えないための目印。
+   数字は配信のたびに変わる印なので、これが同じなら中身も同じ。 */
+.build-badge {
+  font-family: "Consolas", monospace;
+  font-size: 10px;
+  color: var(--ice);
+  opacity: 0.45;
+  letter-spacing: 0.3px;
+  cursor: default;
+  user-select: text;
+}
+.build-badge:hover { opacity: 0.9; }
+.build-badge.is-next { color: var(--gold); opacity: 0.75; }

@@ -1,22 +1,22 @@
 // うたみた05 — メインエントリ
 // 全体のレンダー調整、タブ切替、ショートカットキー
 
-import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=12d0b2b";
-import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=12d0b2b";
-import { initCustomPresets } from "./core/custom_presets.js?v=12d0b2b";
-import { applyFeatureFlags } from "./core/features.js?v=12d0b2b";
-import * as lyrics from "./ui/lyrics_tab.js?v=12d0b2b";
-import * as bgTab from "./ui/background_tab.js?v=12d0b2b";
-import * as titlesTab from "./ui/titles_tab.js?v=12d0b2b";
-import * as tmplTab from "./ui/templates_tab.js?v=12d0b2b";
-import * as settings from "./ui/settings_tab.js?v=12d0b2b";
-import * as playbar from "./ui/playbar.js?v=12d0b2b";
-import * as fileio from "./ui/file_io.js?v=12d0b2b";
-import * as autoTiming from "./ui/auto_timing.js?v=12d0b2b";
-import * as videoExport from "./ui/video_export.js?v=12d0b2b";
-import * as jobs from "./ui/job_status.js?v=12d0b2b";
-import { probeFonts, loadLocalFonts, autoAliasMissing, hasLocalFontAccess, isFontValueAvailable } from "./core/fonts_loader.js?v=12d0b2b";
-import { FONT_PRESETS } from "./core/presets.js?v=12d0b2b";
+import { subscribe, getProject, getUi, setUi, replaceProject, undo, redo, canUndo, canRedo } from "./ui/state.js?v=6355ec0";
+import { loadTemplatesRegistry, getTemplatesRegistry } from "./core/templates_loader.js?v=6355ec0";
+import { initCustomPresets } from "./core/custom_presets.js?v=6355ec0";
+import { applyFeatureFlags } from "./core/features.js?v=6355ec0";
+import * as lyrics from "./ui/lyrics_tab.js?v=6355ec0";
+import * as bgTab from "./ui/background_tab.js?v=6355ec0";
+import * as titlesTab from "./ui/titles_tab.js?v=6355ec0";
+import * as tmplTab from "./ui/templates_tab.js?v=6355ec0";
+import * as settings from "./ui/settings_tab.js?v=6355ec0";
+import * as playbar from "./ui/playbar.js?v=6355ec0";
+import * as fileio from "./ui/file_io.js?v=6355ec0";
+import * as autoTiming from "./ui/auto_timing.js?v=6355ec0";
+import * as videoExport from "./ui/video_export.js?v=6355ec0";
+import * as jobs from "./ui/job_status.js?v=6355ec0";
+import { probeFonts, loadLocalFonts, autoAliasMissing, hasLocalFontAccess, isFontValueAvailable } from "./core/fonts_loader.js?v=6355ec0";
+import { FONT_PRESETS } from "./core/presets.js?v=6355ec0";
 
 let projectNameEl;
 let dirtyStatusEl;
@@ -47,8 +47,28 @@ async function init() {
   videoExport.init();
   jobs.init();          // 処理中の見張り（隅の表示・通知）
   probeUsedFonts();     // この PC にどのフォントが入っているか調べる
+  showBuildBadge();     // どの版を見ているか（本番／開発用）
 
-  // タブ切替
+  // どの版を見ているかを、ロゴの隣にうっすら出す。
+// 版の印は自分自身の読み込み URL（main.js?v=xxxxxxx）から取る。
+// 配信のたびに変わるので、本番と開発用でこれが同じなら中身も同じ。
+function showBuildBadge() {
+  const el = document.getElementById("buildBadge");
+  if (!el) return;
+  let build = "";
+  try {
+    build = new URL(import.meta.url).searchParams.get("v") || "";
+  } catch (e) { /* 取れなくても表示を諦めるだけ */ }
+  const isNext = location.pathname.includes("/next/");
+  el.textContent = (isNext ? "開発用 " : "") + (build || "版不明");
+  el.classList.toggle("is-next", isNext);
+  el.title = (isNext
+    ? "開発用の URL を見ています（テスターの URL とは別）"
+    : "みんなに知らせている URL を見ています")
+    + "  /  版: " + (build || "不明");
+}
+
+// タブ切替
   document.querySelectorAll(".tab").forEach(tab => {
     tab.addEventListener("click", () => {
       const target = tab.dataset.tab;

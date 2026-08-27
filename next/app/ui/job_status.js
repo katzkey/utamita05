@@ -9,7 +9,7 @@
 //   - 終わったらブラウザの通知を出す（席を外していても気づける）
 //   - パネルを開き直せば、途中でも終わっていても続きが見られる
 
-import { pollJob, fetchJob } from "./helper_client.js?v=12d0b2b";
+import { pollJob, fetchJob } from "./helper_client.js?v=6355ec0";
 
 const KINDS = {
   timing: { label: "タイミング自動検出", open: "btnAutoTiming" },
